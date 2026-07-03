@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -62,8 +62,13 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <Section title="Wichtige Städte" onAction={() => router.push("/search")}>
-        <View style={styles.cityGrid}>
+      <Section title="Wichtige Städte (5)">
+        <ScrollView
+          style={styles.cityGrid}
+          contentContainerStyle={{ gap: 5 }}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        >
           {["Karbala", "Najaf", "Kufa", "Kadhimayn", "Samarra"].map((city) => (
             <Pressable
               accessibilityRole="button"
@@ -81,7 +86,7 @@ export default function HomeScreen() {
               <ThemedText type="smallBold">{city}</ThemedText>
             </Pressable>
           ))}
-        </View>
+        </ScrollView>
       </Section>
 
       <Section title="Ausgewählte Orte">
@@ -138,8 +143,6 @@ const styles = StyleSheet.create({
   },
   cityGrid: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.two,
   },
   cityPill: {
     minHeight: 44,

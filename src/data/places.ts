@@ -67,6 +67,26 @@ const mukhayyamImages = [
   ),
 ];
 
+const hurrImages = [
+  localPlaceImage(
+    'hurr-al-riyahi',
+    require('@/assets/images/places/hurr-al-riyahi.jpg'),
+    'Außenansicht des Schreins von Hur ibn Yazid al-Riyahi im Raum Karbala.',
+    'Karbala Intel',
+    'https://karbala-intel.net/filestorage/images/5f5f12fae15dd.jpg',
+  ),
+];
+
+const imamAliImages = [
+  localPlaceImage(
+    'imam-ali-shrine',
+    require('@/assets/images/places/Imam_Ali_shrine,_Najaf_-_1980.jpg'),
+    'Außenansicht des Schreins von Imam Ali in Najaf.',
+    'Wikimedia Commons',
+    'https://upload.wikimedia.org/wikipedia/commons/1/11/Imam_Ali_shrine%2C_Najaf_-_1980.jpg',
+  ),
+];
+
 const wadiSalamImages = [
   localPlaceImage(
     'wadi-as-salam',
@@ -74,6 +94,46 @@ const wadiSalamImages = [
     'Blick auf den Friedhof Wadi al-Salam in Najaf.',
     'Tripadvisor',
     'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/2f/b0/94/35/caption.jpg?w=1200&h=1200&s=1',
+  ),
+];
+
+const masjidKufaImages = [
+  localPlaceImage(
+    'kufa-grand-mosque',
+    require('@/assets/images/places/kufa-grand-mosque01.jpg'),
+    'Außenansicht der Großen Moschee von Kufa.',
+    'Travel Adventures',
+    'https://www.traveladventures.org/countries/iraq/images/kufa-grand-mosque01.jpg',
+  ),
+];
+
+const masjidSahlahImages = [
+  localPlaceImage(
+    'masjid-al-sahlah',
+    require('@/assets/images/places/masjid-al-salah.webp'),
+    'Außenansicht der Masjid al-Sahlah in Kufa.',
+    'Najaf Chamber',
+    'https://najafchamber.com/wp-content/uploads/2021/03/3-10.jpg.webp',
+  ),
+];
+
+const muslimIbnAqilImages = [
+  localPlaceImage(
+    'muslim-shrine-in-kufa',
+    require('@/assets/images/places/Muslim_Shrine_in_Kufa.jpg'),
+    'Ansicht des Schreins von Muslim ibn Aqil in Kufa.',
+    'Google Bildquelle',
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSVTafpl8kTiCwmrxv3YIXuDTxzgbWYpqiMSlOvxrkjrQ&s',
+  ),
+];
+
+const maythamImages = [
+  localPlaceImage(
+    'maytham-tammar-shrine',
+    require('@/assets/images/places/Maytham_tammar_shrine.jpg'),
+    'Außenansicht des Schreins von Maytham al-Tammar in Kufa.',
+    'Wikimedia Commons',
+    'https://upload.wikimedia.org/wikipedia/commons/a/a1/Maytham_tammar_shrine.jpg',
   ),
 ];
 
@@ -217,7 +277,7 @@ export const allPlaces: Place[] = [
     visitingTips: commonTips,
     openingInfo: openingReview,
     accessibilityNotes: accessibilityReview,
-    images: [],
+    images: hurrImages,
     sourceReferences: ['editorial-review-required'],
     verificationStatus: 'needs_review',
   },
@@ -240,7 +300,7 @@ export const allPlaces: Place[] = [
     visitingTips: commonTips,
     openingInfo: openingReview,
     accessibilityNotes: accessibilityReview,
-    images: [],
+    images: imamAliImages,
     sourceReferences: ['duas-ziyarat-ameenallah', 'duas-dua-alqama-safwan'],
     verificationStatus: 'needs_review',
   },
@@ -286,7 +346,7 @@ export const allPlaces: Place[] = [
     visitingTips: commonTips,
     openingInfo: openingReview,
     accessibilityNotes: accessibilityReview,
-    images: [],
+    images: masjidKufaImages,
     sourceReferences: ['editorial-review-required'],
     verificationStatus: 'needs_review',
   },
@@ -309,7 +369,7 @@ export const allPlaces: Place[] = [
     visitingTips: commonTips,
     openingInfo: openingReview,
     accessibilityNotes: accessibilityReview,
-    images: [],
+    images: masjidSahlahImages,
     sourceReferences: ['editorial-review-required'],
     verificationStatus: 'needs_review',
   },
@@ -332,7 +392,7 @@ export const allPlaces: Place[] = [
     visitingTips: commonTips,
     openingInfo: openingReview,
     accessibilityNotes: accessibilityReview,
-    images: [],
+    images: muslimIbnAqilImages,
     sourceReferences: ['editorial-review-required'],
     verificationStatus: 'needs_review',
   },
@@ -378,7 +438,7 @@ export const allPlaces: Place[] = [
     visitingTips: commonTips,
     openingInfo: openingReview,
     accessibilityNotes: accessibilityReview,
-    images: [],
+    images: maythamImages,
     sourceReferences: ['editorial-review-required'],
     verificationStatus: 'needs_review',
   },
