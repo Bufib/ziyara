@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ziyara",
+    "name": "Shia Ziyarah Iraq",
     "slug": "ziyara",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,9 +8,16 @@
     "scheme": "ziyara",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Erlaube Shia Ziyarah Iraq, deinen Standort in der Nähe von Ziyarah-Orten anzuzeigen, wenn du diese Funktion aktivierst."
+      }
     },
     "android": {
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -32,7 +39,8 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,
