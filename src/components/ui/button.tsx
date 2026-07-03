@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import { SymbolIcon, type SymbolIconName } from '@/components/ui/symbol-icon';
 import { ThemedText } from '@/components/themed-text';
@@ -12,10 +12,11 @@ export type ButtonProps = {
   icon: SymbolIconName;
   label: string;
   onPress: () => void;
+  style?: StyleProp<ViewStyle>;
   variant?: ButtonVariant;
 };
 
-export function Button({ icon, label, onPress, variant = 'primary' }: ButtonProps) {
+export function Button({ icon, label, onPress, style, variant = 'primary' }: ButtonProps) {
   const theme = useTheme();
   const resolvedTheme = useResolvedTheme();
   const isPrimary = variant === 'primary';
@@ -40,6 +41,7 @@ export function Button({ icon, label, onPress, variant = 'primary' }: ButtonProp
               : theme.backgroundElement,
           borderColor: isGhost ? 'transparent' : isPrimary ? theme.accent : theme.border,
         },
+        style,
         pressed && styles.pressed,
       ]}>
       <SymbolIcon color={foreground} name={icon} size={18} />

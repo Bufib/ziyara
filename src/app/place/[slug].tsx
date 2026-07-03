@@ -37,7 +37,7 @@ export default function PlaceDetailScreen() {
   const sources = getSourceReferencesByIds(place.sourceReferences);
 
   return (
-    <Screen>
+    <Screen contentStyle={styles.screenContent} safeAreaEdges={['right', 'bottom', 'left']}>
       <View style={styles.header}>
         <View style={styles.headerText}>
           <ThemedText type="eyebrow" themeColor="accent">
@@ -161,5 +161,8 @@ const styles = StyleSheet.create({
   },
   notes: {
     gap: Spacing.two,
+  },
+  screenContent: {
+    paddingTop: Spacing.two,
   },
 });

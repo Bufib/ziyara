@@ -18,7 +18,7 @@ export default function CityScreen() {
   const title = city ?? 'Stadt';
 
   return (
-    <Screen>
+    <Screen contentStyle={styles.screenContent} safeAreaEdges={['right', 'bottom', 'left']}>
       <View style={styles.header}>
         <View style={styles.headerText}>
           <ThemedText type="eyebrow" themeColor="accent">
@@ -92,5 +92,8 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: Spacing.three,
+  },
+  screenContent: {
+    paddingTop: Spacing.two,
   },
 });

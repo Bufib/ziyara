@@ -19,7 +19,7 @@ export default function TabsLayout() {
       tintColor={colors.accent}
     >
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Start</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           sf={{ default: "house", selected: "house.fill" }}
           md={{ default: "home", selected: "home_filled" }}

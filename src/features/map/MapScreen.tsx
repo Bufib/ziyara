@@ -1,11 +1,13 @@
 import * as Location from "expo-location";
 import { router } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import MapView, { Marker, type Region } from "react-native-maps";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
@@ -22,16 +24,31 @@ const iraqRegion: Region = {
   longitudeDelta: 7.5,
 };
 
+type LocationStatus = "idle" | "loading" | "granted" | "denied" | "error";
+
 export function MapExperience() {
   const theme = useTheme();
+  const mapRef = useRef<MapView>(null);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(
     allPlaces[0],
   );
-  const [locationStatus, setLocationStatus] = useState<
-    "idle" | "granted" | "denied"
-  >("idle");
+  const insets = useSafeAreaInsets();
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
+  const [locationMessage, setLocationMessage] = useState<string | null>(null);
   const [userLocation, setUserLocation] =
     useState<Location.LocationObject | null>(null);
+
+  const centerOnLocation = useCallback((location: Location.LocationObject) => {
+    mapRef.current?.animateToRegion(
+      {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.025,
+        longitudeDelta: 0.025,
+      },
+      650,
+    );
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -39,6 +56,15 @@ export function MapExperience() {
       .then((permission) => {
         if (!mounted) return;
         setLocationStatus(permission.granted ? "granted" : "idle");
+        if (permission.granted) {
+          Location.getLastKnownPositionAsync({ maxAge: 60_000 }).then(
+            (lastKnownLocation) => {
+              if (mounted && lastKnownLocation) {
+                setUserLocation(lastKnownLocation);
+              }
+            },
+          );
+        }
       })
       .catch(() => undefined);
     return () => {
@@ -47,15 +73,31 @@ export function MapExperience() {
   }, []);
 
   const requestLocation = async () => {
-    const permission = await Location.requestForegroundPermissionsAsync();
-    if (!permission.granted) {
-      setLocationStatus("denied");
-      return;
-    }
+    setLocationMessage(null);
+    setLocationStatus("loading");
 
-    setLocationStatus("granted");
-    const current = await Location.getCurrentPositionAsync({});
-    setUserLocation(current);
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (!permission.granted) {
+        setLocationStatus("denied");
+        setLocationMessage(
+          "Aktiviere den Standort in den Geräteeinstellungen, um deine Position auf der Karte zu sehen.",
+        );
+        return;
+      }
+
+      const current = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      setUserLocation(current);
+      setLocationStatus("granted");
+      centerOnLocation(current);
+    } catch {
+      setLocationStatus("error");
+      setLocationMessage(
+        "Dein Standort konnte gerade nicht geladen werden. Prüfe GPS, Berechtigungen oder die Internetverbindung.",
+      );
+    }
   };
 
   const markerColor = useMemo(() => theme.accent, [theme.accent]);
@@ -65,6 +107,7 @@ export function MapExperience() {
       style={[styles.container, { backgroundColor: theme.background }]}
     >
       <MapView
+        ref={mapRef}
         initialRegion={iraqRegion}
         showsUserLocation={locationStatus === "granted"}
         style={styles.map}
@@ -75,7 +118,7 @@ export function MapExperience() {
               latitude: place.latitude,
               longitude: place.longitude,
             }}
-            description={`${place.city}, ${place.province}`}
+            description={`${place.city}, ${place.country}`}
             key={place.id}
             onPress={() => setSelectedPlace(place)}
             pinColor={markerColor}
@@ -91,16 +134,32 @@ export function MapExperience() {
         ) : null}
       </MapView>
 
-      {locationStatus === "denied" && (
+      <View style={styles.topBar}>
+        <Button
+          icon="map"
+          label={
+            locationStatus === "loading"
+              ? "Standort wird geladen"
+              : userLocation
+                ? "Neu zentrieren"
+                : "Mein Standort"
+          }
+          variant={userLocation ? "secondary" : "primary"}
+          onPress={requestLocation}
+        />
+      </View>
+
+      {(locationStatus === "denied" || locationStatus === "error") && (
         <View
           style={[styles.permission, { backgroundColor: theme.warningSoft }]}
         >
           <ThemedText type="smallBold">
-            Standortberechtigung abgelehnt
+            {locationStatus === "denied"
+              ? "Standortberechtigung abgelehnt"
+              : "Standort nicht verfügbar"}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Orte bleiben sichtbar. Aktiviere den Standort bei Bedarf in den
-            Geräteeinstellungen.
+            {locationMessage}
           </ThemedText>
         </View>
       )}
@@ -109,17 +168,20 @@ export function MapExperience() {
         <View
           style={[
             styles.sheet,
-            { backgroundColor: theme.surface, borderColor: theme.border },
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.border,
+              bottom: insets.bottom,
+            },
           ]}
         >
           <View style={styles.sheetHeader}>
             <View style={styles.sheetTitle}>
               <ThemedText type="heading">{selectedPlace.name}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                {selectedPlace.city}, {selectedPlace.province}
+                {selectedPlace.city}, {selectedPlace.country}
               </ThemedText>
             </View>
-            <Badge status={selectedPlace.verificationStatus} />
           </View>
 
           <View style={styles.sheetActions}>
@@ -127,18 +189,14 @@ export function MapExperience() {
               icon="info"
               label="Details"
               onPress={() => router.push(placeRoute(selectedPlace.slug))}
+              style={styles.sheetActionButton}
             />
             <Button
               icon="map"
               label="Navigieren"
               variant="secondary"
               onPress={() => openNavigation(selectedPlace)}
-            />
-            <Button
-              icon="book"
-              label="Handlungen"
-              variant="secondary"
-              onPress={() => router.push(placeRoute(selectedPlace.slug))}
+              style={styles.sheetActionButton}
             />
           </View>
         </View>
@@ -173,7 +231,7 @@ const styles = StyleSheet.create({
   sheet: {
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
-    bottom: Spacing.three,
+    bottom: 0,
     gap: Spacing.two,
     left: Spacing.three,
     padding: Spacing.three,
@@ -194,5 +252,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: Spacing.two,
+  },
+  sheetActionButton: {
+    flex: 1,
+    minWidth: 0,
   },
 });

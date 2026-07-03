@@ -29,12 +29,13 @@ function RootNavigation() {
       <NavigationThemeProvider value={scheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack
           screenOptions={{
+            headerBackTitle: '',
             headerStyle: { backgroundColor: colors.background },
             headerTintColor: colors.text,
             headerShadowVisible: false,
             contentStyle: { backgroundColor: colors.background },
           }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Home' }} />
           <Stack.Screen name="city/[city]" options={{ title: 'Stadt' }} />
           <Stack.Screen name="place/[slug]" options={{ title: 'Ortsdetails' }} />
           <Stack.Screen name="reader/[slug]" options={{ title: 'Lesemodus' }} />
