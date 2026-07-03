@@ -41,6 +41,10 @@ type PlaceImageViewerProps = {
   onClose: () => void;
 };
 
+function getPlaceImageSource(image: PlaceImage) {
+  return image.asset ?? { uri: image.uri ?? '' };
+}
+
 function ViewerCloseButton({ onPress }: { onPress: () => void }) {
   const theme = useTheme();
 
@@ -88,7 +92,7 @@ function PlaceImageViewer({ image, onClose }: PlaceImageViewerProps) {
               <Image
                 accessibilityLabel={image.description}
                 contentFit="contain"
-                source={{ uri: image.uri }}
+                source={getPlaceImageSource(image)}
                 style={[
                   styles.viewerImage,
                   {
@@ -143,7 +147,7 @@ function PlaceImageCarousel({ images }: PlaceImageCarouselProps) {
               <Image
                 accessibilityLabel={image.description}
                 contentFit="cover"
-                source={{ uri: image.uri }}
+                source={getPlaceImageSource(image)}
                 style={styles.placeImage}
                 transition={160}
               />

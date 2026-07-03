@@ -9,149 +9,91 @@ const commonTips = [
   'Respektiere die Regeln vor Ort in Schreinen, Moscheen und Friedhöfen.',
 ];
 
-function commonsImage(id: string, fileName: string, description: string): PlaceImage {
-  const encodedFileName = encodeURIComponent(fileName);
-
+function localPlaceImage(
+  id: string,
+  asset: number,
+  description: string,
+  sourceTitle: string,
+  sourceUrl: string,
+): PlaceImage {
   return {
     id,
-    uri: `https://commons.wikimedia.org/wiki/Special:FilePath/${encodedFileName}?width=900`,
+    asset,
     description,
     source: {
-      title: 'Wikimedia Commons',
-      url: `https://commons.wikimedia.org/wiki/File:${encodedFileName}`,
+      title: sourceTitle,
+      url: sourceUrl,
     },
   };
 }
 
 const imamHussainImages = [
-  commonsImage(
-    'imam-hussain-karbala-facade',
-    'Karbala.j.jpg',
-    'Außenansicht des Schreins von Imam Hussain in Karbala mit goldenen Minaretten und Kuppel.',
-  ),
-  commonsImage(
-    'imam-hussain-night',
-    'Imam_Husayn_Shrine_by_Tasnimnews_05.jpg',
-    'Der Schrein von Imam Hussain bei Nacht, beleuchtet über der Altstadt von Karbala.',
-  ),
-  commonsImage(
-    'imam-hussain-courtyard',
-    'Ramadan_1439_AH,_Karbala_24.jpg',
-    'Innenhof und Gebetsbereich des Imam-Hussain-Schreins während eines Besuchsabends.',
+  localPlaceImage(
+    'imam-hussain-shrine',
+    require('@/assets/images/places/imam-hussain-s-shrine.jpg'),
+    'Außenansicht des Schreins von Imam Hussain in Karbala.',
+    'Tripadvisor',
+    'https://www.tripadvisor.de/Attraction_Review-g659513-d6276848-Reviews-The_Holy_Shrine_of_Imam_Hussain-Karbala_Karbala_Province.html',
   ),
 ];
 
 const abbasImages = [
-  commonsImage(
-    'abbas-karbala-dome',
-    'Al_Abbas_Mosque,_Shrine_Karbala.jpg',
-    'Goldene Kuppel und Minarette des Schreins von Abul Fadhl al-Abbas in Karbala.',
-  ),
-  commonsImage(
-    'abbas-dome-detail',
-    '2E1A6585-01.jpg',
-    'Detailansicht von Kuppel, Minarett und Zierfliesen am al-Abbas-Schrein.',
-  ),
-  commonsImage(
-    'abbas-interior-pilgrims',
-    "Arba'een_Pilgrims_in_Bayn_al-Harmian_02.jpg",
-    'Pilger im reich verzierten Innenbereich nahe dem al-Abbas-Schrein.',
+  localPlaceImage(
+    'abu-fadl-shrine',
+    require('@/assets/images/places/abu-fadl-shrine.jpg'),
+    'Außenansicht des Schreins von Abul Fadhl al-Abbas in Karbala.',
+    'Facebook',
+    'https://www.facebook.com/photo?fbid=3766692883365247&set=pcb.3766693883365147',
   ),
 ];
 
-const hurImages = [
-  commonsImage(
-    'hur-shrine-front',
-    'Al-Hurr_ibn_Yazid(2).jpg',
-    'Frontansicht des Schreins von Hur ibn Yazid al-Riyahi im Raum Karbala.',
-  ),
-  commonsImage(
-    'hur-shrine-courtyard',
-    'Al-Hurr_ibn_Yazid.jpg',
-    'Blick auf den Schreinbereich und die Kuppel von Hur ibn Yazid al-Riyahi.',
+const baynAlHaramaynImages = [
+  localPlaceImage(
+    'bayn-al-haramayn',
+    require('@/assets/images/places/bayn-al-haramayn.jpg'),
+    'Blick auf Bayn al-Haramayn zwischen den zwei Schreinen in Karbala.',
+    'Atabat.org',
+    'https://en.atabat.org/files/en/news/2021/4/23/318_774.jpg',
   ),
 ];
 
-const imamAliImages = [
-  commonsImage(
-    'imam-ali-najaf-aerial',
-    'Najaf_City.jpg',
-    'Luftansicht des Imam-Ali-Schreins im Zentrum von Najaf.',
-  ),
-  commonsImage(
-    'imam-ali-golden-iwan',
-    'Najaf-Ali_ibn_Abi_Talib.jpg',
-    'Der goldene Iwan am Eingang des Imam-Ali-Schreins mit Besuchergruppen davor.',
-  ),
-  commonsImage(
-    'imam-ali-interior',
-    'This_photo_is_in_Iraq,_the_Najaf_region,_inside_the_shrine_of_Imam_Ali,_peace_be_upon_him,_where_the_cousin_of_the_Prophet_of_Islam_Muhammad_and_his_son-in-law_are_buried.jpg',
-    'Innenansicht des Schreins von Imam Ali mit Zarih und Spiegelmosaiken.',
+const mukhayyamImages = [
+  localPlaceImage(
+    'al-mukhayam',
+    require('@/assets/images/places/al-mukhayam.jpeg'),
+    'Ansicht von Al-Mukhayyam, dem Lagerbereich von Imam Hussain in Karbala.',
+    'Google Bildquelle',
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSc7F_8gJ9-1NM0u9y_wqg5XS32JLC1RQJy3gFkLz12fQ&s=10',
   ),
 ];
 
-const muslimIbnAqilImages = [
-  commonsImage(
-    'muslim-ibn-aqil-kufa-complex',
-    'Kufa_Mosque.jpg',
-    'Die Große Moschee von Kufa mit den Schreinbereichen von Muslim ibn Aqil und Hani ibn Urwah.',
-  ),
-  commonsImage(
-    'muslim-ibn-aqil-kufa-courtyard',
-    'Kufa_Mosque_(4).jpg',
-    'Innenhof der Kufa-Moschee, in deren Komplex sich der Schrein von Muslim ibn Aqil befindet.',
-  ),
-];
-
-const haniIbnUrwahImages = [
-  commonsImage(
-    'hani-ibn-urwah-kufa-complex',
-    'Kufa_Mosque.jpg',
-    'Die Große Moschee von Kufa; im Komplex liegt der Schrein von Hani ibn Urwah.',
-  ),
-  commonsImage(
-    'hani-ibn-urwah-kufa-courtyard',
-    'Kufa_Mosque_(4).jpg',
-    'Blick in den Hof der Kufa-Moschee nahe den Schreinbereichen von Hani ibn Urwah.',
-  ),
-];
-
-const maythamImages = [
-  commonsImage(
-    'maytham-shrine-exterior',
-    'مسجد_میثم_تمار_در_کوفه_-_panoramio.jpg',
-    'Außenansicht des Schreins von Maytham al-Tammar in Kufa mit türkisfarbener Kuppel.',
+const wadiSalamImages = [
+  localPlaceImage(
+    'wadi-as-salam',
+    require('@/assets/images/places/wadi as-salam.jpg'),
+    'Blick auf den Friedhof Wadi al-Salam in Najaf.',
+    'Tripadvisor',
+    'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/2f/b0/94/35/caption.jpg?w=1200&h=1200&s=1',
   ),
 ];
 
 const kadhimaynImages = [
-  commonsImage(
-    'kadhimayn-golden-domes',
-    'Al-Kadhimiya_Mosque,_Kadhmain_Shrine.jpg',
-    'Die goldenen Kuppeln und Minarette des Kadhimayn-Schreins in Bagdad.',
-  ),
-  commonsImage(
-    'kadhimayn-gate-clocktower',
-    "Close-Up_Shot_of_Imam_Al-Kathim_&_Imam_Jawad's_Clocktower_and_Gate.jpg",
-    'Nahaufnahme des Tores und Uhrturms am Schrein von Imam Musa al-Kadhim und Imam Muhammad al-Jawad.',
+  localPlaceImage(
+    'kadhimayn-shrine',
+    require('@/assets/images/places/Al-Kadhimiya_Mosque,_Kadhmain_Shrine.jpg'),
+    'Außenansicht des Kadhimayn-Schreins in Bagdad.',
+    'Wikimedia Commons',
+    'https://upload.wikimedia.org/wikipedia/commons/f/f9/Al-Kadhimiya_Mosque%2C_Kadhmain_Shrine.jpg',
   ),
 ];
 
 const askariImages = [
-  commonsImage(
-    'askari-shrine-night-crowd',
-    'اثناء_احياء_احدى_الشعائر_الدينية_في_المدينة.jpg',
-    'Der Askariyyayn-Schrein in Samarra während einer religiösen Versammlung bei Nacht.',
-  ),
-  commonsImage(
-    'askari-shrine-night',
-    'مرقد_الامامين_العسكريين_ليلاً.jpg',
-    'Nachtansicht der goldenen Kuppel des Schreins von Imam Ali al-Hadi und Imam Hasan al-Askari.',
-  ),
-  commonsImage(
-    'askari-shrine-courtyard',
-    'ضريح_الامامين_العسكريين.jpg',
-    'Der Askari-Schrein mit Besuchern im Hofbereich von Samarra.',
+  localPlaceImage(
+    'imam-hadi-imam-askari',
+    require('@/assets/images/places/imam-hadi-imam-askari.jpeg'),
+    'Außenansicht des Askariyyayn-Schreins in Samarra.',
+    'Google Bildquelle',
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS0gaQXPTyiLTOd_WMIx1UK80PG5z2zqshI1Kg3eBlaYnscTzfHHxsRGN4m&s=10',
   ),
 ];
 
@@ -229,7 +171,7 @@ export const allPlaces: Place[] = [
     visitingTips: commonTips,
     openingInfo: openingReview,
     accessibilityNotes: accessibilityReview,
-    images: [],
+    images: baynAlHaramaynImages,
     sourceReferences: ['editorial-review-required'],
     verificationStatus: 'needs_review',
   },
@@ -252,7 +194,7 @@ export const allPlaces: Place[] = [
     visitingTips: commonTips,
     openingInfo: openingReview,
     accessibilityNotes: accessibilityReview,
-    images: [],
+    images: mukhayyamImages,
     sourceReferences: ['editorial-review-required'],
     verificationStatus: 'needs_review',
   },
@@ -275,7 +217,7 @@ export const allPlaces: Place[] = [
     visitingTips: commonTips,
     openingInfo: openingReview,
     accessibilityNotes: accessibilityReview,
-    images: hurImages,
+    images: [],
     sourceReferences: ['editorial-review-required'],
     verificationStatus: 'needs_review',
   },
@@ -298,7 +240,7 @@ export const allPlaces: Place[] = [
     visitingTips: commonTips,
     openingInfo: openingReview,
     accessibilityNotes: accessibilityReview,
-    images: imamAliImages,
+    images: [],
     sourceReferences: ['duas-ziyarat-ameenallah', 'duas-dua-alqama-safwan'],
     verificationStatus: 'needs_review',
   },
@@ -321,7 +263,7 @@ export const allPlaces: Place[] = [
     visitingTips: commonTips,
     openingInfo: openingReview,
     accessibilityNotes: accessibilityReview,
-    images: [],
+    images: wadiSalamImages,
     sourceReferences: ['editorial-review-required'],
     verificationStatus: 'needs_review',
   },
@@ -390,7 +332,7 @@ export const allPlaces: Place[] = [
     visitingTips: commonTips,
     openingInfo: openingReview,
     accessibilityNotes: accessibilityReview,
-    images: muslimIbnAqilImages,
+    images: [],
     sourceReferences: ['editorial-review-required'],
     verificationStatus: 'needs_review',
   },
@@ -413,7 +355,7 @@ export const allPlaces: Place[] = [
     visitingTips: commonTips,
     openingInfo: openingReview,
     accessibilityNotes: accessibilityReview,
-    images: haniIbnUrwahImages,
+    images: [],
     sourceReferences: ['editorial-review-required'],
     verificationStatus: 'needs_review',
   },
@@ -436,7 +378,7 @@ export const allPlaces: Place[] = [
     visitingTips: commonTips,
     openingInfo: openingReview,
     accessibilityNotes: accessibilityReview,
-    images: maythamImages,
+    images: [],
     sourceReferences: ['editorial-review-required'],
     verificationStatus: 'needs_review',
   },

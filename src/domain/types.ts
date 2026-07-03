@@ -70,7 +70,8 @@ export type ReligiousContent = {
 
 export type PlaceImage = {
   id: string;
-  uri: string;
+  asset?: number;
+  uri?: string;
   description: string;
   source: {
     title: string;
