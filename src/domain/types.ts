@@ -68,6 +68,16 @@ export type ReligiousContent = {
   version: string;
 };
 
+export type PlaceImage = {
+  id: string;
+  uri: string;
+  description: string;
+  source: {
+    title: string;
+    url: string;
+  };
+};
+
 export type Place = {
   id: string;
   slug: string;
@@ -87,7 +97,7 @@ export type Place = {
   visitingTips: string[];
   openingInfo: string;
   accessibilityNotes: string;
-  images: string[];
+  images: PlaceImage[];
   sourceReferences: string[];
   verificationStatus: VerificationStatus;
 };

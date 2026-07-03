@@ -144,7 +144,7 @@ export function MapExperience() {
               <View style={styles.placeText}>
                 <ThemedText type="heading">{place.name}</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
-                  {place.city}, {place.province}
+                {place.province}, {place.city}
                 </ThemedText>
               </View>
               <Badge status={place.verificationStatus} />

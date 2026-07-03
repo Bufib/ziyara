@@ -97,7 +97,7 @@ export default function HomeScreen() {
                   <View style={styles.cardTitle}>
                     <ThemedText type="heading">{place.name}</ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
-                      {place.city}, {place.province}
+                      {place.city}, {place.country}
                     </ThemedText>
                   </View>
                   <Badge status={place.verificationStatus} />

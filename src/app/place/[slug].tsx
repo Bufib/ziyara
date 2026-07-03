@@ -1,5 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
+import { Linking, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { SourceReferenceList } from '@/components/source-reference-list';
 import { Badge } from '@/components/ui/badge';
@@ -12,10 +13,68 @@ import { recommendedActTypeLabels } from '@/data/labels';
 import { getPlaceBySlug } from '@/data/places';
 import { getRecommendedActsForPlace } from '@/data/recommendedActs';
 import { getSourceReferencesByIds } from '@/data/sourceReferences';
+import type { PlaceImage } from '@/domain/types';
 import { readerRoute, singleRouteParam } from '@/features/navigation/routes';
 import { useBookmarks } from '@/features/storage/useBookmarks';
 import { openNavigation } from '@/features/places/openNavigation';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+
+type PlaceImageCarouselProps = {
+  images: PlaceImage[];
+};
+
+function PlaceImageCarousel({ images }: PlaceImageCarouselProps) {
+  const theme = useTheme();
+  const { width } = useWindowDimensions();
+  const imageCardWidth = Math.min(320, Math.max(248, width - Spacing.four * 2));
+
+  if (images.length === 0) {
+    return null;
+  }
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.imageCarousel}>
+      {images.map((image) => (
+        <View
+          key={image.id}
+          style={[
+            styles.imageCard,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.border,
+              width: imageCardWidth,
+            },
+          ]}>
+          <Image
+            accessibilityLabel={image.description}
+            contentFit="cover"
+            source={{ uri: image.uri }}
+            style={styles.placeImage}
+            transition={160}
+          />
+          <View style={styles.imageCaption}>
+            <ThemedText type="small">{image.description}</ThemedText>
+            <Pressable
+              accessibilityRole="link"
+              hitSlop={8}
+              onPress={() => {
+                void Linking.openURL(image.source.url);
+              }}
+              style={styles.sourceLink}>
+              <ThemedText type="smallBold" themeColor="accent">
+                Quelle: {image.source.title}
+              </ThemedText>
+            </Pressable>
+          </View>
+        </View>
+      ))}
+    </ScrollView>
+  );
+}
 
 export default function PlaceDetailScreen() {
   const params = useLocalSearchParams<{ slug?: string | string[] }>();
@@ -41,7 +100,7 @@ export default function PlaceDetailScreen() {
       <View style={styles.header}>
         <View style={styles.headerText}>
           <ThemedText type="eyebrow" themeColor="accent">
-            {place.city}, {place.province}
+            {place.city}, {place.country}
           </ThemedText>
           <ThemedText type="title">{place.name}</ThemedText>
           <ThemedText themeColor="textSecondary">{place.shortDescription}</ThemedText>
@@ -64,6 +123,7 @@ export default function PlaceDetailScreen() {
         <ThemedText type="small" themeColor="textSecondary">
           {place.historicalNotes}
         </ThemedText>
+        <PlaceImageCarousel images={place.images} />
       </Section>
 
       <Section title="Empfohlene Handlungen">
@@ -161,6 +221,26 @@ const styles = StyleSheet.create({
   },
   notes: {
     gap: Spacing.two,
+  },
+  imageCarousel: {
+    gap: Spacing.two,
+    paddingBottom: Spacing.one,
+  },
+  imageCard: {
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  placeImage: {
+    aspectRatio: 4 / 3,
+    width: '100%',
+  },
+  imageCaption: {
+    gap: Spacing.one,
+    padding: Spacing.three,
+  },
+  sourceLink: {
+    alignSelf: 'flex-start',
   },
   screenContent: {
     paddingTop: Spacing.two,
