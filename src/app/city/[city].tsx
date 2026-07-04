@@ -14,6 +14,14 @@ import { singleRouteParam } from "@/features/navigation/routes";
 import { CityLocationMap } from "@/features/places/CityLocationMap";
 import { PlaceImageCard } from "@/features/places/PlaceImageCard";
 
+const cityDescriptionKeys: Record<string, string> = {
+  Karbala: "city.description.Karbala",
+  Najaf: "city.description.Najaf",
+  Kadhimayn: "city.description.Kadhimayn",
+  Kufa: "city.description.Kufa",
+  Samarra: "city.description.Samarra",
+};
+
 function getCityRegion(places: Place[]) {
   if (places.length === 0) {
     return null;
@@ -36,6 +44,9 @@ export default function CityScreen() {
   const places = localizePlaces(getPlacesByCity(city), language);
   const title = city ? localizeCityName(city, language) : t("city.titleFallback");
   const cityRegion = getCityRegion(places);
+  const cityDescription = t(
+    city ? (cityDescriptionKeys[city] ?? "city.offlineBody") : "city.offlineBody",
+  );
 
   return (
     <Screen
@@ -55,8 +66,8 @@ export default function CityScreen() {
               region={cityRegion}
             />
           ) : null}
-          <ThemedText themeColor="textSecondary">
-            {t("city.offlineBody")}
+          <ThemedText themeColor="textSecondary" style={{marginTop: 5}}>
+            {cityDescription}
           </ThemedText>
         </View>
       </View>

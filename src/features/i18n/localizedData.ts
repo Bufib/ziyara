@@ -59,14 +59,21 @@ const placeTranslations: Record<string, Partial<Record<Language, PlaceTranslatio
   'place-imam-hussain': {
     en: {
       name: 'Shrine of Imam Hussain',
-      shortDescription: 'Important Ziyarah site in Karbala. Details require editorial review.',
+      shortDescription:
+        'The shrine of Imam Hussain (a.) is the heart of Karbala and one of the most important places of Ziyārah.',
+      longDescription:
+        'The shrine of Imam Hussain (a.) is the heart of Karbala and one of the most important places of Ziyārah. It reminds visitors of sacrifice, steadfastness, and loyalty to Allah.',
+      historicalNotes: '',
       imageDescriptions: {
         'imam-hussain-shrine': 'Exterior view of the Shrine of Imam Hussain in Karbala.',
       },
     },
     ar: {
       name: 'ضريح الإمام الحسين',
-      shortDescription: 'موقع زيارة مهم في كربلاء. تحتاج التفاصيل إلى مراجعة تحريرية.',
+      shortDescription: 'يُعدّ مرقد الإمام الحسين (ع) قلب كربلاء ومن أهم أماكن الزيارة.',
+      longDescription:
+        'يُعدّ مرقد الإمام الحسين (ع) قلب كربلاء ومن أهم أماكن الزيارة. وهو يذكّر الزائر بمعاني التضحية والثبات والوفاء لله تعالى.',
+      historicalNotes: '',
       imageDescriptions: {
         'imam-hussain-shrine': 'منظر خارجي لضريح الإمام الحسين في كربلاء.',
       },
@@ -75,14 +82,21 @@ const placeTranslations: Record<string, Partial<Record<Language, PlaceTranslatio
   'place-abul-fadhl-abbas': {
     en: {
       name: 'Shrine of Abul Fadhl al-Abbas',
-      shortDescription: 'Important shrine in Karbala. Details require editorial review.',
+      shortDescription:
+        'The shrine of Abul-Fadhl al-Abbas (a.) represents loyalty, courage, and devotion.',
+      longDescription:
+        'The shrine of Abul-Fadhl al-Abbas (a.) represents loyalty, courage, and devotion. Visiting it reminds pilgrims of the special role of al-Abbas (a.) beside Imam Hussain (a.).',
+      historicalNotes: '',
       imageDescriptions: {
         'abu-fadl-shrine': 'Exterior view of the Shrine of Abul Fadhl al-Abbas in Karbala.',
       },
     },
     ar: {
       name: 'ضريح أبي الفضل العباس',
-      shortDescription: 'ضريح مهم في كربلاء. تحتاج التفاصيل إلى مراجعة تحريرية.',
+      shortDescription: 'يمثّل مرقد أبي الفضل العباس (ع) معاني الوفاء والشجاعة والإخلاص.',
+      longDescription:
+        'يمثّل مرقد أبي الفضل العباس (ع) معاني الوفاء والشجاعة والإخلاص. وتذكّر زيارته بمكانته العظيمة إلى جانب الإمام الحسين (ع).',
+      historicalNotes: '',
       imageDescriptions: {
         'abu-fadl-shrine': 'منظر خارجي لضريح أبي الفضل العباس في كربلاء.',
       },
@@ -91,14 +105,22 @@ const placeTranslations: Record<string, Partial<Record<Language, PlaceTranslatio
   'place-bayn-al-haramayn': {
     en: {
       name: 'Bayn al-Haramayn',
-      shortDescription: 'Area between the two main shrines in Karbala.',
+      shortDescription:
+        'Bayn al-Haramayn is the area between the shrines of Imam Hussain (a.) and Abul-Fadhl al-Abbas (a.).',
+      longDescription:
+        'Bayn al-Haramayn is the area between the shrines of Imam Hussain (a.) and Abul-Fadhl al-Abbas (a.). It is a place of walking, prayer, and quiet remembrance.',
+      historicalNotes: '',
       imageDescriptions: {
         'bayn-al-haramayn': 'View of Bayn al-Haramayn between the two shrines in Karbala.',
       },
     },
     ar: {
       name: 'بين الحرمين',
-      shortDescription: 'المنطقة بين الضريحين الرئيسيين في كربلاء.',
+      shortDescription:
+        'ما بين الحرمين هو المكان الواقع بين مرقد الإمام الحسين (ع) ومرقد أبي الفضل العباس (ع).',
+      longDescription:
+        'ما بين الحرمين هو المكان الواقع بين مرقد الإمام الحسين (ع) ومرقد أبي الفضل العباس (ع). وهو موضع للمشي والدعاء والذكر والتأمل.',
+      historicalNotes: '',
       imageDescriptions: {
         'bayn-al-haramayn': 'منظر لبين الحرمين بين الضريحين في كربلاء.',
       },
@@ -107,14 +129,21 @@ const placeTranslations: Record<string, Partial<Record<Language, PlaceTranslatio
   'place-mukhayyam': {
     en: {
       name: 'Al-Mukhayyam / Camp of Imam Hussain',
-      shortDescription: 'Historic site in Karbala. Details require editorial review.',
+      shortDescription:
+        'Al-Mukhayyam recalls the camp of Imam Hussain (a.) and his family on the day of Ashura.',
+      longDescription:
+        'Al-Mukhayyam recalls the camp of Imam Hussain (a.) and his family on the day of Ashura. It invites visitors to reflect on patience, hardship, and trust in Allah.',
+      historicalNotes: '',
       imageDescriptions: {
         'al-mukhayam': 'View of Al-Mukhayyam, the camp area of Imam Hussain in Karbala.',
       },
     },
     ar: {
       name: 'المخيم / موضع خيام الإمام الحسين',
-      shortDescription: 'موقع تاريخي في كربلاء. تحتاج التفاصيل إلى مراجعة تحريرية.',
+      shortDescription: 'يذكّر المخيّم الحسيني بمخيم الإمام الحسين (ع) وأهل بيته يوم عاشوراء.',
+      longDescription:
+        'يذكّر المخيّم الحسيني بمخيم الإمام الحسين (ع) وأهل بيته يوم عاشوراء. وهو مكان يدعو إلى التأمل في الصبر والابتلاء والتوكل على الله.',
+      historicalNotes: '',
       imageDescriptions: {
         'al-mukhayam': 'منظر للمخيم، موضع خيام الإمام الحسين في كربلاء.',
       },
@@ -123,14 +152,21 @@ const placeTranslations: Record<string, Partial<Record<Language, PlaceTranslatio
   'place-hur': {
     en: {
       name: 'Shrine of Hur ibn Yazid al-Riyahi',
-      shortDescription: 'Shrine in the Karbala area. Details require editorial review.',
+      shortDescription:
+        'The shrine of Hurr ibn Yazid al-Riyahi reminds visitors of repentance, return, and choosing the truth.',
+      longDescription:
+        'The shrine of Hurr ibn Yazid al-Riyahi reminds visitors of repentance, return, and choosing the truth. His story shows that the path back to Allah is always open.',
+      historicalNotes: '',
       imageDescriptions: {
         'hurr-al-riyahi': 'Exterior view of the Shrine of Hur ibn Yazid al-Riyahi near Karbala.',
       },
     },
     ar: {
       name: 'ضريح الحر بن يزيد الرياحي',
-      shortDescription: 'ضريح في منطقة كربلاء. تحتاج التفاصيل إلى مراجعة تحريرية.',
+      shortDescription: 'يذكّر مرقد الحرّ بن يزيد الرياحي بالتوبة والرجوع واختيار الحق.',
+      longDescription:
+        'يذكّر مرقد الحرّ بن يزيد الرياحي بالتوبة والرجوع واختيار الحق. وتُظهر قصته أن باب العودة إلى الله مفتوح دائمًا.',
+      historicalNotes: '',
       imageDescriptions: {
         'hurr-al-riyahi': 'منظر خارجي لضريح الحر بن يزيد الرياحي في منطقة كربلاء.',
       },
@@ -139,14 +175,20 @@ const placeTranslations: Record<string, Partial<Record<Language, PlaceTranslatio
   'place-imam-ali': {
     en: {
       name: 'Shrine of Imam Ali',
-      shortDescription: 'Important Ziyarah site in Najaf. Details require editorial review.',
+      shortDescription: 'The shrine of Imam Ali ibn Abi Talib (a.) is the center of Najaf.',
+      longDescription:
+        'The shrine of Imam Ali ibn Abi Talib (a.) is the center of Najaf. It is a place of Ziyārah, knowledge, and closeness to the Commander of the Faithful.',
+      historicalNotes: '',
       imageDescriptions: {
         'imam-ali-shrine': 'Exterior view of the Shrine of Imam Ali in Najaf.',
       },
     },
     ar: {
       name: 'ضريح الإمام علي',
-      shortDescription: 'موقع زيارة مهم في النجف. تحتاج التفاصيل إلى مراجعة تحريرية.',
+      shortDescription: 'يُعدّ مرقد الإمام علي بن أبي طالب (ع) مركز مدينة النجف.',
+      longDescription:
+        'يُعدّ مرقد الإمام علي بن أبي طالب (ع) مركز مدينة النجف. وهو مكان للزيارة والعلم والقرب من أمير المؤمنين (ع).',
+      historicalNotes: '',
       imageDescriptions: {
         'imam-ali-shrine': 'منظر خارجي لضريح الإمام علي في النجف.',
       },
@@ -155,14 +197,20 @@ const placeTranslations: Record<string, Partial<Record<Language, PlaceTranslatio
   'place-wadi-salam': {
     en: {
       name: 'Wadi al-Salam Cemetery',
-      shortDescription: 'Cemetery in Najaf. Details require editorial review.',
+      shortDescription: 'Wadi al-Salam is one of the most well-known cemeteries in the Islamic world.',
+      longDescription:
+        'Wadi al-Salam is one of the most well-known cemeteries in the Islamic world. It reminds visitors of the hereafter, the passing nature of life, and hope in Allah’s mercy.',
+      historicalNotes: '',
       imageDescriptions: {
         'wadi-as-salam': 'View of Wadi al-Salam Cemetery in Najaf.',
       },
     },
     ar: {
       name: 'مقبرة وادي السلام',
-      shortDescription: 'مقبرة في النجف. تحتاج التفاصيل إلى مراجعة تحريرية.',
+      shortDescription: 'تُعدّ مقبرة وادي السلام من أشهر المقابر في العالم الإسلامي.',
+      longDescription:
+        'تُعدّ مقبرة وادي السلام من أشهر المقابر في العالم الإسلامي. وهي تذكّر بالآخرة وفناء الدنيا والرجاء برحمة الله تعالى.',
+      historicalNotes: '',
       imageDescriptions: {
         'wadi-as-salam': 'منظر لمقبرة وادي السلام في النجف.',
       },
@@ -171,14 +219,20 @@ const placeTranslations: Record<string, Partial<Record<Language, PlaceTranslatio
   'place-masjid-kufa': {
     en: {
       name: 'Masjid al-Kufa',
-      shortDescription: 'Important mosque in Kufa. Details require editorial review.',
+      shortDescription: 'Masjid al-Kufa is one of the most important mosques in Islam.',
+      longDescription:
+        'Masjid al-Kufa is one of the most important mosques in Islam. It is closely connected to Imam Ali (a.) and is a place of prayer, Ziyārah, and remembrance.',
+      historicalNotes: '',
       imageDescriptions: {
         'kufa-grand-mosque': 'Exterior view of the Great Mosque of Kufa.',
       },
     },
     ar: {
       name: 'مسجد الكوفة',
-      shortDescription: 'مسجد مهم في الكوفة. تحتاج التفاصيل إلى مراجعة تحريرية.',
+      shortDescription: 'يُعدّ مسجد الكوفة من أهم مساجد الإسلام، ويرتبط ارتباطًا وثيقًا بالإمام علي (ع).',
+      longDescription:
+        'يُعدّ مسجد الكوفة من أهم مساجد الإسلام، ويرتبط ارتباطًا وثيقًا بالإمام علي (ع). وهو مكان للصلاة والزيارة والذكر.',
+      historicalNotes: '',
       imageDescriptions: {
         'kufa-grand-mosque': 'منظر خارجي لمسجد الكوفة الكبير.',
       },
@@ -187,14 +241,20 @@ const placeTranslations: Record<string, Partial<Record<Language, PlaceTranslatio
   'place-masjid-sahlah': {
     en: {
       name: 'Masjid al-Sahlah',
-      shortDescription: 'Important mosque in Kufa. Details require editorial review.',
+      shortDescription: 'Masjid al-Sahlah is an important mosque near Kufa.',
+      longDescription:
+        'Masjid al-Sahlah is an important mosque near Kufa. It is connected to many narrations and is regarded as a special place for prayer, Duʿāʾ, and spiritual reflection.',
+      historicalNotes: '',
       imageDescriptions: {
         'masjid-al-sahlah': 'Exterior view of Masjid al-Sahlah in Kufa.',
       },
     },
     ar: {
       name: 'مسجد السهلة',
-      shortDescription: 'مسجد مهم في الكوفة. تحتاج التفاصيل إلى مراجعة تحريرية.',
+      shortDescription: 'مسجد السهلة من المساجد المهمة قرب الكوفة، وقد وردت في فضله روايات عديدة.',
+      longDescription:
+        'مسجد السهلة من المساجد المهمة قرب الكوفة، وقد وردت في فضله روايات عديدة. وهو مكان مميز للصلاة والدعاء والتأمل الروحي.',
+      historicalNotes: '',
       imageDescriptions: {
         'masjid-al-sahlah': 'منظر خارجي لمسجد السهلة في الكوفة.',
       },
@@ -203,14 +263,20 @@ const placeTranslations: Record<string, Partial<Record<Language, PlaceTranslatio
   'place-muslim-ibn-aqil': {
     en: {
       name: 'Shrine of Muslim ibn Aqil',
-      shortDescription: 'Shrine in Kufa. Details require editorial review.',
+      shortDescription: 'The shrine of Muslim ibn Aqil recalls the envoy of Imam Hussain (a.) to Kufa.',
+      longDescription:
+        'The shrine of Muslim ibn Aqil recalls the envoy of Imam Hussain (a.) to Kufa. His life represents loyalty, courage, and holding firmly to the truth.',
+      historicalNotes: '',
       imageDescriptions: {
         'muslim-shrine-in-kufa': 'View of the Shrine of Muslim ibn Aqil in Kufa.',
       },
     },
     ar: {
       name: 'ضريح مسلم بن عقيل',
-      shortDescription: 'ضريح في الكوفة. تحتاج التفاصيل إلى مراجعة تحريرية.',
+      shortDescription: 'يذكّر مرقد مسلم بن عقيل بسفير الإمام الحسين (ع) إلى الكوفة.',
+      longDescription:
+        'يذكّر مرقد مسلم بن عقيل بسفير الإمام الحسين (ع) إلى الكوفة. وتمثّل سيرته الوفاء والشجاعة والثبات على الحق.',
+      historicalNotes: '',
       imageDescriptions: {
         'muslim-shrine-in-kufa': 'منظر لضريح مسلم بن عقيل في الكوفة.',
       },
@@ -219,24 +285,36 @@ const placeTranslations: Record<string, Partial<Record<Language, PlaceTranslatio
   'place-hani-ibn-urwah': {
     en: {
       name: 'Shrine of Hani ibn Urwah',
-      shortDescription: 'Shrine in Kufa. Details require editorial review.',
+      shortDescription: 'The shrine of Hani ibn Urwah recalls a loyal supporter of Muslim ibn Aqil.',
+      longDescription:
+        'The shrine of Hani ibn Urwah recalls a loyal supporter of Muslim ibn Aqil. He represents steadfastness, hospitality, and loyalty to the truth.',
+      historicalNotes: '',
     },
     ar: {
       name: 'ضريح هاني بن عروة',
-      shortDescription: 'ضريح في الكوفة. تحتاج التفاصيل إلى مراجعة تحريرية.',
+      shortDescription: 'يذكّر مرقد هاني بن عروة بأحد أنصار مسلم بن عقيل الأوفياء.',
+      longDescription:
+        'يذكّر مرقد هاني بن عروة بأحد أنصار مسلم بن عقيل الأوفياء. وتمثّل شخصيته الثبات والكرم والوفاء للحق.',
+      historicalNotes: '',
     },
   },
   'place-maytham': {
     en: {
       name: 'Shrine of Maytham al-Tammar',
-      shortDescription: 'Shrine in Kufa. Details require editorial review.',
+      shortDescription: 'The shrine of Maytham al-Tammar recalls a loyal companion of Imam Ali (a.).',
+      longDescription:
+        'The shrine of Maytham al-Tammar recalls a loyal companion of Imam Ali (a.). His story represents knowledge, love for the Ahlulbayt (a.), and steadfastness in faith.',
+      historicalNotes: '',
       imageDescriptions: {
         'maytham-tammar-shrine': 'Exterior view of the Shrine of Maytham al-Tammar in Kufa.',
       },
     },
     ar: {
       name: 'ضريح ميثم التمار',
-      shortDescription: 'ضريح في الكوفة. تحتاج التفاصيل إلى مراجعة تحريرية.',
+      shortDescription: 'يذكّر مرقد ميثم التمار بأحد أصحاب الإمام علي (ع) الأوفياء.',
+      longDescription:
+        'يذكّر مرقد ميثم التمار بأحد أصحاب الإمام علي (ع) الأوفياء. وتمثّل قصته العلم ومحبة أهل البيت (ع) والثبات على الإيمان.',
+      historicalNotes: '',
       imageDescriptions: {
         'maytham-tammar-shrine': 'منظر خارجي لضريح ميثم التمار في الكوفة.',
       },
@@ -245,14 +323,22 @@ const placeTranslations: Record<string, Partial<Record<Language, PlaceTranslatio
   'place-kadhimayn': {
     en: {
       name: 'Shrine of Imam Musa al-Kadhim and Imam Muhammad al-Jawad',
-      shortDescription: 'Important Ziyarah site in Baghdad. Details require editorial review.',
+      shortDescription:
+        'The shrine of Imam Musa al-Kadhim (a.) and Imam Muhammad al-Jawad (a.) is the heart of Kadhimayn.',
+      longDescription:
+        'The shrine of Imam Musa al-Kadhim (a.) and Imam Muhammad al-Jawad (a.) is the heart of Kadhimayn. It connects visitors with patience, trust in Allah, knowledge, and love for the Ahlulbayt (a.).',
+      historicalNotes: '',
       imageDescriptions: {
         'kadhimayn-shrine': 'Exterior view of the Kadhimayn Shrine in Baghdad.',
       },
     },
     ar: {
       name: 'ضريح الإمامين موسى الكاظم ومحمد الجواد',
-      shortDescription: 'موقع زيارة مهم في بغداد. تحتاج التفاصيل إلى مراجعة تحريرية.',
+      shortDescription:
+        'يُعدّ مرقد الإمام موسى الكاظم (ع) والإمام محمد الجواد (ع) قلب الكاظمية.',
+      longDescription:
+        'يُعدّ مرقد الإمام موسى الكاظم (ع) والإمام محمد الجواد (ع) قلب الكاظمية. وهو يربط الزائر بمعاني الصبر والتوكل على الله والعلم ومحبة أهل البيت (ع).',
+      historicalNotes: '',
       imageDescriptions: {
         'kadhimayn-shrine': 'منظر خارجي لضريح الكاظمين في بغداد.',
       },
@@ -261,14 +347,22 @@ const placeTranslations: Record<string, Partial<Record<Language, PlaceTranslatio
   'place-askari': {
     en: {
       name: 'Shrine of Imam Ali al-Hadi and Imam Hasan al-Askari',
-      shortDescription: 'Important Ziyarah site in Samarra. Details require editorial review.',
+      shortDescription:
+        'The shrine of Imam Ali al-Hadi (a.) and Imam Hasan al-Askari (a.) is one of the most important Ziyārah places in Iraq.',
+      longDescription:
+        'The shrine of Imam Ali al-Hadi (a.) and Imam Hasan al-Askari (a.) is one of the most important Ziyārah places in Iraq. It reminds visitors of guidance, patience, and connection to the Imams of the Ahlulbayt (a.).',
+      historicalNotes: '',
       imageDescriptions: {
         'imam-hadi-imam-askari': 'Exterior view of the Askariyyayn Shrine in Samarra.',
       },
     },
     ar: {
       name: 'ضريح الإمامين علي الهادي والحسن العسكري',
-      shortDescription: 'موقع زيارة مهم في سامراء. تحتاج التفاصيل إلى مراجعة تحريرية.',
+      shortDescription:
+        'يُعدّ مرقد الإمام علي الهادي (ع) والإمام الحسن العسكري (ع) من أهم أماكن الزيارة في العراق.',
+      longDescription:
+        'يُعدّ مرقد الإمام علي الهادي (ع) والإمام الحسن العسكري (ع) من أهم أماكن الزيارة في العراق. وهو يذكّر بالهداية والصبر والارتباط بأئمة أهل البيت (ع).',
+      historicalNotes: '',
       imageDescriptions: {
         'imam-hadi-imam-askari': 'منظر خارجي لضريح العسكريين في سامراء.',
       },
@@ -277,11 +371,19 @@ const placeTranslations: Record<string, Partial<Record<Language, PlaceTranslatio
   'place-sardab': {
     en: {
       name: 'Sardab al-Ghaybah',
-      shortDescription: 'Ziyarah site in Samarra. Details require editorial review.',
+      shortDescription:
+        'Sardab al-Ghaybah is a special place in Samarra connected to the remembrance of Imam al-Mahdi (a.).',
+      longDescription:
+        'Sardab al-Ghaybah is a special place in Samarra connected to the remembrance of Imam al-Mahdi (a.). It represents hope, expectation, and trust in Allah’s promise.',
+      historicalNotes: '',
     },
     ar: {
       name: 'سرداب الغيبة',
-      shortDescription: 'موقع زيارة في سامراء. تحتاج التفاصيل إلى مراجعة تحريرية.',
+      shortDescription:
+        'السرداب المعروف بسرداب الغيبة مكان خاص في سامراء يرتبط بذكر الإمام المهدي (ع).',
+      longDescription:
+        'السرداب المعروف بسرداب الغيبة مكان خاص في سامراء يرتبط بذكر الإمام المهدي (ع). وهو يرمز إلى الأمل والانتظار والثقة بوعد الله تعالى.',
+      historicalNotes: '',
     },
   },
 };

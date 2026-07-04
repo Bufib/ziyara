@@ -215,9 +215,7 @@ export default function PlaceDetailScreen() {
             {formatPlaceLocation(place, language)}, {localizeCountryName(place.country, language)}
           </ThemedText>
           <ThemedText type="title">{place.name}</ThemedText>
-          <ThemedText themeColor="textSecondary">{place.shortDescription}</ThemedText>
         </View>
-        <Badge status={place.verificationStatus} />
       </View>
 
       <View style={styles.actions}>
@@ -232,9 +230,11 @@ export default function PlaceDetailScreen() {
 
       <Section title={t('place.about')}>
         <ThemedText>{place.longDescription}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {place.historicalNotes}
-        </ThemedText>
+        {place.historicalNotes ? (
+          <ThemedText type="small" themeColor="textSecondary">
+            {place.historicalNotes}
+          </ThemedText>
+        ) : null}
         <PlaceImageCarousel images={place.images} />
       </Section>
 

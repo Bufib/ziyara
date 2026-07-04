@@ -48,6 +48,16 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "city.emptyBody":
       "Der lokale Katalog enthält dafür noch keinen geprüften Platzhalter.",
     "city.emptyTitle": "Noch keine Orte für diese Stadt",
+    "city.description.Karbala":
+      "Karbala gehört zu den bedeutendsten Orten der Ziyārah. Hier befinden sich der Schrein von Imam Hussain (a.) und der Schrein von Abul-Fadhl al-Abbas (a.). Die Stadt erinnert an Standhaftigkeit, Opferbereitschaft und Treue zu Allah.",
+    "city.description.Najaf":
+      "Najaf ist eine der wichtigsten heiligen Städte des Irak. Im Zentrum steht der Schrein von Imam Ali ibn Abi Talib (a.), dem Fürsten der Gläubigen. Die Stadt ist zugleich ein bedeutender Ort des Wissens, der Gelehrsamkeit und der spirituellen Nähe.",
+    "city.description.Kadhimayn":
+      "Kadhimiya ist bekannt für den Schrein von Imam Musa al-Kadhim (a.) und Imam Muhammad al-Jawad (a.). Der Besuch dieses Ortes verbindet die Pilgerinnen und Pilger mit Geduld, Gottesvertrauen und der Liebe zur Ahlulbayt (a.).",
+    "city.description.Kufa":
+      "Kufa ist eine Stadt mit großer islamischer Geschichte. Besonders die Moschee von Kufa ist eng mit Imam Ali (a.) und vielen bedeutenden Persönlichkeiten verbunden. Sie ist ein Ort des Gebets, der Erinnerung und der Besinnung.",
+    "city.description.Samarra":
+      "Samarra ist die Stadt der beiden Imame, Imam Ali al-Hadi (a.) und Imam Hasan al-Askari (a.). Ihr Schrein gehört zu den wichtigsten Ziyārah-Orten im Irak. Die Stadt erinnert zudem an die Erwartung und Hoffnung auf Imam al-Mahdi (a.).",
     "city.offlineBody":
       "Offline verfügbare Orte in dieser Stadt. Religiöse und historische Details bleiben als zu prüfen markiert, bis die Quellenprüfung abgeschlossen ist.",
     "city.placeCount.many": "{count} Orte",
@@ -220,6 +230,16 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "city.emptyBody":
       "The local catalog does not contain a reviewed placeholder for this yet.",
     "city.emptyTitle": "No places for this city yet",
+    "city.description.Karbala":
+      "Karbala is one of the most important places of Ziyārah. It is home to the shrine of Imam Hussain (a.) and the shrine of Abul-Fadhl al-Abbas (a.). The city reminds visitors of steadfastness, sacrifice, and loyalty to Allah.",
+    "city.description.Najaf":
+      "Najaf is one of the most important holy cities in Iraq. At its heart lies the shrine of Imam Ali ibn Abi Talib (a.), the Commander of the Faithful. The city is also a major center of knowledge, scholarship, and spiritual closeness.",
+    "city.description.Kadhimayn":
+      "Kadhimiya is known for the shrine of Imam Musa al-Kadhim (a.) and Imam Muhammad al-Jawad (a.). Visiting this holy place connects pilgrims with patience, trust in Allah, and love for the Ahlulbayt (a.).",
+    "city.description.Kufa":
+      "Kufa is a city with a rich Islamic history. The Mosque of Kufa is especially connected to Imam Ali (a.) and many important personalities. It is a place of prayer, remembrance, and reflection.",
+    "city.description.Samarra":
+      "Samarra is the city of the two Imams, Imam Ali al-Hadi (a.) and Imam Hasan al-Askari (a.). Their shrine is among the most important Ziyārah places in Iraq. The city also reminds visitors of the expectation and hope for Imam al-Mahdi (a.).",
     "city.offlineBody":
       "Offline places available in this city. Religious and historical details remain marked for review until source checking is complete.",
     "city.placeCount.many": "{count} places",
@@ -390,6 +410,16 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "bookmarks.title": "المحفوظات",
     "city.emptyBody": "لا يحتوي الفهرس المحلي بعد على عنصر مراجع لهذا الموضع.",
     "city.emptyTitle": "لا توجد أماكن لهذه المدينة بعد",
+    "city.description.Karbala":
+      "تُعدّ كربلاء من أهم أماكن الزيارة، ففيها مرقد الإمام الحسين (ع) ومرقد أبي الفضل العباس (ع). وتُذكّر هذه المدينة بالثبات والتضحية والوفاء لله تعالى.",
+    "city.description.Najaf":
+      "تُعدّ النجف من أهم المدن المقدسة في العراق، وفي قلبها مرقد الإمام علي بن أبي طالب (ع)، أمير المؤمنين. كما تُعرف المدينة بأنها مركز مهم للعلم والحوزة والقرب الروحي.",
+    "city.description.Kadhimayn":
+      "تُعرف الكاظمية بمرقد الإمام موسى الكاظم (ع) والإمام محمد الجواد (ع). ويرتبط الزائر في هذا المكان المقدس بمعاني الصبر والتوكل على الله ومحبة أهل البيت (ع).",
+    "city.description.Kufa":
+      "الكوفة مدينة ذات تاريخ إسلامي عظيم، ويُعدّ مسجد الكوفة من أبرز معالمها، إذ يرتبط بالإمام علي (ع) وبالعديد من الشخصيات المهمة. وهي مكان للصلاة والذكر والتأمل.",
+    "city.description.Samarra":
+      "سامراء هي مدينة الإمامين، الإمام علي الهادي (ع) والإمام الحسن العسكري (ع). ويُعدّ مرقدهما من أهم أماكن الزيارة في العراق. كما تُذكّر المدينة بانتظار الإمام المهدي (ع) والأمل بظهوره الشريف.",
     "city.offlineBody":
       "أماكن متاحة دون اتصال في هذه المدينة. تبقى التفاصيل الدينية والتاريخية بعلامة المراجعة حتى تكتمل مراجعة المصادر.",
     "city.placeCount.many": "{count} أماكن",
