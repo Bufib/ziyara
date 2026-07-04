@@ -1,23 +1,20 @@
 import { router } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Screen } from "@/components/ui/screen";
 import { Section } from "@/components/ui/section";
 import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
 import { allPlaces } from "@/data/places";
-import { getRecommendedActsForPlace } from "@/data/recommendedActs";
 import type { Place } from "@/domain/types";
 import { useI18n } from "@/features/i18n/i18n";
 import {
-  formatPlaceLocation,
   localizeCityName,
   localizePlace,
 } from "@/features/i18n/localizedData";
-import { cityRoute, placeRoute } from "@/features/navigation/routes";
+import { cityRoute } from "@/features/navigation/routes";
+import { PlaceImageCard } from "@/features/places/PlaceImageCard";
 import { useTheme } from "@/hooks/use-theme";
 
 const featuredSlugs = [
@@ -99,36 +96,9 @@ export default function HomeScreen() {
 
       <Section title={t("home.featuredPlaces")}>
         <View style={styles.list}>
-          {featuredPlaces.map((place) => {
-            const acts = getRecommendedActsForPlace(place.id);
-            return (
-              <Card
-                key={place.id}
-                onPress={() => router.push(placeRoute(place.slug))}
-              >
-                <View style={styles.cardHeader}>
-                  <View style={styles.cardTitle}>
-                    <ThemedText type="heading">{place.name}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {formatPlaceLocation(place, language, true)}
-                    </ThemedText>
-                  </View>
-                  <Badge status={place.verificationStatus} />
-                </View>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {place.shortDescription}
-                </ThemedText>
-                <ThemedText type="smallBold" themeColor="accent">
-                  {t(
-                    acts.length === 1
-                      ? "home.recommendedActs.one"
-                      : "home.recommendedActs.many",
-                    { count: acts.length },
-                  )}
-                </ThemedText>
-              </Card>
-            );
-          })}
+          {featuredPlaces.map((place) => (
+            <PlaceImageCard key={place.id} place={place} />
+          ))}
         </View>
       </Section>
     </Screen>
@@ -165,16 +135,6 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: Spacing.three,
-  },
-  cardHeader: {
-    alignItems: "flex-start",
-    flexDirection: "row",
-    gap: Spacing.two,
-    justifyContent: "space-between",
-  },
-  cardTitle: {
-    flex: 1,
-    gap: Spacing.half,
   },
   notice: {
     borderRadius: 8,

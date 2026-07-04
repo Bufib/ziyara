@@ -9,8 +9,11 @@ import { Section } from '@/components/ui/section';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { searchCatalog, type SearchFilter, type SearchResult } from '@/data/catalog';
+import { getPlaceBySlug } from '@/data/places';
 import { useI18n } from '@/features/i18n/i18n';
+import { localizePlace } from '@/features/i18n/localizedData';
 import { placeRoute, readerRoute, singleRouteParam } from '@/features/navigation/routes';
+import { PlaceImageCard } from '@/features/places/PlaceImageCard';
 import { useTheme } from '@/hooks/use-theme';
 
 const filters: SearchFilter[] = ['all', 'places', 'content', 'acts'];
@@ -94,6 +97,16 @@ export default function SearchScreen() {
 }
 
 function SearchResultCard({ result }: { result: SearchResult }) {
+  const { language } = useI18n();
+
+  if (result.kind === 'place') {
+    const place = getPlaceBySlug(result.slug);
+
+    if (place) {
+      return <PlaceImageCard place={localizePlace(place, language)} />;
+    }
+  }
+
   const route = result.kind === 'place' ? placeRoute(result.slug) : readerRoute(result.slug);
 
   return (
