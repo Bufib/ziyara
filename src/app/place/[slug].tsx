@@ -1,6 +1,6 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { Image } from 'expo-image';
-import { useState } from 'react';
+import { router, useLocalSearchParams } from "expo-router";
+import { Image } from "expo-image";
+import { useState } from "react";
 import {
   Linking,
   Modal,
@@ -9,35 +9,35 @@ import {
   StyleSheet,
   useWindowDimensions,
   View,
-} from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Zoomable } from '@likashefqet/react-native-image-zoom';
+} from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Zoomable } from "@likashefqet/react-native-image-zoom";
 
-import { SourceReferenceList } from '@/components/source-reference-list';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Screen } from '@/components/ui/screen';
-import { Section } from '@/components/ui/section';
-import { SymbolIcon } from '@/components/ui/symbol-icon';
-import { ThemedText } from '@/components/themed-text';
-import { getPlaceBySlug } from '@/data/places';
-import { getRecommendedActsForPlace } from '@/data/recommendedActs';
-import { getSourceReferencesByIds } from '@/data/sourceReferences';
-import type { PlaceImage } from '@/domain/types';
-import { useI18n } from '@/features/i18n/i18n';
+import { SourceReferenceList } from "@/components/source-reference-list";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Screen } from "@/components/ui/screen";
+import { Section } from "@/components/ui/section";
+import { SymbolIcon } from "@/components/ui/symbol-icon";
+import { ThemedText } from "@/components/themed-text";
+import { getPlaceBySlug } from "@/data/places";
+import { getRecommendedActsForPlace } from "@/data/recommendedActs";
+import { getSourceReferencesByIds } from "@/data/sourceReferences";
+import type { PlaceImage } from "@/domain/types";
+import { useI18n } from "@/features/i18n/i18n";
 import {
   formatPlaceLocation,
   localizeCountryName,
   localizePlace,
   localizeRecommendedActs,
   localizeSourceReferences,
-} from '@/features/i18n/localizedData';
-import { readerRoute, singleRouteParam } from '@/features/navigation/routes';
-import { useBookmarks } from '@/features/storage/useBookmarks';
-import { openNavigation } from '@/features/places/openNavigation';
-import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+} from "@/features/i18n/localizedData";
+import { readerRoute, singleRouteParam } from "@/features/navigation/routes";
+import { useBookmarks } from "@/features/storage/useBookmarks";
+import { openNavigation } from "@/features/places/openNavigation";
+import { Spacing } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 
 type PlaceImageCarouselProps = {
   images: PlaceImage[];
@@ -49,7 +49,7 @@ type PlaceImageViewerProps = {
 };
 
 function getPlaceImageSource(image: PlaceImage) {
-  return image.asset ?? { uri: image.uri ?? '' };
+  return image.asset ?? { uri: image.uri ?? "" };
 }
 
 function ViewerCloseButton({ onPress }: { onPress: () => void }) {
@@ -58,14 +58,16 @@ function ViewerCloseButton({ onPress }: { onPress: () => void }) {
 
   return (
     <Pressable
-      accessibilityLabel={t('place.closeImage')}
+      accessibilityLabel={t("place.closeImage")}
       accessibilityRole="button"
+      hitSlop={16}
       onPress={onPress}
       style={({ pressed }) => [
         styles.viewerIconButton,
         { backgroundColor: theme.surface, borderColor: theme.border },
         pressed && styles.pressed,
-      ]}>
+      ]}
+    >
       <SymbolIcon color={theme.text} name="close" size={20} />
     </Pressable>
   );
@@ -81,7 +83,8 @@ function PlaceImageViewer({ image, onClose }: PlaceImageViewerProps) {
       animationType="fade"
       onRequestClose={onClose}
       transparent
-      visible={Boolean(image)}>
+      visible={Boolean(image)}
+    >
       <GestureHandlerRootView style={styles.viewerGestureRoot}>
         <View style={styles.viewerBackdrop}>
           <View style={styles.viewerToolbar}>
@@ -96,7 +99,8 @@ function PlaceImageViewer({ image, onClose }: PlaceImageViewerProps) {
               isPanEnabled
               isPinchEnabled
               maxScale={5}
-              style={styles.viewerZoom}>
+              style={styles.viewerZoom}
+            >
               <Image
                 accessibilityLabel={image.description}
                 contentFit="contain"
@@ -134,7 +138,8 @@ function PlaceImageCarousel({ images }: PlaceImageCarouselProps) {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.imageCarousel}>
+        contentContainerStyle={styles.imageCarousel}
+      >
         {images.map((image) => (
           <View
             key={image.id}
@@ -145,14 +150,18 @@ function PlaceImageCarousel({ images }: PlaceImageCarouselProps) {
                 borderColor: theme.border,
                 width: imageCardWidth,
               },
-            ]}>
+            ]}
+          >
             <Pressable
-              accessibilityLabel={t('place.imageOpenLabel', { description: image.description })}
+              accessibilityLabel={t("place.imageOpenLabel", {
+                description: image.description,
+              })}
               accessibilityRole="imagebutton"
               onPress={() => {
                 setSelectedImage(image);
               }}
-              style={({ pressed }) => [pressed && styles.pressed]}>
+              style={({ pressed }) => [pressed && styles.pressed]}
+            >
               <Image
                 accessibilityLabel={image.description}
                 contentFit="cover"
@@ -169,9 +178,10 @@ function PlaceImageCarousel({ images }: PlaceImageCarouselProps) {
                 onPress={() => {
                   void Linking.openURL(image.source.url);
                 }}
-                style={styles.sourceLink}>
+                style={styles.sourceLink}
+              >
                 <ThemedText type="smallBold" themeColor="accent">
-                  {t('common.sourcePrefix', { source: image.source.title })}
+                  {t("common.sourcePrefix", { source: image.source.title })}
                 </ThemedText>
               </Pressable>
             </View>
@@ -197,38 +207,58 @@ export default function PlaceDetailScreen() {
   if (!place) {
     return (
       <Screen>
-        <ThemedText type="heading">{t('place.notFound')}</ThemedText>
-        <Button icon="map" label={t('common.toMap')} onPress={() => router.push('/map')} />
+        <ThemedText type="heading">{t("place.notFound")}</ThemedText>
+        <Button
+          icon="map"
+          label={t("common.toMap")}
+          onPress={() => router.push("/map")}
+        />
       </Screen>
     );
   }
 
-  const acts = localizeRecommendedActs(getRecommendedActsForPlace(place.id), language);
+  const acts = localizeRecommendedActs(
+    getRecommendedActsForPlace(place.id),
+    language,
+  );
   const bookmarkKey = `place:${place.slug}`;
-  const sources = localizeSourceReferences(getSourceReferencesByIds(place.sourceReferences), language);
+  const sources = localizeSourceReferences(
+    getSourceReferencesByIds(place.sourceReferences),
+    language,
+  );
 
   return (
-    <Screen contentStyle={styles.screenContent} safeAreaEdges={['right', 'bottom', 'left']}>
+    <Screen
+      contentStyle={styles.screenContent}
+      safeAreaEdges={["right", "bottom", "left"]}
+    >
       <View style={styles.header}>
         <View style={styles.headerText}>
           <ThemedText type="eyebrow" themeColor="accent">
-            {formatPlaceLocation(place, language)}, {localizeCountryName(place.country, language)}
+            {formatPlaceLocation(place, language)},{" "}
+            {localizeCountryName(place.country, language)}
           </ThemedText>
           <ThemedText type="title">{place.name}</ThemedText>
         </View>
       </View>
 
       <View style={styles.actions}>
-        <Button icon="map" label={t('place.startNavigation')} onPress={() => openNavigation(place)} />
+        <Button
+          icon="map"
+          label={t("place.startNavigation")}
+          onPress={() => openNavigation(place)}
+        />
         <Button
           icon="bookmark"
-          label={isBookmarked(bookmarkKey) ? t('common.saved') : t('common.save')}
+          label={
+            isBookmarked(bookmarkKey) ? t("common.saved") : t("common.save")
+          }
           variant="secondary"
           onPress={() => toggleBookmark(bookmarkKey)}
         />
       </View>
 
-      <Section title={t('place.about')}>
+      <Section title={t("place.about")}>
         <ThemedText>{place.longDescription}</ThemedText>
         {place.historicalNotes ? (
           <ThemedText type="small" themeColor="textSecondary">
@@ -238,94 +268,63 @@ export default function PlaceDetailScreen() {
         <PlaceImageCarousel images={place.images} />
       </Section>
 
-      <Section title={t('place.recommendedActs')}>
-        <View style={styles.list}>
-          {acts.map((act) => (
-            <Card
-              key={act.id}
-              onPress={() => {
-                if (act.contentId) {
-                  router.push(readerRoute(act.contentId));
-                }
-              }}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardTitle}>
-                  <ThemedText type="heading">{act.title}</ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {t(`labels.actType.${act.type}`)}
-                  </ThemedText>
+      {acts.length > 0 ? (
+        <Section title={t("place.recommendedActs")}>
+          <View style={styles.list}>
+            {acts.map((act) => (
+              <Card
+                key={act.id}
+                onPress={() => {
+                  if (act.contentId) {
+                    router.push(readerRoute(act.contentId));
+                  }
+                }}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.cardTitle}>
+                    <ThemedText type="heading">{act.title}</ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {t(`labels.actType.${act.type}`)}
+                    </ThemedText>
+                  </View>
+                  <Badge status={act.verificationStatus} />
                 </View>
-                <Badge status={act.verificationStatus} />
-              </View>
-              <ThemedText type="small" themeColor="textSecondary">
-                {act.shortInstruction}
-              </ThemedText>
-            </Card>
-          ))}
-        </View>
-      </Section>
-
-      <Section title={t('place.visitTips')}>
-        <View style={styles.notes}>
-          {place.visitingTips.map((tip) => (
-            <ThemedText key={tip} type="small">
-              - {tip}
-            </ThemedText>
-          ))}
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('place.openingPrefix', { value: place.openingInfo })}
-          </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('place.accessibilityPrefix', { value: place.accessibilityNotes })}
-          </ThemedText>
-        </View>
-      </Section>
-
-      <Section title={t('place.reviewSources')}>
-        <SourceReferenceList
-          emptyMessage={t('place.sourcesEmpty')}
-          openButtonVariant="ghost"
-          showExcerpt={false}
-          showLastChecked={false}
-          showOpenButton
-          showUrl={false}
-          sources={sources}
-        />
-        <Button
-          icon="book"
-          label={t('place.sourceRule')}
-          variant="ghost"
-          onPress={() => router.push('/sources')}
-        />
-      </Section>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {act.shortInstruction}
+                </ThemedText>
+              </Card>
+            ))}
+          </View>
+        </Section>
+      ) : null}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
+    alignItems: "flex-start",
+    flexDirection: "row",
     gap: Spacing.three,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   headerText: {
     flex: 1,
     gap: Spacing.two,
   },
   actions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: Spacing.two,
   },
   list: {
     gap: Spacing.three,
   },
   cardHeader: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
+    alignItems: "flex-start",
+    flexDirection: "row",
     gap: Spacing.two,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   cardTitle: {
     flex: 1,
@@ -344,45 +343,48 @@ const styles = StyleSheet.create({
   imageCard: {
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   placeImage: {
     aspectRatio: 4 / 3,
-    width: '100%',
+    width: "100%",
   },
   imageCaption: {
     gap: Spacing.one,
     padding: Spacing.three,
   },
   sourceLink: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   viewerGestureRoot: {
     flex: 1,
   },
   viewerBackdrop: {
-    backgroundColor: 'rgba(0, 0, 0, 0.92)',
+    backgroundColor: "rgba(0, 0, 0, 0.92)",
     flex: 1,
     padding: Spacing.three,
   },
   viewerToolbar: {
-    position: 'absolute',
-    right: Spacing.three,
-    top: Spacing.three,
-    zIndex: 10,
+    position: "absolute",
+    right: Spacing.four,
+    top: Spacing.four,
+    zIndex: 20,
   },
   viewerIconButton: {
-    alignItems: 'center',
+    alignItems: "center",
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
+    elevation: 20,
+    height: 52,
+    justifyContent: "center",
+    width: 52,
+    zIndex: 99,
+    top: 30,
   },
   viewerZoom: {
     flex: 1,
-    height: '100%',
-    width: '100%',
+    height: "100%",
+    width: "100%",
   },
   viewerImage: {
     borderRadius: 8,
