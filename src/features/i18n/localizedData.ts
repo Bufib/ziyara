@@ -388,6 +388,18 @@ const placeTranslations: Record<string, Partial<Record<Language, PlaceTranslatio
   },
 };
 
+const twoRakatPrayerTranslation: Partial<Record<Language, RecommendedActTranslation>> = {
+  en: {
+    title: 'Pray a two-rakʿah prayer',
+    shortInstruction:
+      'Pray two rakʿahs at this shrine as a recommended act, with humility and attention.',
+  },
+  ar: {
+    title: 'صلاة ركعتين',
+    shortInstruction: 'صلِّ ركعتين عند هذا المرقد كعمل مستحب مع الخشوع والتوجه.',
+  },
+};
+
 const recommendedActTranslations: Record<
   string,
   Partial<Record<Language, RecommendedActTranslation>>
@@ -404,16 +416,18 @@ const recommendedActTranslations: Record<
         'المصدر: duas.org. يضاف النص الكامل دون اتصال فقط بعد مراجعة الحقوق والمحتوى.',
     },
   },
-  'act-two-rakat-imam-hussain': {
+  'act-ziyarat-ashura-imam-hussain': {
     en: {
-      title: 'Review Dua Safwan / Alqama after Ziyarat Ashura',
-      shortInstruction: 'duas.org describes this dua as recited after Ziyarat Ashura.',
+      title: 'Read Ziyarat Ashura',
+      shortInstruction:
+        'Read Ziyarat Ashura for Imam Hussain (a.) in the segmented reader view.',
     },
     ar: {
-      title: 'مراجعة دعاء صفوان / علقمة بعد زيارة عاشوراء',
-      shortInstruction: 'يصف موقع duas.org هذا الدعاء بأنه يقرأ بعد زيارة عاشوراء.',
+      title: 'قراءة زيارة عاشوراء',
+      shortInstruction: 'اقرأ زيارة عاشوراء للإمام الحسين (ع) في العرض المقسم.',
     },
   },
+  'act-two-rakat-imam-hussain': twoRakatPrayerTranslation,
   'act-ziyarat-arbaeen-imam-hussain': {
     en: {
       title: 'Review Ziyarat Arbaeen on 20 Safar',
@@ -436,18 +450,14 @@ const recommendedActTranslations: Record<
         'المصدر: duas.org. يضاف النص الكامل دون اتصال فقط بعد مراجعة الحقوق والمحتوى.',
     },
   },
-  'act-two-rakat-imam-ali': {
-    en: {
-      title: 'Review the two-rakʿah rite from the Dua Safwan context',
-      shortInstruction:
-        'duas.org cites two prayer units near the grave of Imam Ali in the background to Dua Safwan.',
-    },
-    ar: {
-      title: 'مراجعة ركعتي الصلاة في سياق دعاء صفوان',
-      shortInstruction:
-        'يذكر موقع duas.org ركعتي صلاة عند قبر الإمام علي ضمن سياق دعاء صفوان.',
-    },
-  },
+  'act-two-rakat-imam-ali': twoRakatPrayerTranslation,
+  'act-two-rakat-abul-fadhl-abbas': twoRakatPrayerTranslation,
+  'act-two-rakat-hur': twoRakatPrayerTranslation,
+  'act-two-rakat-muslim-ibn-aqil': twoRakatPrayerTranslation,
+  'act-two-rakat-hani-ibn-urwah': twoRakatPrayerTranslation,
+  'act-two-rakat-maytham': twoRakatPrayerTranslation,
+  'act-two-rakat-kadhimayn': twoRakatPrayerTranslation,
+  'act-two-rakat-askari': twoRakatPrayerTranslation,
 };
 
 const placeholderTranslations: Record<Language, string> = {
@@ -460,6 +470,20 @@ const religiousContentTranslations: Record<
   string,
   Partial<Record<Language, ReligiousContentTranslation>>
 > = {
+  'ziyarat-ashura': {
+    en: {
+      language: 'Arabic',
+      notes:
+        'Ziyarat Ashura for Imam Hussain (a.). The Arabic text and transliteration have been added in segmented form; a complete line-by-line translation can be added after review.',
+      title: 'Ziyarat Ashura',
+    },
+    ar: {
+      language: 'العربية',
+      notes:
+        'زيارة عاشوراء للإمام الحسين (ع). أضيف النص العربي والنقل الصوتي على شكل مقاطع، ويمكن إضافة ترجمة كاملة سطرا بسطر بعد المراجعة.',
+      title: 'زيارة عاشوراء',
+    },
+  },
   'ziyarah-imam-hussain-placeholder': {
     en: {
       arabicText: placeholderTranslations.en,
@@ -570,6 +594,18 @@ const sourceReferenceTranslations: Record<
         'ينسب موقع duas.org زيارة الأربعين إلى 20 صفر ويذكر في الصفحة إشارات نقل عن الشيخ الطوسي.',
     },
   },
+  'duas-ziyarat-ashura': {
+    en: {
+      language: 'Arabic / English',
+      notes:
+        'duas.org presents Ziyarat Ashura as a Ziyarat for Imam Hussain on Ashura and for daily recitation.',
+    },
+    ar: {
+      language: 'العربية / الإنجليزية',
+      notes:
+        'يعرض موقع duas.org زيارة عاشوراء كزيارة للإمام الحسين في يوم عاشوراء وللقراءة اليومية.',
+    },
+  },
   'duas-dua-alqama-safwan': {
     en: {
       language: 'Arabic / English',
@@ -617,19 +653,8 @@ const cityTranslations: Record<string, Partial<Record<Language, string>>> = {
   Samarra: { en: 'Samarra', ar: 'سامراء' },
 };
 
-const provinceTranslations: Record<string, Partial<Record<Language, string>>> = {
-  Bagdad: { en: 'Baghdad', ar: 'بغداد' },
-  Karbala: { en: 'Karbala', ar: 'كربلاء' },
-  Najaf: { en: 'Najaf', ar: 'النجف' },
-  'Salah al-Din': { en: 'Salah al-Din', ar: 'صلاح الدين' },
-};
-
 export function localizeCityName(city: string, language: Language) {
   return cityTranslations[city]?.[language] ?? city;
-}
-
-export function localizeProvinceName(province: string, language: Language) {
-  return provinceTranslations[province]?.[language] ?? province;
 }
 
 export function localizeCountryName(country: Place['country'], language: Language) {
@@ -640,11 +665,8 @@ export function localizeCountryName(country: Place['country'], language: Languag
   return country;
 }
 
-export function formatPlaceLocation(place: Place, language: Language, includeCountry = false) {
-  const location = `${localizeCityName(place.city, language)}, ${localizeProvinceName(
-    place.province,
-    language,
-  )}`;
+export function formatPlaceLocation(place: Place, language: Language, includeCountry = true) {
+  const location = localizeCityName(place.city, language);
 
   return includeCountry ? `${location}, ${localizeCountryName(place.country, language)}` : location;
 }

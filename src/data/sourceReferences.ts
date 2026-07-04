@@ -26,6 +26,18 @@ export const sourceReferences: SourceReference[] = [
       'duas.org ordnet Ziyarat Arbaeen dem 20. Safar zu und nennt auf der Seite Überlieferungsangaben über Shaykh al-Tusi.',
   },
   {
+    id: 'duas-ziyarat-ashura',
+    title: 'duas.org: Ziyarat Ashura',
+    bookOrWebsite: 'duas.org',
+    url: 'https://www.duas.org/ziaratashura.htm',
+    language: 'Arabisch / Englisch',
+    quotedExcerpt: 'This Ziyarat is recited for Imam Hussain(as) on the day of Ashura & everyday.',
+    contentPolicy: 'pending_rights_review',
+    lastCheckedAt: '2026-07-04',
+    notes:
+      'duas.org beschreibt Ziyarat Ashura als Ziyarat für Imam Hussain am Tag von Ashura und für die tägliche Rezitation.',
+  },
+  {
     id: 'duas-dua-alqama-safwan',
     title: 'duas.org: Dua Alqama / Safwan',
     bookOrWebsite: 'duas.org',

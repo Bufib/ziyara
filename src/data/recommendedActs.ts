@@ -1,5 +1,23 @@
 import type { RecommendedAct } from '@/domain/types';
 
+function twoRakatPrayerAct(
+  id: string,
+  recommendedAtPlaceId: string,
+  priority = 1,
+): RecommendedAct {
+  return {
+    id,
+    title: 'Gebet mit zwei Rakʿah verrichten',
+    type: 'prayer',
+    shortInstruction:
+      'Verrichte an diesem Schrein ein Gebet mit zwei Rakʿah als empfohlene Handlung.',
+    recommendedAtPlaceId,
+    priority,
+    sourceReferences: ['editorial-review-required'],
+    verificationStatus: 'needs_review',
+  };
+}
+
 export const recommendedActs: RecommendedAct[] = [
   {
     id: 'act-ziyarah-imam-hussain',
@@ -13,16 +31,18 @@ export const recommendedActs: RecommendedAct[] = [
     verificationStatus: 'needs_review',
   },
   {
-    id: 'act-two-rakat-imam-hussain',
-    title: 'Dua Safwan / Alqama nach Ziyarat Ashura prüfen',
-    type: 'dua',
-    shortInstruction: 'duas.org beschreibt diese Dua als nach Ziyarat Ashura rezitiert.',
-    contentId: 'two-rakat-prayer-placeholder',
+    id: 'act-ziyarat-ashura-imam-hussain',
+    title: 'Ziyarat Ashura lesen',
+    type: 'ziyarah',
+    shortInstruction:
+      'Lies Ziyarat Ashura für Imam Hussain (a.) in der abschnittsweisen Ansicht.',
+    contentId: 'ziyarat-ashura',
     recommendedAtPlaceId: 'place-imam-hussain',
     priority: 2,
-    sourceReferences: ['duas-dua-alqama-safwan'],
+    sourceReferences: ['duas-ziyarat-ashura'],
     verificationStatus: 'needs_review',
   },
+  twoRakatPrayerAct('act-two-rakat-imam-hussain', 'place-imam-hussain', 3),
   {
     id: 'act-ziyarat-arbaeen-imam-hussain',
     title: 'Ziyarat Arbaeen am 20. Safar prüfen',
@@ -30,10 +50,12 @@ export const recommendedActs: RecommendedAct[] = [
     shortInstruction: 'duas.org ordnet Ziyarat Arbaeen dem 20. Safar zu.',
     contentId: 'general-ziyarah-etiquette-placeholder',
     recommendedAtPlaceId: 'place-imam-hussain',
-    priority: 3,
+    priority: 4,
     sourceReferences: ['duas-ziyarat-arbaeen'],
     verificationStatus: 'needs_review',
   },
+  twoRakatPrayerAct('act-two-rakat-abul-fadhl-abbas', 'place-abul-fadhl-abbas'),
+  twoRakatPrayerAct('act-two-rakat-hur', 'place-hur'),
   {
     id: 'act-ziyarah-imam-ali',
     title: 'Ziyarat Ameenallah über duas.org prüfen',
@@ -45,17 +67,12 @@ export const recommendedActs: RecommendedAct[] = [
     sourceReferences: ['duas-ziyarat-ameenallah'],
     verificationStatus: 'needs_review',
   },
-  {
-    id: 'act-two-rakat-imam-ali',
-    title: 'Zwei-Rakʿa-Ritus aus dem Dua-Safwan-Kontext prüfen',
-    type: 'prayer',
-    shortInstruction: 'duas.org zitiert im Hintergrund zu Dua Safwan zwei Gebetseinheiten am Grab von Imam Ali.',
-    contentId: 'two-rakat-prayer-placeholder',
-    recommendedAtPlaceId: 'place-imam-ali',
-    priority: 2,
-    sourceReferences: ['duas-dua-alqama-safwan'],
-    verificationStatus: 'needs_review',
-  },
+  twoRakatPrayerAct('act-two-rakat-imam-ali', 'place-imam-ali', 2),
+  twoRakatPrayerAct('act-two-rakat-muslim-ibn-aqil', 'place-muslim-ibn-aqil'),
+  twoRakatPrayerAct('act-two-rakat-hani-ibn-urwah', 'place-hani-ibn-urwah'),
+  twoRakatPrayerAct('act-two-rakat-maytham', 'place-maytham'),
+  twoRakatPrayerAct('act-two-rakat-kadhimayn', 'place-kadhimayn'),
+  twoRakatPrayerAct('act-two-rakat-askari', 'place-askari'),
 ];
 
 export function getRecommendedActsForPlace(placeId: string) {

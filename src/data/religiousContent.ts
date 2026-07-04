@@ -1,9 +1,31 @@
 import type { ReligiousContent } from '@/domain/types';
+import {
+  ziyaratAshuraArabicText,
+  ziyaratAshuraSegments,
+  ziyaratAshuraTranslationNotes,
+  ziyaratAshuraTransliteration,
+} from '@/data/ziyaratAshura';
 
 const placeholder =
   'Volltext wird nach Rechte- und Inhaltsprüfung ergänzt. Quelle siehe unten.';
 
 export const religiousContent: ReligiousContent[] = [
+  {
+    id: 'ziyarat-ashura',
+    slug: 'ziyarat-ashura',
+    title: 'Ziyarat Ashura',
+    type: 'ziyarah',
+    arabicText: ziyaratAshuraArabicText,
+    transliteration: ziyaratAshuraTransliteration,
+    translation: ziyaratAshuraTranslationNotes,
+    segments: ziyaratAshuraSegments,
+    language: 'Arabisch',
+    notes:
+      'Ziyarat Ashura für Imam Hussain (a.). Arabischer Text und Transliteration sind abschnittsweise eingetragen; eine vollständige deutsche Zeilenübersetzung kann später ergänzt werden.',
+    sourceReferences: ['duas-ziyarat-ashura'],
+    verificationStatus: 'needs_review',
+    version: '0.1.0',
+  },
   {
     id: 'ziyarah-imam-hussain-placeholder',
     slug: 'ziyarah-imam-hussain-placeholder',

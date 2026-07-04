@@ -13,7 +13,6 @@ import {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Zoomable } from "@likashefqet/react-native-image-zoom";
 
-import { SourceReferenceList } from "@/components/source-reference-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,15 +22,12 @@ import { SymbolIcon } from "@/components/ui/symbol-icon";
 import { ThemedText } from "@/components/themed-text";
 import { getPlaceBySlug } from "@/data/places";
 import { getRecommendedActsForPlace } from "@/data/recommendedActs";
-import { getSourceReferencesByIds } from "@/data/sourceReferences";
 import type { PlaceImage } from "@/domain/types";
 import { useI18n } from "@/features/i18n/i18n";
 import {
   formatPlaceLocation,
-  localizeCountryName,
   localizePlace,
   localizeRecommendedActs,
-  localizeSourceReferences,
 } from "@/features/i18n/localizedData";
 import { readerRoute, singleRouteParam } from "@/features/navigation/routes";
 import { useBookmarks } from "@/features/storage/useBookmarks";
@@ -222,10 +218,6 @@ export default function PlaceDetailScreen() {
     language,
   );
   const bookmarkKey = `place:${place.slug}`;
-  const sources = localizeSourceReferences(
-    getSourceReferencesByIds(place.sourceReferences),
-    language,
-  );
 
   return (
     <Screen
@@ -235,8 +227,7 @@ export default function PlaceDetailScreen() {
       <View style={styles.header}>
         <View style={styles.headerText}>
           <ThemedText type="eyebrow" themeColor="accent">
-            {formatPlaceLocation(place, language)},{" "}
-            {localizeCountryName(place.country, language)}
+            {formatPlaceLocation(place, language)}
           </ThemedText>
           <ThemedText type="title">{place.name}</ThemedText>
         </View>
@@ -329,9 +320,6 @@ const styles = StyleSheet.create({
   cardTitle: {
     flex: 1,
     gap: Spacing.half,
-  },
-  notes: {
-    gap: Spacing.two,
   },
   pressed: {
     opacity: 0.72,

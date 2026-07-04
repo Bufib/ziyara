@@ -16,6 +16,7 @@ import {
   localizeSourceReferences,
 } from '@/features/i18n/localizedData';
 import { singleRouteParam } from '@/features/navigation/routes';
+import { SegmentedReligiousText } from '@/features/reader/SegmentedReligiousText';
 import { useBookmarks } from '@/features/storage/useBookmarks';
 import { useReaderPreferences } from '@/features/storage/useReaderPreferences';
 import { useReadingPosition } from '@/features/storage/useReadingPosition';
@@ -120,26 +121,40 @@ export default function ReaderScreen() {
         <SourceLinkButtons label={t('reader.duasOpen')} sources={sources} />
       </Section>
 
-      <Section title={t('reader.arabic')}>
-        <ThemedText
-          style={[
-            styles.arabic,
-            {
-              fontSize: 28 * preferences.arabicFontScale,
-              lineHeight: 46 * preferences.arabicFontScale,
-            },
-          ]}>
-          {content.arabicText}
-        </ThemedText>
-      </Section>
+      {preferences.lineByLine ? (
+        <Section title={t('reader.text')}>
+          <SegmentedReligiousText
+            arabicFontScale={preferences.arabicFontScale}
+            arabicText={content.arabicText}
+            segments={content.segments}
+            translation={content.translation}
+            transliteration={content.transliteration}
+          />
+        </Section>
+      ) : (
+        <>
+          <Section title={t('reader.arabic')}>
+            <ThemedText
+              style={[
+                styles.arabic,
+                {
+                  fontSize: 28 * preferences.arabicFontScale,
+                  lineHeight: 46 * preferences.arabicFontScale,
+                },
+              ]}>
+              {content.arabicText}
+            </ThemedText>
+          </Section>
 
-      <Section title={t('reader.transliteration')}>
-        <ThemedText>{content.transliteration}</ThemedText>
-      </Section>
+          <Section title={t('reader.transliteration')}>
+            <ThemedText>{content.transliteration}</ThemedText>
+          </Section>
 
-      <Section title={t('reader.translation')}>
-        <ThemedText>{content.translation}</ThemedText>
-      </Section>
+          <Section title={t('reader.translation')}>
+            <ThemedText>{content.translation}</ThemedText>
+          </Section>
+        </>
+      )}
 
       <Section title={t('reader.notes')}>
         <ThemedText themeColor="textSecondary">{content.notes}</ThemedText>

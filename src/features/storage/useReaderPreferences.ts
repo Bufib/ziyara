@@ -9,7 +9,7 @@ type ReaderPreferences = {
 
 const defaultPreferences: ReaderPreferences = {
   arabicFontScale: 1,
-  lineByLine: false,
+  lineByLine: true,
 };
 
 export function useReaderPreferences() {

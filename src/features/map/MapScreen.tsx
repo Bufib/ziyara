@@ -16,7 +16,6 @@ import type { Place } from "@/domain/types";
 import { useI18n } from "@/features/i18n/i18n";
 import {
   formatPlaceLocation,
-  localizeCountryName,
   localizePlace,
 } from "@/features/i18n/localizedData";
 import { placeRoute } from "@/features/navigation/routes";
@@ -186,8 +185,7 @@ export function MapExperience() {
             <View style={styles.sheetTitle}>
               <ThemedText type="heading">{localizedSelectedPlace.name}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                {formatPlaceLocation(localizedSelectedPlace, language)},{" "}
-                {localizeCountryName(localizedSelectedPlace.country, language)}
+                {formatPlaceLocation(localizedSelectedPlace, language)}
               </ThemedText>
             </View>
           </View>

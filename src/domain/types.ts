@@ -23,6 +23,12 @@ export type RecommendedActType =
 
 export type ReligiousContentType = 'dua' | 'ziyarah' | 'salawat' | 'surah' | 'instruction';
 
+export type ReligiousTextSegment = {
+  arabic?: string;
+  translation?: string;
+  transliteration?: string;
+};
+
 export type SourceReference = {
   id: string;
   title: string;
@@ -59,6 +65,7 @@ export type ReligiousContent = {
   arabicText: string;
   transliteration: string;
   translation: string;
+  segments?: ReligiousTextSegment[];
   language: string;
   notes: string;
   sourceReferences: string[];

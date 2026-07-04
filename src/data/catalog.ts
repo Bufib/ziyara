@@ -58,7 +58,6 @@ export function searchCatalog(
               place.name,
               formatPlaceLocation(place, language, true),
               place.city,
-              place.province,
               place.category,
               ...place.alternativeNames,
               ...sourceSearchFields(place.sourceReferences, language),
