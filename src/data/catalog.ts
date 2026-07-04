@@ -1,9 +1,16 @@
 import type { VerificationStatus } from '@/domain/types';
-import { recommendedActTypeLabels, religiousContentTypeLabels } from '@/data/labels';
 import { allPlaces } from '@/data/places';
 import { recommendedActs } from '@/data/recommendedActs';
 import { religiousContent } from '@/data/religiousContent';
 import { getSourceReferencesByIds } from '@/data/sourceReferences';
+import { translate, type Language } from '@/features/i18n/i18n';
+import {
+  formatPlaceLocation,
+  localizePlace,
+  localizeRecommendedAct,
+  localizeReligiousContent,
+  localizeSourceReferences,
+} from '@/features/i18n/localizedData';
 
 export type SearchFilter = 'all' | 'places' | 'content' | 'acts';
 
@@ -27,8 +34,8 @@ function matches(query: string, fields: string[]) {
   return fields.some((field) => normalize(field).includes(normalizedQuery));
 }
 
-function sourceSearchFields(sourceIds: string[]) {
-  return getSourceReferencesByIds(sourceIds).flatMap((source) => [
+function sourceSearchFields(sourceIds: string[], language: Language) {
+  return localizeSourceReferences(getSourceReferencesByIds(sourceIds), language).flatMap((source) => [
     source.title,
     source.bookOrWebsite ?? '',
     source.url ?? '',
@@ -37,18 +44,24 @@ function sourceSearchFields(sourceIds: string[]) {
   ]);
 }
 
-export function searchCatalog(query: string, filter: SearchFilter): SearchResult[] {
+export function searchCatalog(
+  query: string,
+  filter: SearchFilter,
+  language: Language = 'de',
+): SearchResult[] {
   const placeResults =
     filter === 'all' || filter === 'places'
       ? allPlaces
+          .map((place) => localizePlace(place, language))
           .filter((place) =>
             matches(query, [
               place.name,
+              formatPlaceLocation(place, language, true),
               place.city,
               place.province,
               place.category,
               ...place.alternativeNames,
-              ...sourceSearchFields(place.sourceReferences),
+              ...sourceSearchFields(place.sourceReferences, language),
             ]),
           )
           .map((place) => ({
@@ -56,7 +69,7 @@ export function searchCatalog(query: string, filter: SearchFilter): SearchResult
             id: place.id,
             kind: 'place' as const,
             slug: place.slug,
-            subtitle: `${place.city}, ${place.province}`,
+            subtitle: formatPlaceLocation(place, language),
             title: place.name,
             verificationStatus: place.verificationStatus,
           }))
@@ -65,6 +78,7 @@ export function searchCatalog(query: string, filter: SearchFilter): SearchResult
   const contentResults =
     filter === 'all' || filter === 'content'
       ? religiousContent
+          .map((content) => localizeReligiousContent(content, language))
           .filter((content) =>
             matches(query, [
               content.title,
@@ -72,7 +86,7 @@ export function searchCatalog(query: string, filter: SearchFilter): SearchResult
               content.arabicText,
               content.transliteration,
               content.translation,
-              ...sourceSearchFields(content.sourceReferences),
+              ...sourceSearchFields(content.sourceReferences, language),
             ]),
           )
           .map((content) => ({
@@ -80,7 +94,7 @@ export function searchCatalog(query: string, filter: SearchFilter): SearchResult
             id: content.id,
             kind: 'content' as const,
             slug: content.slug,
-            subtitle: religiousContentTypeLabels[content.type],
+            subtitle: translate(language, `labels.contentType.${content.type}`),
             title: content.title,
             verificationStatus: content.verificationStatus,
           }))
@@ -89,12 +103,13 @@ export function searchCatalog(query: string, filter: SearchFilter): SearchResult
   const actResults =
     filter === 'all' || filter === 'acts'
       ? recommendedActs
+          .map((act) => localizeRecommendedAct(act, language))
           .filter((act) =>
             matches(query, [
               act.title,
               act.type,
               act.shortInstruction,
-              ...sourceSearchFields(act.sourceReferences),
+              ...sourceSearchFields(act.sourceReferences, language),
             ]),
           )
           .map((act) => ({
@@ -102,7 +117,7 @@ export function searchCatalog(query: string, filter: SearchFilter): SearchResult
             id: act.id,
             kind: 'act' as const,
             slug: act.contentId ?? 'general-ziyarah-etiquette-placeholder',
-            subtitle: recommendedActTypeLabels[act.type],
+            subtitle: translate(language, `labels.actType.${act.type}`),
             title: act.title,
             verificationStatus: act.verificationStatus,
           }))

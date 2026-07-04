@@ -1,27 +1,25 @@
 import { Screen } from '@/components/ui/screen';
 import { Section } from '@/components/ui/section';
 import { ThemedText } from '@/components/themed-text';
+import { useI18n } from '@/features/i18n/i18n';
 
 export default function DisclaimerScreen() {
+  const { t } = useI18n();
+
   return (
     <Screen>
-      <Section title="Inhaltlicher Hinweis">
+      <Section title={t('disclaimer.title')}>
         <ThemedText>
-          Diese App ist ein Software-Begleiter und Inhaltscontainer. Sie ist keine religiöse
-          Autorität.
+          {t('disclaimer.body1')}
         </ThemedText>
         <ThemedText themeColor="textSecondary">
-          Duas, Ziyarat, Übersetzungen, historische Hinweise, empfohlene Handlungen und Ortsdaten
-          sollten von qualifizierten Gelehrten oder Redakteuren geprüft werden, bevor sie als
-          verifiziert gelten.
+          {t('disclaimer.body2')}
         </ThemedText>
         <ThemedText themeColor="textSecondary">
-          Platzhaltertext wird verwendet, solange geprüftes Arabisch, Transliteration, Übersetzung
-          oder Quellenangaben noch nicht vorliegen.
+          {t('disclaimer.body3')}
         </ThemedText>
         <ThemedText themeColor="textSecondary">
-          Verlinkte duas.org-Seiten dienen als externe Quelle. Volltexte werden erst nach
-          Rechteklärung und fachlicher Inhaltsprüfung offline gespeichert.
+          {t('disclaimer.body4')}
         </ThemedText>
       </Section>
     </Screen>

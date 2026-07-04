@@ -21,11 +21,18 @@ import { Screen } from '@/components/ui/screen';
 import { Section } from '@/components/ui/section';
 import { SymbolIcon } from '@/components/ui/symbol-icon';
 import { ThemedText } from '@/components/themed-text';
-import { recommendedActTypeLabels } from '@/data/labels';
 import { getPlaceBySlug } from '@/data/places';
 import { getRecommendedActsForPlace } from '@/data/recommendedActs';
 import { getSourceReferencesByIds } from '@/data/sourceReferences';
 import type { PlaceImage } from '@/domain/types';
+import { useI18n } from '@/features/i18n/i18n';
+import {
+  formatPlaceLocation,
+  localizeCountryName,
+  localizePlace,
+  localizeRecommendedActs,
+  localizeSourceReferences,
+} from '@/features/i18n/localizedData';
 import { readerRoute, singleRouteParam } from '@/features/navigation/routes';
 import { useBookmarks } from '@/features/storage/useBookmarks';
 import { openNavigation } from '@/features/places/openNavigation';
@@ -47,10 +54,11 @@ function getPlaceImageSource(image: PlaceImage) {
 
 function ViewerCloseButton({ onPress }: { onPress: () => void }) {
   const theme = useTheme();
+  const { t } = useI18n();
 
   return (
     <Pressable
-      accessibilityLabel="Bild schließen"
+      accessibilityLabel={t('place.closeImage')}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [
@@ -112,6 +120,7 @@ function PlaceImageViewer({ image, onClose }: PlaceImageViewerProps) {
 
 function PlaceImageCarousel({ images }: PlaceImageCarouselProps) {
   const theme = useTheme();
+  const { t } = useI18n();
   const { width } = useWindowDimensions();
   const [selectedImage, setSelectedImage] = useState<PlaceImage | null>(null);
   const imageCardWidth = Math.min(320, Math.max(248, width - Spacing.four * 2));
@@ -138,7 +147,7 @@ function PlaceImageCarousel({ images }: PlaceImageCarouselProps) {
               },
             ]}>
             <Pressable
-              accessibilityLabel={`${image.description} groß anzeigen`}
+              accessibilityLabel={t('place.imageOpenLabel', { description: image.description })}
               accessibilityRole="imagebutton"
               onPress={() => {
                 setSelectedImage(image);
@@ -162,7 +171,7 @@ function PlaceImageCarousel({ images }: PlaceImageCarouselProps) {
                 }}
                 style={styles.sourceLink}>
                 <ThemedText type="smallBold" themeColor="accent">
-                  Quelle: {image.source.title}
+                  {t('common.sourcePrefix', { source: image.source.title })}
                 </ThemedText>
               </Pressable>
             </View>
@@ -180,28 +189,30 @@ function PlaceImageCarousel({ images }: PlaceImageCarouselProps) {
 export default function PlaceDetailScreen() {
   const params = useLocalSearchParams<{ slug?: string | string[] }>();
   const slug = singleRouteParam(params.slug);
-  const place = getPlaceBySlug(slug);
+  const rawPlace = getPlaceBySlug(slug);
   const { isBookmarked, toggleBookmark } = useBookmarks();
+  const { language, t } = useI18n();
+  const place = rawPlace ? localizePlace(rawPlace, language) : undefined;
 
   if (!place) {
     return (
       <Screen>
-        <ThemedText type="heading">Ort nicht gefunden</ThemedText>
-        <Button icon="map" label="Zur Karte" onPress={() => router.push('/map')} />
+        <ThemedText type="heading">{t('place.notFound')}</ThemedText>
+        <Button icon="map" label={t('common.toMap')} onPress={() => router.push('/map')} />
       </Screen>
     );
   }
 
-  const acts = getRecommendedActsForPlace(place.id);
+  const acts = localizeRecommendedActs(getRecommendedActsForPlace(place.id), language);
   const bookmarkKey = `place:${place.slug}`;
-  const sources = getSourceReferencesByIds(place.sourceReferences);
+  const sources = localizeSourceReferences(getSourceReferencesByIds(place.sourceReferences), language);
 
   return (
     <Screen contentStyle={styles.screenContent} safeAreaEdges={['right', 'bottom', 'left']}>
       <View style={styles.header}>
         <View style={styles.headerText}>
           <ThemedText type="eyebrow" themeColor="accent">
-            {place.city}, {place.country}
+            {formatPlaceLocation(place, language)}, {localizeCountryName(place.country, language)}
           </ThemedText>
           <ThemedText type="title">{place.name}</ThemedText>
           <ThemedText themeColor="textSecondary">{place.shortDescription}</ThemedText>
@@ -210,16 +221,16 @@ export default function PlaceDetailScreen() {
       </View>
 
       <View style={styles.actions}>
-        <Button icon="map" label="Navigation starten" onPress={() => openNavigation(place)} />
+        <Button icon="map" label={t('place.startNavigation')} onPress={() => openNavigation(place)} />
         <Button
           icon="bookmark"
-          label={isBookmarked(bookmarkKey) ? 'Gespeichert' : 'Speichern'}
+          label={isBookmarked(bookmarkKey) ? t('common.saved') : t('common.save')}
           variant="secondary"
           onPress={() => toggleBookmark(bookmarkKey)}
         />
       </View>
 
-      <Section title="Über diesen Ort">
+      <Section title={t('place.about')}>
         <ThemedText>{place.longDescription}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
           {place.historicalNotes}
@@ -227,7 +238,7 @@ export default function PlaceDetailScreen() {
         <PlaceImageCarousel images={place.images} />
       </Section>
 
-      <Section title="Empfohlene Handlungen">
+      <Section title={t('place.recommendedActs')}>
         <View style={styles.list}>
           {acts.map((act) => (
             <Card
@@ -241,7 +252,7 @@ export default function PlaceDetailScreen() {
                 <View style={styles.cardTitle}>
                   <ThemedText type="heading">{act.title}</ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
-                    {recommendedActTypeLabels[act.type]}
+                    {t(`labels.actType.${act.type}`)}
                   </ThemedText>
                 </View>
                 <Badge status={act.verificationStatus} />
@@ -254,7 +265,7 @@ export default function PlaceDetailScreen() {
         </View>
       </Section>
 
-      <Section title="Hinweise für den Besuch">
+      <Section title={t('place.visitTips')}>
         <View style={styles.notes}>
           {place.visitingTips.map((tip) => (
             <ThemedText key={tip} type="small">
@@ -262,17 +273,17 @@ export default function PlaceDetailScreen() {
             </ThemedText>
           ))}
           <ThemedText type="small" themeColor="textSecondary">
-            Öffnungszeiten: {place.openingInfo}
+            {t('place.openingPrefix', { value: place.openingInfo })}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Barrierefreiheit: {place.accessibilityNotes}
+            {t('place.accessibilityPrefix', { value: place.accessibilityNotes })}
           </ThemedText>
         </View>
       </Section>
 
-      <Section title="Quellen und Prüfung">
+      <Section title={t('place.reviewSources')}>
         <SourceReferenceList
-          emptyMessage="Redaktionelle Prüfung ausstehend."
+          emptyMessage={t('place.sourcesEmpty')}
           openButtonVariant="ghost"
           showExcerpt={false}
           showLastChecked={false}
@@ -282,7 +293,7 @@ export default function PlaceDetailScreen() {
         />
         <Button
           icon="book"
-          label="Quellenregel ansehen"
+          label={t('place.sourceRule')}
           variant="ghost"
           onPress={() => router.push('/sources')}
         />

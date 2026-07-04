@@ -1,26 +1,25 @@
 import { Screen } from '@/components/ui/screen';
 import { Section } from '@/components/ui/section';
 import { ThemedText } from '@/components/themed-text';
+import { useI18n } from '@/features/i18n/i18n';
 
 export default function AboutScreen() {
+  const { t } = useI18n();
+
   return (
     <Screen>
-      <Section title="Über Shia Ziyarah Iraq">
+      <Section title={t('about.title')}>
         <ThemedText>
-          Shia Ziyarah Iraq ist als Offline-First-Begleiter für Pilgerinnen und Pilger aufgebaut,
-          die wichtige schiitische Ziyarah-Orte im Irak besuchen.
+          {t('about.intro')}
         </ThemedText>
         <ThemedText themeColor="textSecondary">
-          Der aktuelle Build nutzt Expo SDK 57, Expo Router, TypeScript, React Native Maps, Expo
-          Location, SQLite-Vorbereitung und lokal gespeicherte Einstellungen.
+          {t('about.build')}
         </ThemedText>
       </Section>
 
-      <Section title="Redaktionelles Prinzip">
+      <Section title={t('about.editorialTitle')}>
         <ThemedText themeColor="textSecondary">
-          Religiöse Texte, Übersetzungen, Transliterationen und Aussagen dürfen nur mit
-          Quellenangaben und qualifizierter Prüfung ergänzt werden. Platzhalter bleiben sichtbar,
-          bis diese Prüfung abgeschlossen ist.
+          {t('about.editorialBody')}
         </ThemedText>
       </Section>
     </Screen>

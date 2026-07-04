@@ -9,6 +9,12 @@ import { Section } from '@/components/ui/section';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { allPlaces } from '@/data/places';
+import { useI18n } from '@/features/i18n/i18n';
+import {
+  formatPlaceLocation,
+  localizeCountryName,
+  localizePlaces,
+} from '@/features/i18n/localizedData';
 import { placeRoute } from '@/features/navigation/routes';
 import { openNavigation } from '@/features/places/openNavigation';
 import { useTheme } from '@/hooks/use-theme';
@@ -26,6 +32,7 @@ type Coordinates = {
 };
 
 type LocationStatus = 'idle' | 'loading' | 'granted' | 'denied' | 'error';
+type LocationMessageKey = 'map.browserDenied' | 'map.browserUnsupported';
 
 function positionFor({ latitude, longitude }: Coordinates) {
   const x = ((longitude - bounds.minLon) / (bounds.maxLon - bounds.minLon)) * 100;
@@ -38,18 +45,20 @@ function positionFor({ latitude, longitude }: Coordinates) {
 
 export function MapExperience() {
   const theme = useTheme();
+  const { language, t } = useI18n();
+  const places = localizePlaces(allPlaces, language);
   const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle');
-  const [locationMessage, setLocationMessage] = useState<string | null>(null);
+  const [locationMessageKey, setLocationMessageKey] = useState<LocationMessageKey | null>(null);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
 
   const requestLocation = () => {
     const geolocation = globalThis.navigator?.geolocation;
     setLocationStatus('loading');
-    setLocationMessage(null);
+    setLocationMessageKey(null);
 
     if (!geolocation) {
       setLocationStatus('error');
-      setLocationMessage('Dieser Browser unterstützt keine Standortfreigabe.');
+      setLocationMessageKey('map.browserUnsupported');
       return;
     }
 
@@ -63,9 +72,7 @@ export function MapExperience() {
       },
       () => {
         setLocationStatus('denied');
-        setLocationMessage(
-          'Standortfreigabe wurde abgelehnt oder ist im Browser nicht verfügbar.',
-        );
+        setLocationMessageKey('map.browserDenied');
       },
       { enableHighAccuracy: true, maximumAge: 60_000, timeout: 12_000 },
     );
@@ -73,42 +80,41 @@ export function MapExperience() {
 
   return (
     <Screen>
-      <Section title="Ziyarah-Karte Irak">
+      <Section title={t('map.title')}>
         <ThemedText themeColor="textSecondary">
-          Im Web wird eine schematische Offline-Karte angezeigt. Auf iOS und Android nutzt die App
-          React Native Maps mit Markern und optionalem Standort.
+          {t('map.description')}
         </ThemedText>
         <Button
           icon="map"
           label={
             locationStatus === 'loading'
-              ? 'Standort wird geladen'
+              ? t('map.locationLoading')
               : userLocation
-                ? 'Standort aktualisieren'
-                : 'Mein Standort'
+                ? t('map.refreshLocation')
+                : t('map.myLocation')
           }
           onPress={requestLocation}
           variant={userLocation ? 'secondary' : 'primary'}
         />
-        {locationMessage ? (
+        {locationMessageKey ? (
           <View style={[styles.locationNotice, { backgroundColor: theme.warningSoft }]}>
             <ThemedText type="smallBold">
               {locationStatus === 'denied'
-                ? 'Standortberechtigung abgelehnt'
-                : 'Standort nicht verfügbar'}
+                ? t('map.locationDenied')
+                : t('map.locationUnavailable')}
             </ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
-              {locationMessage}
+              {t(locationMessageKey)}
             </ThemedText>
           </View>
         ) : null}
         <View style={[styles.map, { backgroundColor: theme.accentSoft, borderColor: theme.border }]}>
           <ThemedText type="eyebrow" themeColor="accent" style={styles.mapLabel}>
-            Iraq
+            {localizeCountryName('Iraq', language)}
           </ThemedText>
-          {allPlaces.map((place) => (
+          {places.map((place) => (
             <Pressable
-              accessibilityLabel={`${place.name}, ${place.city}`}
+              accessibilityLabel={`${place.name}, ${formatPlaceLocation(place, language)}`}
               accessibilityRole="button"
               key={place.id}
               onPress={() => router.push(placeRoute(place.slug))}
@@ -123,7 +129,7 @@ export function MapExperience() {
           ))}
           {userLocation ? (
             <View
-              accessibilityLabel="Dein aktueller Standort"
+              accessibilityLabel={t('common.currentLocation')}
               style={[
                 styles.userMarker,
                 positionFor(userLocation),
@@ -135,28 +141,28 @@ export function MapExperience() {
         </View>
       </Section>
 
-      <Section title="Orte">
+      <Section title={t('map.places')}>
         <View style={styles.list}>
-          {allPlaces.map((place) => (
+          {places.map((place) => (
             <View
               key={place.id}
               style={[styles.placeRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
               <View style={styles.placeText}>
                 <ThemedText type="heading">{place.name}</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
-                {place.province}, {place.city}
+                  {formatPlaceLocation(place, language)}
                 </ThemedText>
               </View>
               <Badge status={place.verificationStatus} />
               <View style={styles.actions}>
                 <Button
                   icon="info"
-                  label="Details"
+                  label={t('common.details')}
                   onPress={() => router.push(placeRoute(place.slug))}
                 />
                 <Button
                   icon="map"
-                  label="Navigieren"
+                  label={t('common.navigate')}
                   variant="secondary"
                   onPress={() => openNavigation(place)}
                 />

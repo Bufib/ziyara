@@ -7,40 +7,38 @@ import { Screen } from '@/components/ui/screen';
 import { Section } from '@/components/ui/section';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { languageOptions, useI18n } from '@/features/i18n/i18n';
 import { useReaderPreferences } from '@/features/storage/useReaderPreferences';
 import { useThemeMode, type ThemeMode } from '@/features/theme/theme-mode';
 import { useTheme } from '@/hooks/use-theme';
 
-const themeOptions: { label: string; value: ThemeMode }[] = [
-  { label: 'System', value: 'system' },
-  { label: 'Hell', value: 'light' },
-  { label: 'Dunkel', value: 'dark' },
-];
+const themeModeOptions: ThemeMode[] = ['system', 'light', 'dark'];
 
 export default function SettingsScreen() {
   const theme = useTheme();
   const { mode, resolvedTheme, setMode } = useThemeMode();
+  const { language, setLanguage, t } = useI18n();
   const { preferences, setArabicFontScale, setLineByLine } = useReaderPreferences();
 
   return (
     <Screen>
-      <Section title="Darstellung">
+      <Section title={t('settings.appearance')}>
         <ThemedView type="surface" style={[styles.panel, { borderColor: theme.border }]}>
           <View style={styles.rowText}>
-            <ThemedText type="smallBold">Farbmodus</ThemedText>
+            <ThemedText type="smallBold">{t('settings.themeTitle')}</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
-              Der Dunkelmodus nutzt ein ruhiges Dunkelblau statt reinem Schwarz.
+              {t('settings.themeBody')}
             </ThemedText>
           </View>
 
           <View style={styles.segmentedControl}>
-            {themeOptions.map((option) => {
-              const selected = mode === option.value;
+            {themeModeOptions.map((option) => {
+              const selected = mode === option;
               return (
                 <Pressable
                   accessibilityRole="button"
-                  key={option.value}
-                  onPress={() => setMode(option.value)}
+                  key={option}
+                  onPress={() => setMode(option)}
                   style={({ pressed }) => [
                     styles.segment,
                     {
@@ -52,25 +50,64 @@ export default function SettingsScreen() {
                   <ThemedText
                     type="smallBold"
                     style={selected && { color: theme.background }}>
-                    {option.label}
+                    {t(`settings.theme.${option}`)}
                   </ThemedText>
                 </Pressable>
               );
             })}
           </View>
           <ThemedText type="small" themeColor="textSecondary">
-            Aktiver Modus: {resolvedTheme === 'dark' ? 'Dunkelblau' : 'Hell'}.
+            {t('settings.activeMode', {
+              mode: resolvedTheme === 'dark' ? t('settings.darkBlue') : t('settings.light'),
+            })}
           </ThemedText>
         </ThemedView>
       </Section>
 
-      <Section title="Lesemodus">
+      <Section title={t('settings.languageTitle')}>
+        <ThemedView type="surface" style={[styles.panel, { borderColor: theme.border }]}>
+          <View style={styles.rowText}>
+            <ThemedText type="smallBold">{t('settings.languageTitle')}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('settings.languageBody')}
+            </ThemedText>
+          </View>
+
+          <View style={styles.segmentedControl}>
+            {languageOptions.map((option) => {
+              const selected = language === option.value;
+              return (
+                <Pressable
+                  accessibilityRole="button"
+                  key={option.value}
+                  onPress={() => setLanguage(option.value)}
+                  style={({ pressed }) => [
+                    styles.segment,
+                    {
+                      backgroundColor: selected ? theme.accent : theme.backgroundElement,
+                      borderColor: selected ? theme.accent : theme.border,
+                    },
+                    pressed && styles.pressed,
+                  ]}>
+                  <ThemedText
+                    type="smallBold"
+                    style={selected && { color: theme.background }}>
+                    {option.nativeLabel}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
+          </View>
+        </ThemedView>
+      </Section>
+
+      <Section title={t('settings.reader')}>
         <ThemedView type="surface" style={[styles.panel, { borderColor: theme.border }]}>
           <View style={styles.row}>
             <View style={styles.rowText}>
-              <ThemedText type="smallBold">Arabische Schriftgröße</ThemedText>
+              <ThemedText type="smallBold">{t('settings.arabicFontTitle')}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                Gilt für Platzhalter und geprüfte arabische Inhalte.
+                {t('settings.arabicFontBody')}
               </ThemedText>
             </View>
             <View style={styles.stepper}>
@@ -92,9 +129,9 @@ export default function SettingsScreen() {
 
           <View style={styles.row}>
             <View style={styles.rowText}>
-              <ThemedText type="smallBold">Zeilenweise Ansicht</ThemedText>
+              <ThemedText type="smallBold">{t('settings.lineByLineTitle')}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                Gruppiert Arabisch, Transliteration und Übersetzung.
+                {t('settings.lineByLineBody')}
               </ThemedText>
             </View>
             <Switch
@@ -106,18 +143,18 @@ export default function SettingsScreen() {
         </ThemedView>
       </Section>
 
-      <Section title="App-Vorbereitung">
+      <Section title={t('settings.appPrep')}>
         <View style={styles.actions}>
-          <Button icon="info" label="Inhaltlicher Hinweis" onPress={() => router.push('/disclaimer')} />
+          <Button icon="info" label={t('common.disclaimer')} onPress={() => router.push('/disclaimer')} />
           <Button
             icon="book"
-            label="Quellen"
+            label={t('common.sources')}
             variant="secondary"
             onPress={() => router.push('/sources')}
           />
           <Button
             icon="settings"
-            label="Über die App"
+            label={t('common.aboutApp')}
             variant="secondary"
             onPress={() => router.push('/about')}
           />

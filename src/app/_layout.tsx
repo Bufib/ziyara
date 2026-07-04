@@ -4,21 +4,25 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Colors } from '@/constants/theme';
+import { AppI18nProvider, useI18n } from '@/features/i18n/i18n';
 import { AppThemeProvider, useResolvedTheme } from '@/features/theme/theme-mode';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
   return (
-    <AppThemeProvider>
-      <RootNavigation />
-    </AppThemeProvider>
+    <AppI18nProvider>
+      <AppThemeProvider>
+        <RootNavigation />
+      </AppThemeProvider>
+    </AppI18nProvider>
   );
 }
 
 function RootNavigation() {
   const scheme = useResolvedTheme();
   const colors = Colors[scheme];
+  const { t } = useI18n();
 
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => undefined);
@@ -35,13 +39,13 @@ function RootNavigation() {
             headerShadowVisible: false,
             contentStyle: { backgroundColor: colors.background },
           }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Home' }} />
-          <Stack.Screen name="city/[city]" options={{ title: 'Stadt' }} />
-          <Stack.Screen name="place/[slug]" options={{ title: 'Ortsdetails' }} />
-          <Stack.Screen name="reader/[slug]" options={{ title: 'Lesemodus' }} />
-          <Stack.Screen name="about" options={{ title: 'Über die App' }} />
-          <Stack.Screen name="sources" options={{ title: 'Quellen' }} />
-          <Stack.Screen name="disclaimer" options={{ title: 'Inhaltlicher Hinweis' }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false, title: t('nav.home') }} />
+          <Stack.Screen name="city/[city]" options={{ title: t('nav.city') }} />
+          <Stack.Screen name="place/[slug]" options={{ title: t('nav.placeDetails') }} />
+          <Stack.Screen name="reader/[slug]" options={{ title: t('nav.reader') }} />
+          <Stack.Screen name="about" options={{ title: t('nav.about') }} />
+          <Stack.Screen name="sources" options={{ title: t('nav.sources') }} />
+          <Stack.Screen name="disclaimer" options={{ title: t('nav.disclaimer') }} />
         </Stack>
       </NavigationThemeProvider>
     </GestureHandlerRootView>

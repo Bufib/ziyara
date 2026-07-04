@@ -11,6 +11,12 @@ import { Spacing } from "@/constants/theme";
 import { allPlaces } from "@/data/places";
 import { getRecommendedActsForPlace } from "@/data/recommendedActs";
 import type { Place } from "@/domain/types";
+import { useI18n } from "@/features/i18n/i18n";
+import {
+  formatPlaceLocation,
+  localizeCityName,
+  localizePlace,
+} from "@/features/i18n/localizedData";
 import { cityRoute, placeRoute } from "@/features/navigation/routes";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -27,9 +33,12 @@ function isPlace(place: Place | undefined): place is Place {
 
 export default function HomeScreen() {
   const theme = useTheme();
+  const { language, t } = useI18n();
   const featuredPlaces = featuredSlugs
     .map((slug) => allPlaces.find((place) => place.slug === slug))
-    .filter(isPlace);
+    .filter(isPlace)
+    .map((place) => localizePlace(place, language));
+  const cities = ["Karbala", "Najaf", "Kufa", "Kadhimayn", "Samarra"];
 
   return (
     <Screen>
@@ -39,37 +48,36 @@ export default function HomeScreen() {
             Ziyarah
           </ThemedText>
           <ThemedText type="title" style={styles.title}>
-            Plane, lies und besuche heilige Orte mit Ruhe und Sorgfalt.
+            {t("home.heroTitle")}
           </ThemedText>
           <ThemedText themeColor="textSecondary">
-            Offline verfügbare Ortsdaten, prüfungsbewusste religiöse Inhalte,
-            Merkliste und eine Karte für Pilgerinnen und Pilger im Irak.
+            {t("home.heroBody")}
           </ThemedText>
         </View>
 
         <View style={styles.actions}>
           <Button
             icon="map"
-            label="Karte öffnen"
+            label={t("common.openMap")}
             onPress={() => router.push("/map")}
           />
           <Button
             icon="search"
-            label="Suchen"
+            label={t("common.search")}
             variant="secondary"
             onPress={() => router.push("/search")}
           />
         </View>
       </View>
 
-      <Section title="Wichtige Städte (5)">
+      <Section title={t("home.importantCities")}>
         <ScrollView
           style={styles.cityGrid}
           contentContainerStyle={{ gap: 5 }}
           horizontal
           showsHorizontalScrollIndicator={false}
         >
-          {["Karbala", "Najaf", "Kufa", "Kadhimayn", "Samarra"].map((city) => (
+          {cities.map((city) => (
             <Pressable
               accessibilityRole="button"
               key={city}
@@ -83,13 +91,13 @@ export default function HomeScreen() {
                 pressed && styles.pressed,
               ]}
             >
-              <ThemedText type="smallBold">{city}</ThemedText>
+              <ThemedText type="smallBold">{localizeCityName(city, language)}</ThemedText>
             </Pressable>
           ))}
         </ScrollView>
       </Section>
 
-      <Section title="Ausgewählte Orte">
+      <Section title={t("home.featuredPlaces")}>
         <View style={styles.list}>
           {featuredPlaces.map((place) => {
             const acts = getRecommendedActsForPlace(place.id);
@@ -102,7 +110,7 @@ export default function HomeScreen() {
                   <View style={styles.cardTitle}>
                     <ThemedText type="heading">{place.name}</ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
-                      {place.city}, {place.country}
+                      {formatPlaceLocation(place, language, true)}
                     </ThemedText>
                   </View>
                   <Badge status={place.verificationStatus} />
@@ -111,8 +119,12 @@ export default function HomeScreen() {
                   {place.shortDescription}
                 </ThemedText>
                 <ThemedText type="smallBold" themeColor="accent">
-                  {acts.length} empfohlene Handlung
-                  {acts.length === 1 ? "" : "en"}
+                  {t(
+                    acts.length === 1
+                      ? "home.recommendedActs.one"
+                      : "home.recommendedActs.many",
+                    { count: acts.length },
+                  )}
                 </ThemedText>
               </Card>
             );

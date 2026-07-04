@@ -10,6 +10,8 @@ import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
 import { getPlacesByCity } from "@/data/places";
 import type { Place, PlaceImage } from "@/domain/types";
+import { useI18n } from "@/features/i18n/i18n";
+import { localizeCityName, localizePlaces } from "@/features/i18n/localizedData";
 import { placeRoute, singleRouteParam } from "@/features/navigation/routes";
 import { CityLocationMap } from "@/features/places/CityLocationMap";
 
@@ -33,6 +35,7 @@ function getCityRegion(places: Place[]) {
 }
 
 function PlaceCard({ place }: { place: Place }) {
+  const { t } = useI18n();
   const coverImage = place.images[0];
 
   if (!coverImage) {
@@ -49,7 +52,7 @@ function PlaceCard({ place }: { place: Place }) {
 
   return (
     <Pressable
-      accessibilityLabel={`${place.name} öffnen`}
+      accessibilityLabel={`${place.name} ${t("common.details")}`}
       accessibilityRole="button"
       onPress={() => router.push(placeRoute(place.slug))}
       style={({ pressed }) => [
@@ -82,8 +85,9 @@ function PlaceCard({ place }: { place: Place }) {
 export default function CityScreen() {
   const params = useLocalSearchParams<{ city?: string | string[] }>();
   const city = singleRouteParam(params.city);
-  const places = getPlacesByCity(city);
-  const title = city ?? "Stadt";
+  const { language, t } = useI18n();
+  const places = localizePlaces(getPlacesByCity(city), language);
+  const title = city ? localizeCityName(city, language) : t("city.titleFallback");
   const cityRegion = getCityRegion(places);
 
   return (
@@ -94,7 +98,7 @@ export default function CityScreen() {
       <View style={styles.header}>
         <View style={styles.headerText}>
           <ThemedText type="eyebrow" themeColor="accent">
-            Stadt
+            {t("nav.city")}
           </ThemedText>
           <ThemedText type="title">{title}</ThemedText>
           {cityRegion ? (
@@ -105,14 +109,16 @@ export default function CityScreen() {
             />
           ) : null}
           <ThemedText themeColor="textSecondary">
-            Offline verfügbare Orte in dieser Stadt. Religiöse und historische
-            Details bleiben als zu prüfen markiert, bis die Quellenprüfung
-            abgeschlossen ist.
+            {t("city.offlineBody")}
           </ThemedText>
         </View>
       </View>
 
-      <Section title={`${places.length} Ort${places.length === 1 ? "" : "e"}`}>
+      <Section
+        title={t(places.length === 1 ? "city.placeCount.one" : "city.placeCount.many", {
+          count: places.length,
+        })}
+      >
         <View style={styles.list}>
           {places.map((place) => (
             <PlaceCard key={place.id} place={place} />
@@ -121,15 +127,14 @@ export default function CityScreen() {
           {places.length === 0 ? (
             <View style={styles.empty}>
               <ThemedText type="heading">
-                Noch keine Orte für diese Stadt
+                {t("city.emptyTitle")}
               </ThemedText>
               <ThemedText themeColor="textSecondary">
-                Der lokale Katalog enthält dafür noch keinen geprüften
-                Platzhalter.
+                {t("city.emptyBody")}
               </ThemedText>
               <Button
                 icon="map"
-                label="Karte öffnen"
+                label={t("common.openMap")}
                 onPress={() => router.push("/map")}
               />
             </View>

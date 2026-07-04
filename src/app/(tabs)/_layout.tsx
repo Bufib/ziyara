@@ -1,11 +1,13 @@
 import { NativeTabs } from "expo-router/unstable-native-tabs";
 
 import { Colors } from "@/constants/theme";
+import { useI18n } from "@/features/i18n/i18n";
 import { useResolvedTheme } from "@/features/theme/theme-mode";
 
 export default function TabsLayout() {
   const scheme = useResolvedTheme();
   const colors = Colors[scheme];
+  const { t } = useI18n();
 
   return (
     <NativeTabs
@@ -19,7 +21,7 @@ export default function TabsLayout() {
       tintColor={colors.accent}
     >
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t("nav.home")}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           sf={{ default: "house", selected: "house.fill" }}
           md={{ default: "home", selected: "home_filled" }}
@@ -27,7 +29,7 @@ export default function TabsLayout() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="map">
-        <NativeTabs.Trigger.Label>Karte</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t("nav.map")}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           sf={{ default: "map", selected: "map.fill" }}
           md="map"
@@ -35,12 +37,12 @@ export default function TabsLayout() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="search">
-        <NativeTabs.Trigger.Label>Suche</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t("nav.search")}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="magnifyingglass" md="search" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="bookmarks">
-        <NativeTabs.Trigger.Label>Merkliste</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t("nav.bookmarks")}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           sf={{ default: "bookmark", selected: "bookmark.fill" }}
           md={{ default: "bookmark_border", selected: "bookmark" }}
@@ -48,7 +50,7 @@ export default function TabsLayout() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="settings">
-        <NativeTabs.Trigger.Label>Einstellungen</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t("nav.settings")}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           sf={{ default: "gearshape", selected: "gearshape.fill" }}
           md="settings"

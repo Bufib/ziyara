@@ -6,9 +6,14 @@ import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { Section } from '@/components/ui/section';
 import { ThemedText } from '@/components/themed-text';
-import { religiousContentTypeLabels } from '@/data/labels';
 import { allPlaces, getPlaceBySlug } from '@/data/places';
 import { religiousContent, getReligiousContentBySlug } from '@/data/religiousContent';
+import { useI18n } from '@/features/i18n/i18n';
+import {
+  formatPlaceLocation,
+  localizePlace,
+  localizeReligiousContent,
+} from '@/features/i18n/localizedData';
 import { placeRoute, readerRoute } from '@/features/navigation/routes';
 import { useBookmarks } from '@/features/storage/useBookmarks';
 import { Spacing } from '@/constants/theme';
@@ -26,26 +31,29 @@ function isBookmarkItem(item: BookmarkItem | null): item is BookmarkItem {
 
 export default function BookmarksScreen() {
   const { bookmarks, clearBookmarks } = useBookmarks();
+  const { language, t } = useI18n();
   const items: BookmarkItem[] = bookmarks
     .map<BookmarkItem | null>((bookmark) => {
       const [kind, slug] = bookmark.split(':');
       if (kind === 'place') {
-        const place = getPlaceBySlug(slug);
+        const rawPlace = getPlaceBySlug(slug);
+        const place = rawPlace ? localizePlace(rawPlace, language) : undefined;
         return place
           ? {
               key: bookmark,
               title: place.name,
-              subtitle: `${place.city}, ${place.province}`,
+              subtitle: formatPlaceLocation(place, language),
               route: placeRoute(place.slug),
             }
           : null;
       }
-      const content = getReligiousContentBySlug(slug);
+      const rawContent = getReligiousContentBySlug(slug);
+      const content = rawContent ? localizeReligiousContent(rawContent, language) : undefined;
       return content
         ? {
             key: bookmark,
             title: content.title,
-            subtitle: religiousContentTypeLabels[content.type],
+            subtitle: t(`labels.contentType.${content.type}`),
             route: readerRoute(content.slug),
           }
         : null;
@@ -55,8 +63,8 @@ export default function BookmarksScreen() {
   return (
     <Screen>
       <Section
-        title="Merkliste"
-        actionLabel={items.length > 0 ? 'Leeren' : undefined}
+        title={t('bookmarks.title')}
+        actionLabel={items.length > 0 ? t('bookmarks.clear') : undefined}
         onAction={items.length > 0 ? clearBookmarks : undefined}>
         <View style={styles.list}>
           {items.map((item) => (
@@ -70,19 +78,19 @@ export default function BookmarksScreen() {
 
           {items.length === 0 && (
             <View style={styles.empty}>
-              <ThemedText type="heading">Noch keine Einträge</ThemedText>
+              <ThemedText type="heading">{t('bookmarks.emptyTitle')}</ThemedText>
               <ThemedText themeColor="textSecondary">
-                Speichere Orte oder Leseeinträge, um sie offline schnell wiederzufinden.
+                {t('bookmarks.emptyBody')}
               </ThemedText>
               <View style={styles.actions}>
                 <Button
                   icon="map"
-                  label={`${allPlaces.length} Orte ansehen`}
+                  label={t('bookmarks.showPlaces', { count: allPlaces.length })}
                   onPress={() => router.push('/map')}
                 />
                 <Button
                   icon="book"
-                  label={`${religiousContent.length} Leseeinträge`}
+                  label={t('bookmarks.readingEntries', { count: religiousContent.length })}
                   variant="secondary"
                   onPress={() => router.push('/search')}
                 />

@@ -9,7 +9,7 @@ import { Section } from '@/components/ui/section';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { searchCatalog, type SearchFilter, type SearchResult } from '@/data/catalog';
-import { searchFilterLabels } from '@/data/labels';
+import { useI18n } from '@/features/i18n/i18n';
 import { placeRoute, readerRoute, singleRouteParam } from '@/features/navigation/routes';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -20,17 +20,18 @@ export default function SearchScreen() {
   const [query, setQuery] = useState(singleRouteParam(params.city) ?? '');
   const [filter, setFilter] = useState<SearchFilter>('all');
   const theme = useTheme();
+  const { isRTL, language, t } = useI18n();
 
-  const results = useMemo(() => searchCatalog(query, filter), [filter, query]);
+  const results = useMemo(() => searchCatalog(query, filter, language), [filter, language, query]);
 
   return (
     <Screen>
-      <Section title="Suche">
+      <Section title={t('search.title')}>
         <TextInput
-          accessibilityLabel="Orte, Städte, Duas, Ziyarat und Handlungen suchen"
+          accessibilityLabel={t('search.searchA11y')}
           autoCapitalize="none"
           onChangeText={setQuery}
-          placeholder="Karbala, Ziyarah, Najaf suchen..."
+          placeholder={t('search.placeholder')}
           placeholderTextColor={theme.textSecondary}
           returnKeyType="search"
           style={[
@@ -39,6 +40,8 @@ export default function SearchScreen() {
               backgroundColor: theme.surface,
               borderColor: theme.border,
               color: theme.text,
+              textAlign: isRTL ? 'right' : 'left',
+              writingDirection: isRTL ? 'rtl' : 'ltr',
             },
           ]}
           value={query}
@@ -60,7 +63,7 @@ export default function SearchScreen() {
                   pressed && styles.pressed,
                 ]}>
                 <ThemedText type="smallBold" style={selected && { color: theme.background }}>
-                  {searchFilterLabels[item]}
+                  {t(`labels.searchFilter.${item}`)}
                 </ThemedText>
               </Pressable>
             );
@@ -68,17 +71,19 @@ export default function SearchScreen() {
         </View>
       </Section>
 
-      <Section title={`${results.length} Ergebnis${results.length === 1 ? '' : 'se'}`}>
+      <Section
+        title={t(results.length === 1 ? 'search.resultCount.one' : 'search.resultCount.many', {
+          count: results.length,
+        })}>
         <View style={styles.results}>
           {results.map((result) => (
             <SearchResultCard key={`${result.kind}-${result.id}`} result={result} />
           ))}
           {results.length === 0 && (
             <View style={[styles.empty, { borderColor: theme.border }]}>
-              <ThemedText type="smallBold">Keine passenden Offline-Inhalte</ThemedText>
+              <ThemedText type="smallBold">{t('search.emptyTitle')}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                Probiere eine Stadt, einen Ortsnamen, eine Transliteration oder einen Inhaltstyp.
-                Weitere geprüfte Inhalte können später im lokalen Datenkatalog ergänzt werden.
+                {t('search.emptyBody')}
               </ThemedText>
             </View>
           )}

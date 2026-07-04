@@ -3,22 +3,26 @@ import { Screen } from '@/components/ui/screen';
 import { Section } from '@/components/ui/section';
 import { ThemedText } from '@/components/themed-text';
 import { sourceReferences } from '@/data/sourceReferences';
+import { useI18n } from '@/features/i18n/i18n';
+import { localizeSourceReferences } from '@/features/i18n/localizedData';
 
 export default function SourcesScreen() {
+  const { language, t } = useI18n();
+  const localizedSources = localizeSourceReferences(sourceReferences, language);
+
   return (
     <Screen>
-      <Section title="Quellenregel">
+      <Section title={t('sources.ruleTitle')}>
         <ThemedText>
-          Jeder geprüfte religiöse Eintrag muss eine Quelle nennen. Empfohlene Handlungen ohne
-          Quelle bleiben als „zu prüfen“ markiert.
+          {t('sources.ruleBody')}
         </ThemedText>
       </Section>
 
-      <Section title="Aktuelle Quellen">
+      <Section title={t('sources.current')}>
         <SourceReferenceList
           showNotes
           showOpenButton
-          sources={sourceReferences}
+          sources={localizedSources}
           titleType="heading"
         />
       </Section>

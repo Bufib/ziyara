@@ -13,6 +13,12 @@ import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
 import { allPlaces } from "@/data/places";
 import type { Place } from "@/domain/types";
+import { useI18n } from "@/features/i18n/i18n";
+import {
+  formatPlaceLocation,
+  localizeCountryName,
+  localizePlace,
+} from "@/features/i18n/localizedData";
 import { placeRoute } from "@/features/navigation/routes";
 import { openNavigation } from "@/features/places/openNavigation";
 import { useTheme } from "@/hooks/use-theme";
@@ -28,15 +34,18 @@ type LocationStatus = "idle" | "loading" | "granted" | "denied" | "error";
 
 export function MapExperience() {
   const theme = useTheme();
+  const { language, t } = useI18n();
   const mapRef = useRef<MapView>(null);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(
     allPlaces[0],
   );
   const insets = useSafeAreaInsets();
   const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
-  const [locationMessage, setLocationMessage] = useState<string | null>(null);
   const [userLocation, setUserLocation] =
     useState<Location.LocationObject | null>(null);
+  const localizedSelectedPlace = selectedPlace
+    ? localizePlace(selectedPlace, language)
+    : null;
 
   const centerOnLocation = useCallback((location: Location.LocationObject) => {
     mapRef.current?.animateToRegion(
@@ -73,16 +82,12 @@ export function MapExperience() {
   }, []);
 
   const requestLocation = async () => {
-    setLocationMessage(null);
     setLocationStatus("loading");
 
     try {
       const permission = await Location.requestForegroundPermissionsAsync();
       if (!permission.granted) {
         setLocationStatus("denied");
-        setLocationMessage(
-          "Aktiviere den Standort in den Geräteeinstellungen, um deine Position auf der Karte zu sehen.",
-        );
         return;
       }
 
@@ -94,9 +99,6 @@ export function MapExperience() {
       centerOnLocation(current);
     } catch {
       setLocationStatus("error");
-      setLocationMessage(
-        "Dein Standort konnte gerade nicht geladen werden. Prüfe GPS, Berechtigungen oder die Internetverbindung.",
-      );
     }
   };
 
@@ -112,24 +114,27 @@ export function MapExperience() {
         showsUserLocation={locationStatus === "granted"}
         style={styles.map}
       >
-        {allPlaces.map((place) => (
-          <Marker
-            coordinate={{
-              latitude: place.latitude,
-              longitude: place.longitude,
-            }}
-            description={`${place.city}, ${place.country}`}
-            key={place.id}
-            onPress={() => setSelectedPlace(place)}
-            pinColor={markerColor}
-            title={place.name}
-          />
-        ))}
+        {allPlaces.map((rawPlace) => {
+          const place = localizePlace(rawPlace, language);
+          return (
+            <Marker
+              coordinate={{
+                latitude: place.latitude,
+                longitude: place.longitude,
+              }}
+              description={formatPlaceLocation(place, language, true)}
+              key={place.id}
+              onPress={() => setSelectedPlace(rawPlace)}
+              pinColor={markerColor}
+              title={place.name}
+            />
+          );
+        })}
         {userLocation ? (
           <Marker
             coordinate={userLocation.coords}
             pinColor={theme.warning}
-            title="Dein aktueller Standort"
+            title={t("common.currentLocation")}
           />
         ) : null}
       </MapView>
@@ -139,10 +144,10 @@ export function MapExperience() {
           icon="map"
           label={
             locationStatus === "loading"
-              ? "Standort wird geladen"
+              ? t("map.locationLoading")
               : userLocation
-                ? "Neu zentrieren"
-                : "Mein Standort"
+                ? t("map.recenter")
+                : t("map.myLocation")
           }
           variant={userLocation ? "secondary" : "primary"}
           onPress={requestLocation}
@@ -155,16 +160,18 @@ export function MapExperience() {
         >
           <ThemedText type="smallBold">
             {locationStatus === "denied"
-              ? "Standortberechtigung abgelehnt"
-              : "Standort nicht verfügbar"}
+              ? t("map.locationDenied")
+              : t("map.locationUnavailable")}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            {locationMessage}
+            {locationStatus === "denied"
+              ? t("map.locationDeniedBody")
+              : t("map.locationErrorBody")}
           </ThemedText>
         </View>
       )}
 
-      {selectedPlace && (
+      {localizedSelectedPlace && (
         <View
           style={[
             styles.sheet,
@@ -177,9 +184,10 @@ export function MapExperience() {
         >
           <View style={styles.sheetHeader}>
             <View style={styles.sheetTitle}>
-              <ThemedText type="heading">{selectedPlace.name}</ThemedText>
+              <ThemedText type="heading">{localizedSelectedPlace.name}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                {selectedPlace.city}, {selectedPlace.country}
+                {formatPlaceLocation(localizedSelectedPlace, language)},{" "}
+                {localizeCountryName(localizedSelectedPlace.country, language)}
               </ThemedText>
             </View>
           </View>
@@ -187,15 +195,15 @@ export function MapExperience() {
           <View style={styles.sheetActions}>
             <Button
               icon="info"
-              label="Details"
-              onPress={() => router.push(placeRoute(selectedPlace.slug))}
+              label={t("common.details")}
+              onPress={() => router.push(placeRoute(localizedSelectedPlace.slug))}
               style={styles.sheetActionButton}
             />
             <Button
               icon="map"
-              label="Navigieren"
+              label={t("common.navigate")}
               variant="secondary"
-              onPress={() => openNavigation(selectedPlace)}
+              onPress={() => openNavigation(localizedSelectedPlace)}
               style={styles.sheetActionButton}
             />
           </View>

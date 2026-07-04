@@ -3,6 +3,8 @@ import MapView, { Marker, type Region } from 'react-native-maps';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { useI18n } from '@/features/i18n/i18n';
+import { localizeCountryName } from '@/features/i18n/localizedData';
 import { useTheme } from '@/hooks/use-theme';
 
 type CityLocationMapProps = {
@@ -13,12 +15,13 @@ type CityLocationMapProps = {
 
 export function CityLocationMap({ city, placeCount, region }: CityLocationMapProps) {
   const theme = useTheme();
+  const { language, t } = useI18n();
 
   return (
     <View style={styles.container}>
       <View style={[styles.mapFrame, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
         <MapView
-          accessibilityLabel={`Karte von ${city}`}
+          accessibilityLabel={`${t('nav.map')}: ${city}`}
           initialRegion={region}
           maxZoomLevel={20}
           minZoomLevel={12}
@@ -39,7 +42,10 @@ export function CityLocationMap({ city, placeCount, region }: CityLocationMapPro
         </MapView>
       </View>
       <ThemedText type="small" themeColor="textSecondary">
-        {city}, Iraq · {placeCount} Ort{placeCount === 1 ? '' : 'e'}
+        {city}, {localizeCountryName('Iraq', language)} ·{' '}
+        {t(placeCount === 1 ? 'city.placeCount.one' : 'city.placeCount.many', {
+          count: placeCount,
+        })}
       </ThemedText>
     </View>
   );

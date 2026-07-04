@@ -3,8 +3,8 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { ThemedText, type ThemedTextProps } from '@/components/themed-text';
 import { Button, type ButtonVariant } from '@/components/ui/button';
 import { Spacing } from '@/constants/theme';
-import { sourceContentPolicyLabels } from '@/data/labels';
 import type { SourceReference } from '@/domain/types';
+import { useI18n } from '@/features/i18n/i18n';
 
 type SourceReferenceListProps = {
   emptyMessage?: string;
@@ -35,11 +35,13 @@ function openUrl(url: string) {
 }
 
 export function SourceLinkButtons({
-  label = 'Quelle öffnen',
+  label,
   sources,
   variant = 'secondary',
 }: SourceLinkButtonsProps) {
+  const { t } = useI18n();
   const linkedSources = sources.filter(hasUrl);
+  const buttonLabel = label ?? t('common.openSource');
 
   if (linkedSources.length === 0) {
     return null;
@@ -51,7 +53,7 @@ export function SourceLinkButtons({
         <Button
           icon="external-link"
           key={source.id}
-          label={label}
+          label={buttonLabel}
           variant={variant}
           onPress={() => openUrl(source.url)}
         />
@@ -61,8 +63,8 @@ export function SourceLinkButtons({
 }
 
 export function SourceReferenceList({
-  emptyMessage = 'Quellenangaben werden während der fachlichen Inhaltsprüfung ergänzt.',
-  openButtonLabel = 'Quelle öffnen',
+  emptyMessage,
+  openButtonLabel,
   openButtonVariant = 'secondary',
   showExcerpt = true,
   showLastChecked = true,
@@ -73,10 +75,12 @@ export function SourceReferenceList({
   sources,
   titleType = 'smallBold',
 }: SourceReferenceListProps) {
+  const { t } = useI18n();
+
   if (sources.length === 0) {
     return (
       <ThemedText type="small" themeColor="textSecondary">
-        {emptyMessage}
+        {emptyMessage ?? t('sources.empty')}
       </ThemedText>
     );
   }
@@ -93,17 +97,19 @@ export function SourceReferenceList({
           ) : null}
           {showExcerpt && source.quotedExcerpt ? (
             <ThemedText type="small" themeColor="textSecondary">
-              Kurzzitat: “{source.quotedExcerpt}”
+              {t('sources.excerptPrefix', { excerpt: source.quotedExcerpt })}
             </ThemedText>
           ) : null}
           {showPolicy && source.contentPolicy ? (
             <ThemedText type="small" themeColor="textSecondary">
-              Status: {sourceContentPolicyLabels[source.contentPolicy]}
+              {t('sources.policyPrefix', {
+                status: t(`labels.sourcePolicy.${source.contentPolicy}`),
+              })}
             </ThemedText>
           ) : null}
           {showLastChecked && source.lastCheckedAt ? (
             <ThemedText type="small" themeColor="textSecondary">
-              Quelle geprüft am: {source.lastCheckedAt}
+              {t('sources.lastChecked', { date: source.lastCheckedAt })}
             </ThemedText>
           ) : null}
           {showUrl && source.url ? (
@@ -113,7 +119,7 @@ export function SourceReferenceList({
           ) : null}
           {showOpenButton ? (
             <SourceLinkButtons
-              label={openButtonLabel}
+              label={openButtonLabel ?? t('common.openSource')}
               sources={[source]}
               variant={openButtonVariant}
             />
