@@ -13,7 +13,7 @@ export const Colors = {
         background: "#f2f2f2",
 
     surface: '#FFFFFF',
-    backgroundElement: '#EAF0ED',
+    backgroundElement: '#C8E6C9',
     backgroundSelected: '#D8E5DE',
     textSecondary: '#5B6861',
     border: '#CAD7D0',

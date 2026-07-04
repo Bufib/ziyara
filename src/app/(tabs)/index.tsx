@@ -1,6 +1,5 @@
 import { router } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
-
 import { Button } from "@/components/ui/button";
 import { Screen } from "@/components/ui/screen";
 import { Section } from "@/components/ui/section";
@@ -9,10 +8,7 @@ import { Spacing } from "@/constants/theme";
 import { allPlaces } from "@/data/places";
 import type { Place } from "@/domain/types";
 import { useI18n } from "@/features/i18n/i18n";
-import {
-  localizeCityName,
-  localizePlace,
-} from "@/features/i18n/localizedData";
+import { localizeCityName, localizePlace } from "@/features/i18n/localizedData";
 import { cityRoute } from "@/features/navigation/routes";
 import { PlaceImageCard } from "@/features/places/PlaceImageCard";
 import { useTheme } from "@/hooks/use-theme";
@@ -57,12 +53,14 @@ export default function HomeScreen() {
             icon="map"
             label={t("common.openMap")}
             onPress={() => router.push("/map")}
+            style={{ flex: 1 }}
           />
           <Button
             icon="search"
             label={t("common.search")}
             variant="secondary"
             onPress={() => router.push("/search")}
+            style={{ flex: 1 }}
           />
         </View>
       </View>
@@ -82,13 +80,15 @@ export default function HomeScreen() {
               style={({ pressed }) => [
                 styles.cityPill,
                 {
-                  backgroundColor: theme.backgroundElement,
+                  backgroundColor: "#1F7A5A",
                   borderColor: theme.border,
                 },
                 pressed && styles.pressed,
               ]}
             >
-              <ThemedText type="smallBold">{localizeCityName(city, language)}</ThemedText>
+              <ThemedText type="smallBold" style={{color: "#fff"}}>
+                {localizeCityName(city, language)}
+              </ThemedText>
             </Pressable>
           ))}
         </ScrollView>
@@ -119,8 +119,8 @@ const styles = StyleSheet.create({
     maxWidth: 640,
   },
   actions: {
+    flex: 1,
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: Spacing.two,
   },
   cityGrid: {
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   cityPill: {
     minHeight: 44,
     justifyContent: "center",
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: 1,
     paddingHorizontal: Spacing.three,
   },

@@ -53,7 +53,6 @@ const styles = StyleSheet.create({
     gap: Spacing.five,
     maxWidth: MaxContentWidth,
     padding: Spacing.three,
-    paddingBottom: Spacing.six,
     width: "100%",
   },
 });
