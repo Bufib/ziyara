@@ -195,10 +195,7 @@ export function AdminQuestionRoundPanel() {
 
   return (
     <Card style={styles.panel}>
-      <View style={styles.headingBlock}>
-        <ThemedText type="heading">{t('questionRound.adminTitle')}</ThemedText>
-        <ThemedText themeColor="textSecondary">{t('questionRound.adminBody')}</ThemedText>
-      </View>
+      <ThemedText themeColor="textSecondary">{t('questionRound.adminBody')}</ThemedText>
 
       {isLoadingRound ? (
         <ActivityIndicator color={theme.accent} />
@@ -322,9 +319,6 @@ function QuestionItem({
 const styles = StyleSheet.create({
   panel: {
     gap: Spacing.three,
-  },
-  headingBlock: {
-    gap: Spacing.two,
   },
   status: {
     borderRadius: 8,

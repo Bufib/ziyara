@@ -133,12 +133,9 @@ export function AdminGroupCheckPanel() {
 
   return (
     <Card style={styles.panel}>
-      <View style={styles.headingBlock}>
-        <ThemedText type="heading">{t('groupCheck.adminTitle')}</ThemedText>
-        <ThemedText themeColor="textSecondary">
-          {activeCheck ? t('groupCheck.adminActiveBody') : t('groupCheck.adminBody')}
-        </ThemedText>
-      </View>
+      <ThemedText themeColor="textSecondary">
+        {activeCheck ? t('groupCheck.adminActiveBody') : t('groupCheck.adminBody')}
+      </ThemedText>
 
       {activeCheck ? (
         <>
@@ -285,9 +282,6 @@ function ResultColumn({
 const styles = StyleSheet.create({
   panel: {
     gap: Spacing.three,
-  },
-  headingBlock: {
-    gap: Spacing.two,
   },
   activeQuestion: {
     borderRadius: 8,

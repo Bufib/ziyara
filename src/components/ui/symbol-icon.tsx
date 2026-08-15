@@ -6,6 +6,7 @@ export type SymbolIconName =
   | 'account'
   | 'book'
   | 'bookmark'
+  | 'chevron'
   | 'close'
   | 'confirm'
   | 'copy'
@@ -29,6 +30,7 @@ const symbolNames: Record<SymbolIconName, React.ComponentProps<typeof SymbolView
   account: { ios: 'person.crop.circle', android: 'account_circle', web: 'account_circle' },
   book: { ios: 'book.closed', android: 'menu_book', web: 'menu_book' },
   bookmark: { ios: 'bookmark', android: 'bookmark', web: 'bookmark' },
+  chevron: { ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' },
   close: { ios: 'xmark', android: 'close', web: 'close' },
   confirm: { ios: 'checkmark.circle.fill', android: 'check_circle', web: 'check_circle' },
   copy: { ios: 'doc.on.doc', android: 'content_copy', web: 'content_copy' },

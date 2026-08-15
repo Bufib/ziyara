@@ -7,9 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import type { AdminUserSummary } from '@/domain/database';
+import { AdminSectionHeader } from '@/features/admin/AdminSectionHeader';
 import { supabase } from '@/features/auth/supabase';
 import { AdminGroupCheckPanel } from '@/features/group-check/AdminGroupCheckPanel';
+import { useGroupCheck } from '@/features/group-check/group-check-context';
 import { AdminQuestionRoundPanel } from '@/features/question-round/AdminQuestionRoundPanel';
+import { useQuestionRound } from '@/features/question-round/question-round-context';
 import { useI18n } from '@/features/i18n/i18n';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -20,6 +23,8 @@ const localeByLanguage = {
 } as const;
 
 const adminPageSize = 200;
+
+type AdminSection = 'questions' | 'status' | 'users';
 
 async function fetchAllAdminUsers() {
   const allUsers: AdminUserSummary[] = [];
@@ -45,10 +50,17 @@ async function fetchAllAdminUsers() {
 export default function AdminScreen() {
   const theme = useTheme();
   const { language, t } = useI18n();
+  const { activeCheck } = useGroupCheck();
+  const { activeRound } = useQuestionRound();
   const [users, setUsers] = useState<AdminUserSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Record<AdminSection, boolean>>({
+    questions: false,
+    status: false,
+    users: false,
+  });
 
   const dateFormatter = useMemo(
     () =>
@@ -108,6 +120,9 @@ export default function AdminScreen() {
   }, []);
 
   const formatDate = (value: string) => dateFormatter.format(new Date(value));
+  const toggleSection = (section: AdminSection) => {
+    setExpandedSections((current) => ({ ...current, [section]: !current[section] }));
+  };
 
   return (
     <SafeAreaView
@@ -115,7 +130,7 @@ export default function AdminScreen() {
       style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <FlatList
         contentContainerStyle={styles.content}
-        data={users}
+        data={expandedSections.users && hasLoaded && !hasError ? users : []}
         keyExtractor={(item) => item.user_id}
         refreshControl={
           <RefreshControl
@@ -126,41 +141,97 @@ export default function AdminScreen() {
           />
         }
         ListHeaderComponent={
-          <View style={styles.header}>
-            <ThemedText type="title">{t('admin.title')}</ThemedText>
-            <ThemedText themeColor="textSecondary">{t('admin.description')}</ThemedText>
-            {hasLoaded && !hasError ? (
-              <View style={styles.counts}>
-                <ThemedText type="smallBold" themeColor="accent">
-                  {t('admin.userCount', { count: users.length })}
-                </ThemedText>
-                <ThemedText type="smallBold" themeColor="accent">
-                  {t('admin.personCount', { count: representedPeople })}
-                </ThemedText>
-              </View>
-            ) : null}
-            <AdminGroupCheckPanel />
-            <AdminQuestionRoundPanel />
-          </View>
-        }
-        ListEmptyComponent={
-          isLoading && !hasLoaded ? (
-            <View style={styles.state}>
-              <ActivityIndicator color={theme.accent} size="large" />
-              <ThemedText themeColor="textSecondary">{t('admin.loading')}</ThemedText>
+          <View style={styles.headerContent}>
+            <View style={styles.intro}>
+              <ThemedText type="title">{t('admin.title')}</ThemedText>
+              <ThemedText themeColor="textSecondary">{t('admin.description')}</ThemedText>
             </View>
-          ) : hasError ? (
-            <Card style={styles.state}>
-              <ThemedText type="heading">{t('admin.errorTitle')}</ThemedText>
-              <ThemedText themeColor="textSecondary">{t('admin.errorBody')}</ThemedText>
-              <Button icon="refresh" label={t('admin.retry')} onPress={() => void loadUsers()} />
-            </Card>
-          ) : (
-            <Card style={styles.state}>
-              <ThemedText type="heading">{t('admin.emptyTitle')}</ThemedText>
-              <ThemedText themeColor="textSecondary">{t('admin.emptyBody')}</ThemedText>
-            </Card>
-          )
+
+            <View style={styles.sections}>
+              <View style={styles.section}>
+                <AdminSectionHeader
+                  description={t('admin.section.status.description')}
+                  expanded={expandedSections.status}
+                  icon="confirm"
+                  onToggle={() => toggleSection('status')}
+                  status={t(
+                    activeCheck ? 'admin.section.status.active' : 'admin.section.status.inactive',
+                  )}
+                  statusColor={activeCheck ? 'warning' : 'textSecondary'}
+                  title={t('admin.section.status.title')}
+                />
+                {expandedSections.status ? <AdminGroupCheckPanel /> : null}
+              </View>
+
+              <View style={styles.section}>
+                <AdminSectionHeader
+                  description={t('admin.section.questions.description')}
+                  expanded={expandedSections.questions}
+                  icon="question"
+                  onToggle={() => toggleSection('questions')}
+                  status={t(
+                    activeRound
+                      ? 'admin.section.questions.open'
+                      : 'admin.section.questions.closed',
+                  )}
+                  statusColor={activeRound ? 'success' : 'textSecondary'}
+                  title={t('admin.section.questions.title')}
+                />
+                {expandedSections.questions ? <AdminQuestionRoundPanel /> : null}
+              </View>
+
+              <View style={styles.section}>
+                <AdminSectionHeader
+                  description={t('admin.section.users.description')}
+                  expanded={expandedSections.users}
+                  icon="people"
+                  onToggle={() => toggleSection('users')}
+                  status={
+                    hasError
+                      ? t('admin.section.users.error')
+                      : !hasLoaded
+                        ? t('admin.section.users.loading')
+                        : t('admin.section.users.count', { count: users.length })
+                  }
+                  statusColor={hasError ? 'danger' : 'accent'}
+                  title={t('admin.section.users.title')}
+                />
+
+                {expandedSections.users ? (
+                  isLoading && !hasLoaded ? (
+                    <Card style={styles.state}>
+                      <ActivityIndicator color={theme.accent} size="large" />
+                      <ThemedText themeColor="textSecondary">{t('admin.loading')}</ThemedText>
+                    </Card>
+                  ) : hasError ? (
+                    <Card style={styles.state}>
+                      <ThemedText type="heading">{t('admin.errorTitle')}</ThemedText>
+                      <ThemedText themeColor="textSecondary">{t('admin.errorBody')}</ThemedText>
+                      <Button
+                        icon="refresh"
+                        label={t('admin.retry')}
+                        onPress={() => void loadUsers()}
+                      />
+                    </Card>
+                  ) : users.length === 0 ? (
+                    <Card style={styles.state}>
+                      <ThemedText type="heading">{t('admin.emptyTitle')}</ThemedText>
+                      <ThemedText themeColor="textSecondary">{t('admin.emptyBody')}</ThemedText>
+                    </Card>
+                  ) : (
+                    <Card style={styles.overviewCard}>
+                      <ThemedText type="smallBold" themeColor="accent">
+                        {t('admin.userCount', { count: users.length })}
+                      </ThemedText>
+                      <ThemedText type="smallBold" themeColor="accent">
+                        {t('admin.personCount', { count: representedPeople })}
+                      </ThemedText>
+                    </Card>
+                  )
+                ) : null}
+              </View>
+            </View>
+          </View>
         }
         renderItem={({ item }) => (
           <Card style={styles.userCard}>
@@ -216,11 +287,19 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     width: '100%',
   },
-  header: {
-    gap: Spacing.two,
-    marginBottom: Spacing.one,
+  headerContent: {
+    gap: Spacing.four,
   },
-  counts: {
+  intro: {
+    gap: Spacing.two,
+  },
+  sections: {
+    gap: Spacing.three,
+  },
+  section: {
+    gap: Spacing.two,
+  },
+  overviewCard: {
     gap: Spacing.half,
   },
   state: {
