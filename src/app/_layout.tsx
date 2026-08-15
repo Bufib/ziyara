@@ -5,7 +5,12 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Colors } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/features/auth/auth-context';
+import { GroupCheckProvider, useGroupCheck } from '@/features/group-check/group-check-context';
 import { AppI18nProvider, useI18n } from '@/features/i18n/i18n';
+import {
+  QuestionRoundProvider,
+  useQuestionRound,
+} from '@/features/question-round/question-round-context';
 import { AppThemeProvider, useResolvedTheme } from '@/features/theme/theme-mode';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -15,7 +20,11 @@ export default function RootLayout() {
     <AppI18nProvider>
       <AppThemeProvider>
         <AuthProvider>
-          <RootNavigation />
+          <GroupCheckProvider>
+            <QuestionRoundProvider>
+              <RootNavigation />
+            </QuestionRoundProvider>
+          </GroupCheckProvider>
         </AuthProvider>
       </AppThemeProvider>
     </AppI18nProvider>
@@ -26,15 +35,17 @@ function RootNavigation() {
   const scheme = useResolvedTheme();
   const colors = Colors[scheme];
   const { t } = useI18n();
-  const { isLoading, session } = useAuth();
+  const { isAdmin, isLoading, session } = useAuth();
+  const { isBlocking, isLoading: isGroupCheckLoading } = useGroupCheck();
+  const { activeRound } = useQuestionRound();
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && !isGroupCheckLoading) {
       SplashScreen.hideAsync().catch(() => undefined);
     }
-  }, [isLoading]);
+  }, [isGroupCheckLoading, isLoading]);
 
-  if (isLoading) {
+  if (isLoading || isGroupCheckLoading) {
     return null;
   }
 
@@ -57,14 +68,32 @@ function RootNavigation() {
             />
           </Stack.Protected>
 
-          <Stack.Protected guard={Boolean(session)}>
+          <Stack.Protected guard={Boolean(session) && !isBlocking}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false, title: t('nav.home') }} />
             <Stack.Screen name="city/[city]" options={{ title: t('nav.city') }} />
             <Stack.Screen name="place/[slug]" options={{ title: t('nav.placeDetails') }} />
             <Stack.Screen name="reader/[slug]" options={{ title: t('nav.reader') }} />
             <Stack.Screen name="about" options={{ title: t('nav.about') }} />
+            <Stack.Screen name="account" options={{ title: t('nav.account') }} />
             <Stack.Screen name="sources" options={{ title: t('nav.sources') }} />
             <Stack.Screen name="disclaimer" options={{ title: t('nav.disclaimer') }} />
+            <Stack.Protected guard={!isAdmin && Boolean(activeRound)}>
+              <Stack.Screen
+                name="question-round"
+                options={{ title: t('questionRound.navTitle') }}
+              />
+            </Stack.Protected>
+          </Stack.Protected>
+
+          <Stack.Protected guard={Boolean(session) && isBlocking}>
+            <Stack.Screen
+              name="check-in"
+              options={{ headerShown: false, title: t('groupCheck.navTitle') }}
+            />
+          </Stack.Protected>
+
+          <Stack.Protected guard={Boolean(session) && isAdmin}>
+            <Stack.Screen name="admin" options={{ title: t('nav.admin') }} />
           </Stack.Protected>
         </Stack>
       </NavigationThemeProvider>

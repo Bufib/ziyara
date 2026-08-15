@@ -8,9 +8,11 @@ import { Spacing } from "@/constants/theme";
 import { allPlaces } from "@/data/places";
 import type { Place } from "@/domain/types";
 import { useI18n } from "@/features/i18n/i18n";
+import { useAuth } from "@/features/auth/auth-context";
 import { localizeCityName, localizePlace } from "@/features/i18n/localizedData";
 import { cityRoute } from "@/features/navigation/routes";
 import { PlaceImageCard } from "@/features/places/PlaceImageCard";
+import { useQuestionRound } from "@/features/question-round/question-round-context";
 import { useTheme } from "@/hooks/use-theme";
 
 const featuredSlugs = [
@@ -27,6 +29,8 @@ function isPlace(place: Place | undefined): place is Place {
 export default function HomeScreen() {
   const theme = useTheme();
   const { language, t } = useI18n();
+  const { isAdmin } = useAuth();
+  const { activeRound } = useQuestionRound();
   const featuredPlaces = featuredSlugs
     .map((slug) => allPlaces.find((place) => place.slug === slug))
     .filter(isPlace)
@@ -64,6 +68,25 @@ export default function HomeScreen() {
           />
         </View>
       </View>
+
+      {activeRound && !isAdmin ? (
+        <View
+          style={[
+            styles.notice,
+            { backgroundColor: theme.accentSoft, borderColor: theme.accent },
+          ]}
+        >
+          <ThemedText type="heading">{t("questionRound.homeTitle")}</ThemedText>
+          <ThemedText themeColor="textSecondary">
+            {t("questionRound.homeBody")}
+          </ThemedText>
+          <Button
+            icon="question"
+            label={t("questionRound.openForm")}
+            onPress={() => router.push("/question-round")}
+          />
+        </View>
+      ) : null}
 
       <Section title={t("home.importantCities")}>
         <ScrollView

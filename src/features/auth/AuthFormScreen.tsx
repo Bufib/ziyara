@@ -17,6 +17,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { getAuthErrorTranslationKey, useAuth } from '@/features/auth/auth-context';
+import { getPartySize, PartySizeField } from '@/features/auth/PartySizeField';
 import { useI18n } from '@/features/i18n/i18n';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -34,6 +35,7 @@ export function AuthFormScreen({ mode }: AuthFormScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
+  const [partySize, setPartySize] = useState('1');
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isError, setIsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,6 +52,7 @@ export function AuthFormScreen({ mode }: AuthFormScreenProps) {
 
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedName = displayName.trim();
+    const normalizedPartySize = getPartySize(partySize);
 
     if (!normalizedEmail.includes('@') || !normalizedEmail.includes('.')) {
       showFeedback(t('auth.validation.email'), true);
@@ -58,6 +61,11 @@ export function AuthFormScreen({ mode }: AuthFormScreenProps) {
 
     if (isRegister && normalizedName.length < 2) {
       showFeedback(t('auth.validation.name'), true);
+      return;
+    }
+
+    if (isRegister && normalizedPartySize === null) {
+      showFeedback(t('family.validation.partySize'), true);
       return;
     }
 
@@ -80,7 +88,12 @@ export function AuthFormScreen({ mode }: AuthFormScreenProps) {
 
     try {
       if (isRegister) {
-        const result = await signUp(normalizedName, normalizedEmail, password);
+        const result = await signUp(
+          normalizedName,
+          normalizedEmail,
+          password,
+          normalizedPartySize ?? 1,
+        );
 
         if (result.error) {
           showFeedback(t(getAuthErrorTranslationKey(result.error)), true);
@@ -131,28 +144,35 @@ export function AuthFormScreen({ mode }: AuthFormScreenProps) {
 
             <ThemedView type="surface" style={[styles.card, { borderColor: theme.border }]}>
               {isRegister ? (
-                <View style={styles.field}>
-                  <ThemedText type="smallBold">{t('auth.name')}</ThemedText>
-                  <TextInput
-                    autoCapitalize="words"
-                    autoComplete="name"
-                    editable={!isSubmitting}
-                    maxLength={80}
-                    onChangeText={setDisplayName}
-                    placeholder={t('auth.namePlaceholder')}
-                    placeholderTextColor={theme.textSecondary}
-                    style={[
-                      styles.input,
-                      {
-                        backgroundColor: theme.background,
-                        borderColor: theme.border,
-                        color: theme.text,
-                      },
-                    ]}
-                    textContentType="name"
-                    value={displayName}
+                <>
+                  <View style={styles.field}>
+                    <ThemedText type="smallBold">{t('auth.name')}</ThemedText>
+                    <TextInput
+                      autoCapitalize="words"
+                      autoComplete="name"
+                      editable={!isSubmitting}
+                      maxLength={80}
+                      onChangeText={setDisplayName}
+                      placeholder={t('auth.namePlaceholder')}
+                      placeholderTextColor={theme.textSecondary}
+                      style={[
+                        styles.input,
+                        {
+                          backgroundColor: theme.background,
+                          borderColor: theme.border,
+                          color: theme.text,
+                        },
+                      ]}
+                      textContentType="name"
+                      value={displayName}
+                    />
+                  </View>
+                  <PartySizeField
+                    disabled={isSubmitting}
+                    onChange={setPartySize}
+                    value={partySize}
                   />
-                </View>
+                </>
               ) : null}
 
               <View style={styles.field}>

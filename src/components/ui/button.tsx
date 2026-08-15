@@ -9,6 +9,7 @@ import { useTheme } from '@/hooks/use-theme';
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 
 export type ButtonProps = {
+  disabled?: boolean;
   icon: SymbolIconName;
   label: string;
   onPress: () => void;
@@ -16,7 +17,14 @@ export type ButtonProps = {
   variant?: ButtonVariant;
 };
 
-export function Button({ icon, label, onPress, style, variant = 'primary' }: ButtonProps) {
+export function Button({
+  disabled = false,
+  icon,
+  label,
+  onPress,
+  style,
+  variant = 'primary',
+}: ButtonProps) {
   const theme = useTheme();
   const resolvedTheme = useResolvedTheme();
   const isPrimary = variant === 'primary';
@@ -30,6 +38,8 @@ export function Button({ icon, label, onPress, style, variant = 'primary' }: But
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
@@ -43,6 +53,7 @@ export function Button({ icon, label, onPress, style, variant = 'primary' }: But
         },
         style,
         pressed && styles.pressed,
+        disabled && styles.disabled,
       ]}>
       <SymbolIcon color={foreground} name={icon} size={18} />
       <ThemedText type="smallBold" style={{ color: foreground }}>
@@ -66,5 +77,8 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.72,
+  },
+  disabled: {
+    opacity: 0.55,
   },
 });

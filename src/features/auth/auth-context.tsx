@@ -1,4 +1,4 @@
-import type { AuthError, Session, User } from '@supabase/supabase-js';
+import type { AuthError, PostgrestError, Session, User } from '@supabase/supabase-js';
 import {
   createContext,
   type PropsWithChildren,
@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { AppState, Platform } from 'react-native';
 
+import type { UserProfile } from '@/domain/database';
 import { supabase } from '@/features/auth/supabase';
 
 type AuthResult = {
@@ -20,19 +21,35 @@ type SignUpResult = AuthResult & {
   requiresEmailConfirmation: boolean;
 };
 
+type ProfileUpdateResult = {
+  error: PostgrestError | null;
+};
+
 type AuthContextValue = {
+  changeEmail: (currentPassword: string, newEmail: string) => Promise<AuthResult>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<AuthResult>;
+  isAdmin: boolean;
   isLoading: boolean;
+  profile: UserProfile | null;
   session: Session | null;
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signOut: () => Promise<AuthResult>;
-  signUp: (displayName: string, email: string, password: string) => Promise<SignUpResult>;
+  signUp: (
+    displayName: string,
+    email: string,
+    password: string,
+    partySize: number,
+  ) => Promise<SignUpResult>;
+  updatePartySize: (partySize: number) => Promise<ProfileUpdateResult>;
   user: User | null;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
@@ -43,7 +60,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (isMounted) {
         setSession(nextSession);
-        setIsLoading(false);
+        setIsSessionLoading(false);
+
+        if (!nextSession) {
+          setProfile(null);
+          setProfileUserId(null);
+        }
       }
     });
 
@@ -58,7 +80,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       })
       .finally(() => {
         if (isMounted) {
-          setIsLoading(false);
+          setIsSessionLoading(false);
         }
       });
 
@@ -88,41 +110,176 @@ export function AuthProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
+  useEffect(() => {
+    const userId = session?.user.id;
+
+    if (!userId) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadProfile = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, user_id, display_name, party_size, role, created_at, updated_at')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (isMounted) {
+          setProfile(error ? null : data);
+        }
+      } catch {
+        if (isMounted) {
+          setProfile(null);
+        }
+      } finally {
+        if (isMounted) {
+          setProfileUserId(userId);
+        }
+      }
+    };
+
+    void loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session?.user.id]);
+
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error };
   }, []);
 
-  const signUp = useCallback(async (displayName: string, email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { display_name: displayName },
-      },
-    });
+  const signUp = useCallback(
+    async (displayName: string, email: string, password: string, partySize: number) => {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { display_name: displayName, party_size: partySize },
+        },
+      });
 
-    return {
-      error,
-      requiresEmailConfirmation: !error && !data.session,
-    };
-  }, []);
+      return {
+        error,
+        requiresEmailConfirmation: !error && !data.session,
+      };
+    },
+    [],
+  );
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     return { error };
   }, []);
 
+  const verifyCurrentPassword = useCallback(
+    async (currentPassword: string) => {
+      if (!session?.user.email) {
+        return { error: null, verified: false };
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: session.user.email,
+        password: currentPassword,
+      });
+
+      return { error, verified: !error };
+    },
+    [session],
+  );
+
+  const changeEmail = useCallback(
+    async (currentPassword: string, newEmail: string) => {
+      const verification = await verifyCurrentPassword(currentPassword);
+
+      if (!verification.verified) {
+        if (!verification.error) {
+          throw new Error('Das Konto hat keine E-Mail-Adresse.');
+        }
+
+        return { error: verification.error };
+      }
+
+      const { error } = await supabase.auth.updateUser({ email: newEmail });
+      return { error };
+    },
+    [verifyCurrentPassword],
+  );
+
+  const changePassword = useCallback(
+    async (currentPassword: string, newPassword: string) => {
+      const verification = await verifyCurrentPassword(currentPassword);
+
+      if (!verification.verified) {
+        if (!verification.error) {
+          throw new Error('Das Konto hat keine E-Mail-Adresse.');
+        }
+
+        return { error: verification.error };
+      }
+
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      return { error };
+    },
+    [verifyCurrentPassword],
+  );
+
+  const updatePartySize = useCallback(
+    async (partySize: number) => {
+      const userId = session?.user.id;
+
+      if (!userId) {
+        throw new Error('Für die Änderung ist eine Anmeldung erforderlich.');
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ party_size: partySize })
+        .eq('user_id', userId)
+        .select('id, user_id, display_name, party_size, role, created_at, updated_at')
+        .single();
+
+      if (!error) {
+        setProfile(data);
+      }
+
+      return { error };
+    },
+    [session],
+  );
+
+  const currentProfile = profile?.user_id === session?.user.id ? profile : null;
+  const isLoading = isSessionLoading || Boolean(session && profileUserId !== session.user.id);
+
   const value = useMemo<AuthContextValue>(
     () => ({
+      changeEmail,
+      changePassword,
+      isAdmin: currentProfile?.role === 'admin',
       isLoading,
+      profile: currentProfile,
       session,
       signIn,
       signOut,
       signUp,
       user: session?.user ?? null,
+      updatePartySize,
     }),
-    [isLoading, session, signIn, signOut, signUp],
+    [
+      changeEmail,
+      changePassword,
+      currentProfile,
+      isLoading,
+      session,
+      signIn,
+      signOut,
+      signUp,
+      updatePartySize,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

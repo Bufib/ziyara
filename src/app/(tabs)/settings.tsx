@@ -19,7 +19,7 @@ export default function SettingsScreen() {
   const theme = useTheme();
   const { mode, resolvedTheme, setMode } = useThemeMode();
   const { language, setLanguage, t } = useI18n();
-  const { signOut, user } = useAuth();
+  const { isAdmin, signOut, user } = useAuth();
   const { preferences, setArabicFontScale, setLineByLine } = useReaderPreferences();
 
   const handleSignOut = async () => {
@@ -162,11 +162,24 @@ export default function SettingsScreen() {
             </ThemedText>
           </View>
           <Button
+            icon="account"
+            label={t('settings.manageAccount')}
+            variant="secondary"
+            onPress={() => router.push('/account')}
+          />
+          <Button
             icon="logout"
             label={t('settings.signOut')}
             variant="secondary"
             onPress={() => void handleSignOut()}
           />
+          {isAdmin ? (
+            <Button
+              icon="people"
+              label={t('settings.openAdmin')}
+              onPress={() => router.push('/admin')}
+            />
+          ) : null}
         </ThemedView>
       </Section>
 
