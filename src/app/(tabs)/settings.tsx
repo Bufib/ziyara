@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Screen } from '@/components/ui/screen';
 import { Section } from '@/components/ui/section';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { getAuthErrorTranslationKey, useAuth } from '@/features/auth/auth-context';
 import { languageOptions, useI18n } from '@/features/i18n/i18n';
 import { useReaderPreferences } from '@/features/storage/useReaderPreferences';
 import { useThemeMode, type ThemeMode } from '@/features/theme/theme-mode';
@@ -18,7 +19,16 @@ export default function SettingsScreen() {
   const theme = useTheme();
   const { mode, resolvedTheme, setMode } = useThemeMode();
   const { language, setLanguage, t } = useI18n();
+  const { signOut, user } = useAuth();
   const { preferences, setArabicFontScale, setLineByLine } = useReaderPreferences();
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+
+    if (error) {
+      Alert.alert(t('auth.errorTitle'), t(getAuthErrorTranslationKey(error)));
+    }
+  };
 
   return (
     <Screen>
@@ -140,6 +150,23 @@ export default function SettingsScreen() {
               value={preferences.lineByLine}
             />
           </View>
+        </ThemedView>
+      </Section>
+
+      <Section title={t('settings.account')}>
+        <ThemedView type="surface" style={[styles.panel, { borderColor: theme.border }]}>
+          <View style={styles.rowText}>
+            <ThemedText type="smallBold">{t('settings.accountEmail')}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {user?.email ?? '—'}
+            </ThemedText>
+          </View>
+          <Button
+            icon="logout"
+            label={t('settings.signOut')}
+            variant="secondary"
+            onPress={() => void handleSignOut()}
+          />
         </ThemedView>
       </Section>
 

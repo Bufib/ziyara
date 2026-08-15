@@ -30,6 +30,40 @@ export const languageOptions: {
 
 const dictionaries: Record<Language, Record<string, string>> = {
   de: {
+    "auth.email": "E-Mail-Adresse",
+    "auth.emailPlaceholder": "name@beispiel.de",
+    "auth.error.emailNotConfirmed":
+      "Bestätige zuerst deine E-Mail-Adresse und versuche es danach erneut.",
+    "auth.error.generic":
+      "Das hat nicht funktioniert. Prüfe deine Internetverbindung und versuche es erneut.",
+    "auth.error.invalidCredentials": "E-Mail-Adresse oder Passwort ist nicht korrekt.",
+    "auth.error.rateLimit":
+      "Zu viele Versuche in kurzer Zeit. Bitte warte einen Moment.",
+    "auth.error.signupDisabled": "Neue Registrierungen sind derzeit deaktiviert.",
+    "auth.error.userExists": "Für diese E-Mail-Adresse existiert bereits ein Konto.",
+    "auth.error.weakPassword": "Das Passwort erfüllt die Sicherheitsanforderungen nicht.",
+    "auth.errorTitle": "Anmeldung fehlgeschlagen",
+    "auth.haveAccount": "Du hast bereits ein Konto?",
+    "auth.loginBody": "Melde dich an, um die App zu verwenden.",
+    "auth.loginTitle": "Willkommen zurück",
+    "auth.name": "Anzeigename",
+    "auth.namePlaceholder": "Dein Name",
+    "auth.noAccount": "Du hast noch kein Konto?",
+    "auth.password": "Passwort",
+    "auth.passwordConfirm": "Passwort wiederholen",
+    "auth.passwordHint": "Mindestens 8 Zeichen sowie mindestens ein Buchstabe und eine Zahl.",
+    "auth.registerBody": "Erstelle ein Konto, um die App zu verwenden.",
+    "auth.registerTitle": "Konto erstellen",
+    "auth.signIn": "Anmelden",
+    "auth.signUp": "Registrieren",
+    "auth.success.checkEmail":
+      "Fast geschafft. Öffne die Bestätigungs-E-Mail und bestätige dein Konto.",
+    "auth.validation.email": "Gib eine gültige E-Mail-Adresse ein.",
+    "auth.validation.name": "Der Anzeigename muss mindestens 2 Zeichen lang sein.",
+    "auth.validation.password": "Das Passwort muss mindestens 8 Zeichen lang sein.",
+    "auth.validation.passwordMatch": "Die eingegebenen Passwörter stimmen nicht überein.",
+    "auth.validation.passwordPattern":
+      "Das Passwort muss mindestens einen Buchstaben und eine Zahl enthalten.",
     "about.build":
       "Der aktuelle Build nutzt Expo SDK 57, Expo Router, TypeScript, React Native Maps, Expo Location, SQLite-Vorbereitung und lokal gespeicherte Einstellungen.",
     "about.editorialBody":
@@ -181,6 +215,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "search.searchA11y": "Orte, Städte, Duas, Ziyarat und Handlungen suchen",
     "search.title": "Suche",
     "settings.activeMode": "Aktiver Modus: {mode}.",
+    "settings.account": "Konto",
+    "settings.accountEmail": "Angemeldet als",
     "settings.appPrep": "App-Vorbereitung",
     "settings.arabicFontBody":
       "Gilt für Platzhalter und geprüfte arabische Inhalte.",
@@ -195,6 +231,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "Gruppiert Arabisch, Transliteration und Übersetzung.",
     "settings.lineByLineTitle": "Zeilenweise Ansicht",
     "settings.reader": "Lesemodus",
+    "settings.signOut": "Abmelden",
     "settings.theme.dark": "Dunkel",
     "settings.theme.light": "Hell",
     "settings.theme.system": "System",
@@ -212,6 +249,39 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "sources.ruleTitle": "Quellenregel",
   },
   en: {
+    "auth.email": "Email address",
+    "auth.emailPlaceholder": "name@example.com",
+    "auth.error.emailNotConfirmed":
+      "Confirm your email address first, then try again.",
+    "auth.error.generic":
+      "That did not work. Check your internet connection and try again.",
+    "auth.error.invalidCredentials": "The email address or password is incorrect.",
+    "auth.error.rateLimit": "Too many attempts in a short time. Please wait a moment.",
+    "auth.error.signupDisabled": "New registrations are currently disabled.",
+    "auth.error.userExists": "An account already exists for this email address.",
+    "auth.error.weakPassword": "The password does not meet the security requirements.",
+    "auth.errorTitle": "Sign-in failed",
+    "auth.haveAccount": "Already have an account?",
+    "auth.loginBody": "Sign in to use the app.",
+    "auth.loginTitle": "Welcome back",
+    "auth.name": "Display name",
+    "auth.namePlaceholder": "Your name",
+    "auth.noAccount": "Do not have an account yet?",
+    "auth.password": "Password",
+    "auth.passwordConfirm": "Confirm password",
+    "auth.passwordHint": "At least 8 characters with at least one letter and one number.",
+    "auth.registerBody": "Create an account to use the app.",
+    "auth.registerTitle": "Create account",
+    "auth.signIn": "Sign in",
+    "auth.signUp": "Register",
+    "auth.success.checkEmail":
+      "Almost done. Open the confirmation email and verify your account.",
+    "auth.validation.email": "Enter a valid email address.",
+    "auth.validation.name": "The display name must be at least 2 characters long.",
+    "auth.validation.password": "The password must be at least 8 characters long.",
+    "auth.validation.passwordMatch": "The passwords do not match.",
+    "auth.validation.passwordPattern":
+      "The password must contain at least one letter and one number.",
     "about.build":
       "This build uses Expo SDK 57, Expo Router, TypeScript, React Native Maps, Expo Location, SQLite preparation, and locally stored settings.",
     "about.editorialBody":
@@ -362,6 +432,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "search.searchA11y": "Search places, cities, duas, Ziyarat, and acts",
     "search.title": "Search",
     "settings.activeMode": "Active mode: {mode}.",
+    "settings.account": "Account",
+    "settings.accountEmail": "Signed in as",
     "settings.appPrep": "App Preparation",
     "settings.arabicFontBody":
       "Applies to placeholders and reviewed Arabic content.",
@@ -376,6 +448,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "Groups Arabic, transliteration, and translation.",
     "settings.lineByLineTitle": "Line-by-line view",
     "settings.reader": "Reader",
+    "settings.signOut": "Sign out",
     "settings.theme.dark": "Dark",
     "settings.theme.light": "Light",
     "settings.theme.system": "System",
@@ -393,6 +466,39 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "sources.ruleTitle": "Source Rule",
   },
   ar: {
+    "auth.email": "البريد الإلكتروني",
+    "auth.emailPlaceholder": "name@example.com",
+    "auth.error.emailNotConfirmed":
+      "أكد عنوان بريدك الإلكتروني أولا، ثم حاول مرة أخرى.",
+    "auth.error.generic":
+      "لم تنجح العملية. تحقق من اتصال الإنترنت وحاول مرة أخرى.",
+    "auth.error.invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    "auth.error.rateLimit": "محاولات كثيرة خلال وقت قصير. يرجى الانتظار قليلا.",
+    "auth.error.signupDisabled": "التسجيلات الجديدة معطلة حاليا.",
+    "auth.error.userExists": "يوجد حساب بالفعل لهذا البريد الإلكتروني.",
+    "auth.error.weakPassword": "كلمة المرور لا تستوفي متطلبات الأمان.",
+    "auth.errorTitle": "فشل تسجيل الدخول",
+    "auth.haveAccount": "لديك حساب بالفعل؟",
+    "auth.loginBody": "سجل الدخول لاستخدام التطبيق.",
+    "auth.loginTitle": "مرحبا بعودتك",
+    "auth.name": "اسم العرض",
+    "auth.namePlaceholder": "اسمك",
+    "auth.noAccount": "ليس لديك حساب بعد؟",
+    "auth.password": "كلمة المرور",
+    "auth.passwordConfirm": "تأكيد كلمة المرور",
+    "auth.passwordHint": "8 أحرف على الأقل، مع حرف واحد ورقم واحد على الأقل.",
+    "auth.registerBody": "أنشئ حسابا لاستخدام التطبيق.",
+    "auth.registerTitle": "إنشاء حساب",
+    "auth.signIn": "تسجيل الدخول",
+    "auth.signUp": "التسجيل",
+    "auth.success.checkEmail":
+      "أوشكت على الانتهاء. افتح رسالة التأكيد وأكد حسابك.",
+    "auth.validation.email": "أدخل عنوان بريد إلكتروني صالحا.",
+    "auth.validation.name": "يجب ألا يقل اسم العرض عن حرفين.",
+    "auth.validation.password": "يجب ألا تقل كلمة المرور عن 8 أحرف.",
+    "auth.validation.passwordMatch": "كلمتا المرور غير متطابقتين.",
+    "auth.validation.passwordPattern":
+      "يجب أن تحتوي كلمة المرور على حرف واحد ورقم واحد على الأقل.",
     "about.build":
       "يعتمد هذا الإصدار على Expo SDK 57 و Expo Router و TypeScript و React Native Maps و Expo Location مع إعداد SQLite وحفظ الإعدادات محليا.",
     "about.editorialBody":
@@ -542,6 +648,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "search.searchA11y": "البحث عن الأماكن والمدن والأدعية والزيارات والأعمال",
     "search.title": "بحث",
     "settings.activeMode": "الوضع النشط: {mode}.",
+    "settings.account": "الحساب",
+    "settings.accountEmail": "تم تسجيل الدخول باسم",
     "settings.appPrep": "إعداد التطبيق",
     "settings.arabicFontBody":
       "ينطبق على النصوص المؤقتة والمحتوى العربي المراجع.",
@@ -554,6 +662,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "settings.lineByLineBody": "يجمع العربية والنقل الصوتي والترجمة.",
     "settings.lineByLineTitle": "عرض سطر بسطر",
     "settings.reader": "وضع القراءة",
+    "settings.signOut": "تسجيل الخروج",
     "settings.theme.dark": "داكن",
     "settings.theme.light": "فاتح",
     "settings.theme.system": "النظام",

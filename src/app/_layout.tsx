@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Colors } from '@/constants/theme';
+import { AuthProvider, useAuth } from '@/features/auth/auth-context';
 import { AppI18nProvider, useI18n } from '@/features/i18n/i18n';
 import { AppThemeProvider, useResolvedTheme } from '@/features/theme/theme-mode';
 
@@ -13,7 +14,9 @@ export default function RootLayout() {
   return (
     <AppI18nProvider>
       <AppThemeProvider>
-        <RootNavigation />
+        <AuthProvider>
+          <RootNavigation />
+        </AuthProvider>
       </AppThemeProvider>
     </AppI18nProvider>
   );
@@ -23,10 +26,17 @@ function RootNavigation() {
   const scheme = useResolvedTheme();
   const colors = Colors[scheme];
   const { t } = useI18n();
+  const { isLoading, session } = useAuth();
 
   useEffect(() => {
-    SplashScreen.hideAsync().catch(() => undefined);
-  }, []);
+    if (!isLoading) {
+      SplashScreen.hideAsync().catch(() => undefined);
+    }
+  }, [isLoading]);
+
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -39,13 +49,23 @@ function RootNavigation() {
             headerShadowVisible: false,
             contentStyle: { backgroundColor: colors.background },
           }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false, title: t('nav.home') }} />
-          <Stack.Screen name="city/[city]" options={{ title: t('nav.city') }} />
-          <Stack.Screen name="place/[slug]" options={{ title: t('nav.placeDetails') }} />
-          <Stack.Screen name="reader/[slug]" options={{ title: t('nav.reader') }} />
-          <Stack.Screen name="about" options={{ title: t('nav.about') }} />
-          <Stack.Screen name="sources" options={{ title: t('nav.sources') }} />
-          <Stack.Screen name="disclaimer" options={{ title: t('nav.disclaimer') }} />
+          <Stack.Protected guard={!session}>
+            <Stack.Screen name="login" options={{ headerShown: false, title: t('auth.loginTitle') }} />
+            <Stack.Screen
+              name="register"
+              options={{ headerShown: false, title: t('auth.registerTitle') }}
+            />
+          </Stack.Protected>
+
+          <Stack.Protected guard={Boolean(session)}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false, title: t('nav.home') }} />
+            <Stack.Screen name="city/[city]" options={{ title: t('nav.city') }} />
+            <Stack.Screen name="place/[slug]" options={{ title: t('nav.placeDetails') }} />
+            <Stack.Screen name="reader/[slug]" options={{ title: t('nav.reader') }} />
+            <Stack.Screen name="about" options={{ title: t('nav.about') }} />
+            <Stack.Screen name="sources" options={{ title: t('nav.sources') }} />
+            <Stack.Screen name="disclaimer" options={{ title: t('nav.disclaimer') }} />
+          </Stack.Protected>
         </Stack>
       </NavigationThemeProvider>
     </GestureHandlerRootView>
