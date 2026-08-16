@@ -71,7 +71,7 @@ export function MapExperience() {
                 setUserLocation(lastKnownLocation);
               }
             },
-          );
+          ).catch(() => undefined);
         }
       })
       .catch(() => undefined);
@@ -110,7 +110,6 @@ export function MapExperience() {
       <MapView
         ref={mapRef}
         initialRegion={iraqRegion}
-        showsUserLocation={locationStatus === "granted"}
         style={styles.map}
       >
         {allPlaces.map((rawPlace) => {
@@ -140,6 +139,7 @@ export function MapExperience() {
 
       <View style={styles.topBar}>
         <Button
+          disabled={locationStatus === "loading"}
           icon="map"
           label={
             locationStatus === "loading"

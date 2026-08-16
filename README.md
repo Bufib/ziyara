@@ -14,7 +14,7 @@ Produktionsorientierte Expo-SDK-57-App für schiitische Ziyarah im Irak.
 - React Native 0.86
 - React 19.2.3
 - Expo Router with TypeScript
-- React Native Maps, Expo Location, Expo SQLite readiness, AsyncStorage, Expo Clipboard
+- React Native Maps, Expo Location, AsyncStorage, Expo Clipboard
 
 ## Inhaltsregel
 
@@ -27,5 +27,5 @@ npm install
 npx expo start
 ```
 
-SDK 57 erwartet Node `22.13.x` oder eine andere unterstützte React-Native-0.86-Engine-Version.
+SDK 57 erwartet Node `22.13.x` oder eine andere in `package.json` deklarierte React-Native-0.86-Engine-Version. `npm run validate` führt Typprüfung, Lint, Tests und den Expo-Abhängigkeitscheck aus.
 # ziyara

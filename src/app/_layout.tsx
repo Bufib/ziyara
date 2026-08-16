@@ -3,6 +3,9 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { ThemedText } from '@/components/themed-text';
+import { Button } from '@/components/ui/button';
+import { Screen } from '@/components/ui/screen';
 import { Colors } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/features/auth/auth-context';
 import { GroupCheckProvider, useGroupCheck } from '@/features/group-check/group-check-context';
@@ -11,7 +14,7 @@ import {
   QuestionRoundProvider,
   useQuestionRound,
 } from '@/features/question-round/question-round-context';
-import { AppThemeProvider, useResolvedTheme } from '@/features/theme/theme-mode';
+import { AppThemeProvider, useThemeMode } from '@/features/theme/theme-mode';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -32,21 +35,53 @@ export default function RootLayout() {
 }
 
 function RootNavigation() {
-  const scheme = useResolvedTheme();
+  const { loaded: isThemeLoaded, resolvedTheme: scheme } = useThemeMode();
   const colors = Colors[scheme];
-  const { t } = useI18n();
-  const { isAdmin, isLoading, session } = useAuth();
+  const { loaded: isLanguageLoaded, t } = useI18n();
+  const { hasProfileError, isAdmin, isLoading, refreshProfile, session } = useAuth();
   const { activeCheck, isBlocking, isLoading: isGroupCheckLoading } = useGroupCheck();
-  const { activeRound } = useQuestionRound();
+  const { activeRound, isLoading: isQuestionRoundLoading } = useQuestionRound();
 
   useEffect(() => {
-    if (!isLoading && !isGroupCheckLoading) {
+    if (
+      !isLoading &&
+      !isGroupCheckLoading &&
+      !isQuestionRoundLoading &&
+      isLanguageLoaded &&
+      isThemeLoaded
+    ) {
       SplashScreen.hideAsync().catch(() => undefined);
     }
-  }, [isGroupCheckLoading, isLoading]);
+  }, [
+    isGroupCheckLoading,
+    isLanguageLoaded,
+    isLoading,
+    isQuestionRoundLoading,
+    isThemeLoaded,
+  ]);
 
-  if (isLoading || isGroupCheckLoading) {
+  if (
+    isLoading ||
+    isGroupCheckLoading ||
+    isQuestionRoundLoading ||
+    !isLanguageLoaded ||
+    !isThemeLoaded
+  ) {
     return null;
+  }
+
+  if (session && hasProfileError) {
+    return (
+      <Screen>
+        <ThemedText type="title">{t('auth.profileErrorTitle')}</ThemedText>
+        <ThemedText themeColor="textSecondary">{t('auth.profileErrorBody')}</ThemedText>
+        <Button
+          icon="refresh"
+          label={t('auth.profileRetry')}
+          onPress={() => void refreshProfile()}
+        />
+      </Screen>
+    );
   }
 
   return (

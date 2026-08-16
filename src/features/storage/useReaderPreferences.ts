@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { usePersistentState } from '@/features/storage/persistentState';
+import { createPersistentState } from '@/features/storage/persistentState';
 
 type ReaderPreferences = {
   arabicFontScale: number;
@@ -12,11 +12,33 @@ const defaultPreferences: ReaderPreferences = {
   lineByLine: true,
 };
 
+const useReaderPreferencesState = createPersistentState(
+  'ziyara.reader.preferences',
+  defaultPreferences,
+  (value) => {
+    if (!value || typeof value !== 'object') {
+      return undefined;
+    }
+
+    const candidate = value as Partial<ReaderPreferences>;
+
+    if (
+      typeof candidate.arabicFontScale !== 'number' ||
+      !Number.isFinite(candidate.arabicFontScale) ||
+      typeof candidate.lineByLine !== 'boolean'
+    ) {
+      return undefined;
+    }
+
+    return {
+      arabicFontScale: Math.min(1.6, Math.max(0.85, candidate.arabicFontScale)),
+      lineByLine: candidate.lineByLine,
+    };
+  },
+);
+
 export function useReaderPreferences() {
-  const [preferences, setPreferences] = usePersistentState<ReaderPreferences>(
-    'ziyara.reader.preferences',
-    defaultPreferences,
-  );
+  const [preferences, setPreferences] = useReaderPreferencesState();
 
   const setArabicFontScale = useCallback(
     (arabicFontScale: number) => {

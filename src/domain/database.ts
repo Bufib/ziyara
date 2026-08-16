@@ -57,6 +57,21 @@ export type AnonymousQuestion = {
   round_id: number;
 };
 
+export type QuestionSubmissionLimit = {
+  profile_id: number;
+  round_id: number;
+  submission_count: number;
+};
+
+export type RoleAssignmentAudit = {
+  changed_by_profile_id: number | null;
+  created_at: string;
+  id: number;
+  new_role: AppRole;
+  previous_role: AppRole;
+  target_user_id: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -138,6 +153,31 @@ export type Database = {
         Update: {
           closed_at?: string | null;
         };
+      };
+      question_submission_limits: {
+        Insert: {
+          profile_id: number;
+          round_id: number;
+          submission_count?: number;
+        };
+        Relationships: [];
+        Row: QuestionSubmissionLimit;
+        Update: {
+          submission_count?: number;
+        };
+      };
+      role_assignment_audit: {
+        Insert: {
+          changed_by_profile_id?: number | null;
+          created_at?: string;
+          id?: never;
+          new_role: AppRole;
+          previous_role: AppRole;
+          target_user_id: string;
+        };
+        Relationships: [];
+        Row: RoleAssignmentAudit;
+        Update: never;
       };
     };
     Views: Record<string, never>;

@@ -18,6 +18,7 @@ export function Card({ children, onPress, style, ...props }: CardProps) {
   if (onPress) {
     return (
       <Pressable
+        {...props}
         accessibilityRole="button"
         onPress={onPress}
         style={({ pressed }) => [cardStyle, pressed && styles.pressed]}>

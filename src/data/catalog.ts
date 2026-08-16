@@ -14,18 +14,30 @@ import {
 
 export type SearchFilter = 'all' | 'places' | 'content' | 'acts';
 
-export type SearchResult = {
+type SearchResultBase = {
   description: string;
   id: string;
-  kind: 'place' | 'content' | 'act';
-  slug: string;
   subtitle: string;
   title: string;
   verificationStatus: VerificationStatus;
 };
 
+export type SearchResult =
+  | (SearchResultBase & { kind: 'place'; slug: string })
+  | (SearchResultBase & { kind: 'content'; slug: string })
+  | (SearchResultBase & { kind: 'act'; slug?: string });
+
 function normalize(value: string) {
-  return value.trim().toLocaleLowerCase();
+  return value
+    .normalize('NFKD')
+    .replace(/\p{M}/gu, '')
+    .replace(/ـ/g, '')
+    .replace(/[إأآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ؤ/g, 'و')
+    .replace(/ئ/g, 'ي')
+    .trim()
+    .toLocaleLowerCase();
 }
 
 function matches(query: string, fields: string[]) {
@@ -115,7 +127,7 @@ export function searchCatalog(
             description: act.shortInstruction,
             id: act.id,
             kind: 'act' as const,
-            slug: act.contentId ?? 'general-ziyarah-etiquette-placeholder',
+            slug: act.contentId,
             subtitle: translate(language, `labels.actType.${act.type}`),
             title: act.title,
             verificationStatus: act.verificationStatus,

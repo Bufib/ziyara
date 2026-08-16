@@ -48,7 +48,7 @@ export const recommendedActs: RecommendedAct[] = [
     title: 'Ziyarat Arbaeen am 20. Safar prüfen',
     type: 'ziyarah',
     shortInstruction: 'duas.org ordnet Ziyarat Arbaeen dem 20. Safar zu.',
-    contentId: 'general-ziyarah-etiquette-placeholder',
+    contentId: 'ziyarat-arbaeen-placeholder',
     recommendedAtPlaceId: 'place-imam-hussain',
     priority: 4,
     sourceReferences: ['duas-ziyarat-arbaeen'],

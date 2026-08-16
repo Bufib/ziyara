@@ -1,9 +1,20 @@
 import { useCallback } from 'react';
 
-import { usePersistentState } from '@/features/storage/persistentState';
+import { createPersistentState } from '@/features/storage/persistentState';
+
+const bookmarkAliases: Record<string, string> = {
+  'content:general-ziyarah-etiquette-placeholder': 'content:ziyarat-arbaeen-placeholder',
+  'content:two-rakat-prayer-placeholder': 'content:dua-safwan-placeholder',
+};
+
+const useBookmarksState = createPersistentState<string[]>('ziyara.bookmarks', [], (value) =>
+  Array.isArray(value) && value.every((item): item is string => typeof item === 'string')
+    ? [...new Set(value.map((item) => bookmarkAliases[item] ?? item))]
+    : undefined,
+);
 
 export function useBookmarks() {
-  const [bookmarks, setBookmarks] = usePersistentState<string[]>('ziyara.bookmarks', []);
+  const [bookmarks, setBookmarks] = useBookmarksState();
 
   const isBookmarked = useCallback(
     (key: string) => bookmarks.includes(key),

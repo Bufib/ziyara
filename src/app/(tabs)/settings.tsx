@@ -41,12 +41,13 @@ export default function SettingsScreen() {
             </ThemedText>
           </View>
 
-          <View style={styles.segmentedControl}>
+          <View accessibilityRole="radiogroup" style={styles.segmentedControl}>
             {themeModeOptions.map((option) => {
               const selected = mode === option;
               return (
                 <Pressable
-                  accessibilityRole="button"
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: selected }}
                   key={option}
                   onPress={() => setMode(option)}
                   style={({ pressed }) => [
@@ -83,12 +84,13 @@ export default function SettingsScreen() {
             </ThemedText>
           </View>
 
-          <View style={styles.segmentedControl}>
+          <View accessibilityRole="radiogroup" style={styles.segmentedControl}>
             {languageOptions.map((option) => {
               const selected = language === option.value;
               return (
                 <Pressable
-                  accessibilityRole="button"
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: selected }}
                   key={option.value}
                   onPress={() => setLanguage(option.value)}
                   style={({ pressed }) => [

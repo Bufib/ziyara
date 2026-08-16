@@ -57,8 +57,8 @@ export const religiousContent: ReligiousContent[] = [
     version: '0.1.0',
   },
   {
-    id: 'general-ziyarah-etiquette-placeholder',
-    slug: 'general-ziyarah-etiquette-placeholder',
+    id: 'ziyarat-arbaeen-placeholder',
+    slug: 'ziyarat-arbaeen-placeholder',
     title: 'Ziyarat Arbaeen',
     type: 'ziyarah',
     arabicText: placeholder,
@@ -72,8 +72,8 @@ export const religiousContent: ReligiousContent[] = [
     version: '0.1.0',
   },
   {
-    id: 'two-rakat-prayer-placeholder',
-    slug: 'two-rakat-prayer-placeholder',
+    id: 'dua-safwan-placeholder',
+    slug: 'dua-safwan-placeholder',
     title: 'Dua Safwan / Alqama nach Ziyarat Ashura',
     type: 'dua',
     arabicText: placeholder,
@@ -89,5 +89,14 @@ export const religiousContent: ReligiousContent[] = [
 ];
 
 export function getReligiousContentBySlug(slug?: string) {
-  return religiousContent.find((content) => content.slug === slug || content.id === slug);
+  const migratedSlug =
+    slug === 'general-ziyarah-etiquette-placeholder'
+      ? 'ziyarat-arbaeen-placeholder'
+      : slug === 'two-rakat-prayer-placeholder'
+        ? 'dua-safwan-placeholder'
+        : slug;
+
+  return religiousContent.find(
+    (content) => content.slug === migratedSlug || content.id === migratedSlug,
+  );
 }

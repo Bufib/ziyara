@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { AppState, Platform } from 'react-native';
@@ -29,15 +30,23 @@ type QuestionRoundContextValue = {
 type SyncState = 'error' | 'loading' | 'ready';
 
 const QuestionRoundContext = createContext<QuestionRoundContextValue | null>(null);
+const fallbackRefreshIntervalMs = 120_000;
+const fallbackRefreshJitterMs = 30_000;
 
 export function QuestionRoundProvider({ children }: PropsWithChildren) {
   const { isLoading: isAuthLoading, session } = useAuth();
   const [activeRound, setActiveRound] = useState<QuestionRound | null>(null);
+  const [syncedUserId, setSyncedUserId] = useState<string | null>(null);
   const [syncState, setSyncState] = useState<SyncState>('loading');
+  const refreshSequence = useRef(0);
+  const userId = session?.user.id ?? null;
 
   const refresh = useCallback(async () => {
-    if (!session) {
+    const requestSequence = ++refreshSequence.current;
+
+    if (!userId) {
       setActiveRound(null);
+      setSyncedUserId(null);
       setSyncState('ready');
       return;
     }
@@ -53,12 +62,18 @@ export function QuestionRoundProvider({ children }: PropsWithChildren) {
         throw error;
       }
 
-      setActiveRound(data);
-      setSyncState('ready');
+      if (requestSequence === refreshSequence.current) {
+        setActiveRound(data);
+        setSyncedUserId(userId);
+        setSyncState('ready');
+      }
     } catch {
-      setSyncState('error');
+      if (requestSequence === refreshSequence.current) {
+        setSyncedUserId(userId);
+        setSyncState('error');
+      }
     }
-  }, [session]);
+  }, [userId]);
 
   useEffect(() => {
     if (isAuthLoading) {
@@ -67,12 +82,12 @@ export function QuestionRoundProvider({ children }: PropsWithChildren) {
 
     const initialRefreshTimeout = setTimeout(() => void refresh(), 0);
 
-    if (!session) {
+    if (!userId) {
       return () => clearTimeout(initialRefreshTimeout);
     }
 
     const channel = supabase
-      .channel(`question-round-state:${session.user.id}`)
+      .channel(`question-round-state:${userId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'question_rounds' },
@@ -80,7 +95,19 @@ export function QuestionRoundProvider({ children }: PropsWithChildren) {
       )
       .subscribe();
 
-    const pollingInterval = setInterval(() => void refresh(), 15_000);
+    let pollingTimeout: ReturnType<typeof setTimeout> | null = null;
+    let stopped = false;
+    const scheduleFallbackRefresh = () => {
+      if (stopped) {
+        return;
+      }
+
+      const delay = fallbackRefreshIntervalMs + Math.random() * fallbackRefreshJitterMs;
+      pollingTimeout = setTimeout(() => {
+        void refresh().finally(scheduleFallbackRefresh);
+      }, delay);
+    };
+    scheduleFallbackRefresh();
     const appStateSubscription =
       Platform.OS === 'web'
         ? null
@@ -91,12 +118,15 @@ export function QuestionRoundProvider({ children }: PropsWithChildren) {
           });
 
     return () => {
+      stopped = true;
       clearTimeout(initialRefreshTimeout);
-      clearInterval(pollingInterval);
+      if (pollingTimeout) {
+        clearTimeout(pollingTimeout);
+      }
       appStateSubscription?.remove();
       void supabase.removeChannel(channel);
     };
-  }, [isAuthLoading, refresh, session]);
+  }, [isAuthLoading, refresh, userId]);
 
   const submitQuestion = useCallback(async (roundId: number, question: string) => {
     const { error } = await supabase.rpc('submit_anonymous_question', {
@@ -111,11 +141,11 @@ export function QuestionRoundProvider({ children }: PropsWithChildren) {
     () => ({
       activeRound,
       hasSyncError: syncState === 'error',
-      isLoading: syncState === 'loading',
+      isLoading: isAuthLoading || syncedUserId !== userId || syncState === 'loading',
       refresh,
       submitQuestion,
     }),
-    [activeRound, refresh, submitQuestion, syncState],
+    [activeRound, isAuthLoading, refresh, submitQuestion, syncedUserId, syncState, userId],
   );
 
   return <QuestionRoundContext.Provider value={value}>{children}</QuestionRoundContext.Provider>;

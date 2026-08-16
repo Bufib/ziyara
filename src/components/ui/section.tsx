@@ -8,14 +8,13 @@ type SectionProps = {
   children: React.ReactNode;
   onAction?: () => void;
   title: string;
-  textColor?: any
 };
 
-export function Section({ actionLabel, children, onAction, title, textColor }: SectionProps) {
+export function Section({ actionLabel, children, onAction, title }: SectionProps) {
   return (
     <View style={styles.section}>
       <View style={styles.header}>
-        <ThemedText type="subtitle" style={{color: textColor}}>{title}</ThemedText>
+        <ThemedText type="subtitle">{title}</ThemedText>
         {actionLabel && onAction ? (
           <Pressable accessibilityRole="button" onPress={onAction} style={styles.action}>
             <ThemedText type="smallBold" themeColor="accent">

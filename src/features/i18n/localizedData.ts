@@ -524,7 +524,7 @@ const religiousContentTranslations: Record<
       transliteration: placeholderTranslations.ar,
     },
   },
-  'general-ziyarah-etiquette-placeholder': {
+  'ziyarat-arbaeen-placeholder': {
     en: {
       arabicText: placeholderTranslations.en,
       language: 'English',
@@ -544,7 +544,7 @@ const religiousContentTranslations: Record<
       transliteration: placeholderTranslations.ar,
     },
   },
-  'two-rakat-prayer-placeholder': {
+  'dua-safwan-placeholder': {
     en: {
       arabicText: placeholderTranslations.en,
       language: 'English',

@@ -85,6 +85,7 @@ export function MapExperience() {
           {t('map.description')}
         </ThemedText>
         <Button
+          disabled={locationStatus === 'loading'}
           icon="map"
           label={
             locationStatus === 'loading'

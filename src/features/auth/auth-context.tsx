@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { AppState, Platform } from 'react-native';
@@ -30,7 +31,9 @@ type AuthContextValue = {
   changePassword: (currentPassword: string, newPassword: string) => Promise<AuthResult>;
   isAdmin: boolean;
   isLoading: boolean;
+  hasProfileError: boolean;
   profile: UserProfile | null;
+  refreshProfile: () => Promise<void>;
   session: Session | null;
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signOut: () => Promise<AuthResult>;
@@ -52,6 +55,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const profileRequestSequence = useRef(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -111,43 +115,48 @@ export function AuthProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
-  useEffect(() => {
+  const refreshProfile = useCallback(async () => {
     const userId = session?.user.id;
+    const requestSequence = ++profileRequestSequence.current;
 
     if (!userId) {
+      setProfile(null);
+      setProfileUserId(null);
       return;
     }
 
-    let isMounted = true;
+    setProfileUserId(null);
 
-    const loadProfile = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, user_id, display_name, member_type, party_size, role, created_at, updated_at')
-          .eq('user_id', userId)
-          .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, user_id, display_name, member_type, party_size, role, created_at, updated_at')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-        if (isMounted) {
-          setProfile(error ? null : data);
-        }
-      } catch {
-        if (isMounted) {
-          setProfile(null);
-        }
-      } finally {
-        if (isMounted) {
-          setProfileUserId(userId);
-        }
+      if (requestSequence === profileRequestSequence.current) {
+        setProfile(error ? null : data);
       }
-    };
+    } catch {
+      if (requestSequence === profileRequestSequence.current) {
+        setProfile(null);
+      }
+    } finally {
+      if (requestSequence === profileRequestSequence.current) {
+        setProfileUserId(userId);
+      }
+    }
+  }, [session?.user.id]);
 
-    void loadProfile();
+  useEffect(() => {
+    const profileLoadTimeout = setTimeout(() => void refreshProfile(), 0);
+
 
     return () => {
-      isMounted = false;
+      clearTimeout(profileLoadTimeout);
+      profileRequestSequence.current += 1;
     };
-  }, [session?.user.id]);
+  }, [refreshProfile]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -261,14 +270,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const currentProfile = profile?.user_id === session?.user.id ? profile : null;
   const isLoading = isSessionLoading || Boolean(session && profileUserId !== session.user.id);
+  const hasProfileError = Boolean(session && !isLoading && currentProfile === null);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       changeEmail,
       changePassword,
+      hasProfileError,
       isAdmin: currentProfile?.role === 'admin',
       isLoading,
       profile: currentProfile,
+      refreshProfile,
       session,
       signIn,
       signOut,
@@ -280,7 +292,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       changeEmail,
       changePassword,
       currentProfile,
+      hasProfileError,
       isLoading,
+      refreshProfile,
       session,
       signIn,
       signOut,

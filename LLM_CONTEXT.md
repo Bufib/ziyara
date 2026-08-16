@@ -54,9 +54,9 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 - Während sie aktiv ist, sehen Konten ohne Adminrolle ausschließlich den Check-in und antworten mit Ja oder Nein. Admins bleiben in der App, sehen auf Home einen Hinweis und können die Abfrage ebenfalls beantworten.
 - Bei einem Synchronisationsfehler bleibt die App für Konten ohne Adminrolle vorsorglich gesperrt.
 - Ein Admin kann eine anonyme Fragerunde öffnen und schließen, Fragen lesen und als erledigt markieren.
-- Jede angemeldete Rolle einschließlich Admin kann während einer offenen Runde eine anonyme Frage absenden. Die Tabelle speichert keine Profil- oder User-ID. Nutzer sollten trotzdem keine personenbezogenen Daten in den Freitext schreiben.
+- Jede angemeldete Rolle einschließlich Admin kann während einer offenen Runde bis zu fünf anonyme Fragen absenden. Die Fragentabelle speichert keine Profil- oder User-ID. Eine getrennte, für Clients nicht lesbare Zähltabelle hält während der offenen Runde nur Profil, Runde und Anzahl fest und wird beim Schließen geleert. Nutzer sollten trotzdem keine personenbezogenen Daten in den Freitext schreiben.
 - Die Personenübersicht im Adminbereich zeigt nur Name, vertretene Personenzahl und Rolle und kann nach Namen gefiltert werden. Die geschützte Vergabe von Nicht-Admin-Rollen öffnet sich erst über einen Knopf am Personeneintrag; neue Konten besitzen standardmäßig die Rolle `user`.
-- Gruppenstatus wird über Supabase Realtime, App-Fokus und zusätzlich alle 15 Sekunden aktualisiert.
+- Gruppenstatus wird primär über Supabase Realtime und beim App-Fokus aktualisiert. Als gestaffelter Ausfallschutz läuft die Pflichtabfrage etwa alle 60–90 Sekunden und die Fragerunde alle 120–150 Sekunden. Parallele Antworten dürfen ältere Ergebnisse nicht mehr über neuere schreiben.
 
 ## Technischer Stack
 
@@ -69,10 +69,10 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 - Supabase JS `^2.112.3` für Auth, Postgres, RPC und Realtime
 - AsyncStorage `2.2.0` für lokale Einstellungen
 - React Native Maps `1.27.2` und Expo Location
-- Expo Image, Clipboard, Linking, Web Browser und SQLite
-- SQLite ist installiert und als Expo-Plugin konfiguriert, besitzt aber noch keinen produktiven Content Store.
+- Expo Image, Clipboard und Linking
+- Jest/Jest Expo für Katalog- und Integritätstests
 
-Node `22.13.x` beziehungsweise eine von React Native 0.86 unterstützte Node-22-Version verwenden. Expo-/React-Native-Pakete mit `npx expo install <paket>` installieren, damit SDK-Versionen ausgerichtet bleiben.
+Bevorzugt die in `.nvmrc` festgelegte Node-Version `22.13.x` verwenden; `package.json` bildet zusätzlich die von React Native 0.86 unterstützten Engine-Bereiche ab. Node 23 ist nicht unterstützt. Expo-/React-Native-Pakete mit `npx expo install <paket>` installieren, damit SDK-Versionen ausgerichtet bleiben.
 
 ## Projektstart
 
@@ -101,7 +101,7 @@ npm run android
 npm run web
 ```
 
-`app.json` konfiguriert Portrait-Modus, das Scheme `ziyara`, automatische Systemdarstellung, Standortberechtigungen, statischen Web-Export, Expo Router, Splash Screen und SQLite. Änderungen an nativen Abhängigkeiten oder App-Konfiguration können einen neuen Development Build erfordern.
+`app.json` konfiguriert Portrait-Modus, das Scheme `ziyara`, automatische Systemdarstellung, Standortberechtigungen, statischen Web-Export, Expo Router und Splash Screen. `eas.json` besitzt interne Preview- und Production-Buildprofile. Änderungen an nativen Abhängigkeiten oder App-Konfiguration können einen neuen Development Build erfordern.
 
 ## Architektur und Verzeichnisstruktur
 
@@ -141,7 +141,7 @@ AppI18nProvider
                 └── RootNavigation
 ```
 
-Die Reihenfolge ist relevant: Gruppen- und Fragerunden benötigen den Auth-State; Navigation benötigt alle Zustände. Der Splash Screen wird erst ausgeblendet, wenn Auth und Gruppenabfrage initial geladen wurden.
+Die Reihenfolge ist relevant: Gruppen- und Fragerunden benötigen den Auth-State; Navigation benötigt alle Zustände. Der Splash Screen wird erst ausgeblendet, wenn Sprache, Theme, Auth, Gruppenabfrage und Fragerunde initial geladen wurden. Kann das Profil samt Rolle nicht sicher geladen werden, erscheint ein eigener Fehlerzustand mit Wiederholen statt einer Navigation mit falschen Rechten.
 
 ## Navigation und Zugriffsschutz
 
@@ -187,7 +187,7 @@ Verbindliche Inhaltsregeln:
 - Religiöse Inhalte gehören in `src/data`, nicht direkt in UI-Komponenten oder Übersetzungsdateien.
 - Disclaimer, Quellenansicht und sichtbare Prüfstatus dürfen nicht entfernt oder verharmlost werden.
 
-`src/data/catalog.ts` durchsucht lokalisierte Orte, Inhalte, Handlungen und deren Quellen. IDs und Slugs sind persistente Referenzen; Änderungen können Bookmarks und Deep Links ungültig machen.
+`src/data/catalog.ts` durchsucht lokalisierte Orte, Inhalte, Handlungen und deren Quellen. Die Suche normalisiert lateinische Diakritika sowie häufige arabische Zeichenvarianten. Handlungen ohne Reader-Inhalt bleiben sichtbar, sind aber nicht fälschlich mit einem anderen Text verlinkt. IDs und Slugs sind persistente Referenzen; bei den korrigierten Platzhalter-Slugs existieren deshalb Legacy-Aliase und eine Bookmark-Migration.
 
 ## Internationalisierung und RTL
 
@@ -201,7 +201,7 @@ Verbindliche Inhaltsregeln:
 
 ## Lokale Persistenz
 
-`src/features/storage/persistentState.ts` serialisiert JSON über AsyncStorage. Aktuelle Schlüssel:
+`src/features/storage/persistentState.ts` stellt pro Schlüssel einen gemeinsamen externen Store bereit und serialisiert JSON geordnet über AsyncStorage. Jeder Schlüssel besitzt einen Laufzeitparser; beschädigte oder veraltete Werte fallen sicher auf Standardwerte zurück. Hydration kann keine neuere Bedienaktion überschreiben, mehrere gleichzeitig montierte Screens bleiben synchron und Schreibvorgänge behalten ihre Reihenfolge. Aktuelle Schlüssel:
 
 | Schlüssel | Inhalt |
 | --- | --- |
@@ -211,7 +211,7 @@ Verbindliche Inhaltsregeln:
 | `ziyara.reader.preferences` | arabische Schriftgröße und Zeilenansicht |
 | `ziyara.reader.positions` | Scrolloffset je Reader-Slug |
 
-Der Reader speichert Positionen derzeit, stellt sie beim erneuten Öffnen aber noch nicht wieder her. Persistenzfehler werden absichtlich still abgefangen; bei kritischem Zustand ist ein sichtbarer Fehlerzustand erforderlich.
+Der Reader speichert und restauriert Positionen beim erneuten Öffnen. Nichtkritische lokale Speicherfehler fallen auf den In-Memory-Zustand zurück; serverseitige Auth-, Profil- und Pflichtabfragefehler besitzen sichtbare beziehungsweise fail-closed Zustände.
 
 ## Supabase-Datenmodell und Sicherheit
 
@@ -224,6 +224,8 @@ Aktuelle Tabellen:
 - `group_check_responses`: genau eine änderbare Ja-/Nein-Antwort pro Profil und Abfrage.
 - `question_rounds`: Öffnungs-/Schließzeit einer anonymen Runde.
 - `anonymous_questions`: Fragetext und Bearbeitungsstatus ohne Profil-/User-Fremdschlüssel.
+- `question_submission_limits`: temporäre, clientseitig nicht lesbare Anzahl je Profil und offener Runde; ohne Fragetext, Frage-ID oder Zeitstempel.
+- `role_assignment_audit`: clientseitig nicht lesbare Nachvollziehbarkeit tatsächlicher Rollenänderungen durch mehrere Admins.
 
 Wichtige RPCs:
 
@@ -245,7 +247,17 @@ Die Migration `20260816030000_allow_all_roles_participate.sql` öffnet die Antwo
 
 Die Migration `20260816040000_minimize_admin_user_list.sql` reduziert `admin_list_users` auf Name, vertretene Personenzahl und Rolle. Nur die für eine Rollenänderung notwendige interne Auth-UUID wird zusätzlich übertragen; E-Mail-Adresse, Profil-ID, Zuordnung und Anmeldedaten werden nicht mehr ausgeliefert.
 
-Der Status des verbundenen Remote-Projekts ist nicht aus dem Repository ableitbar. Vor Annahmen über ausgerollte Migrationen `npx supabase migration list` prüfen. Migrationen nur nach ausdrücklichem Arbeitsauftrag pushen.
+Die Migration `20260816050000_harden_multi_admin_and_questions.sql` serialisiert konkurrierende Rollenwechsel und protokolliert echte Änderungen, sperrt Antworten transaktionssicher gegen das gleichzeitige Schließen einer Runde und begrenzt anonyme Einsendungen auf fünf pro Profil und Runde. Die temporären Zähler werden beim Schließen gelöscht.
+
+Am 16. August 2026 waren alle lokalen Migrationen bis `20260816050000` im verknüpften Remote-Projekt ausgerollt und `db lint --linked` meldete keine Schemafehler. Dieser Zustand kann sich ändern; vor späteren Annahmen erneut `npx supabase migration list --linked` prüfen. Migrationen nur innerhalb eines ausdrücklich beauftragten Implementierungs- oder Deployment-Schritts pushen.
+
+## Kapazität für die Reisegruppe
+
+- Zielgröße sind ungefähr 100 Konten zuzüglich mehrerer Admin-/Mitarbeitergeräte.
+- Der Supabase-Client teilt mehrere Realtime-Kanäle über eine Verbindung. Aktuelle Tarifgrenzen trotzdem vor der Reise im Dashboard gegen die erwarteten gleichzeitig aktiven Geräte prüfen.
+- Durch die gestaffelten Fallback-Intervalle entstehen bei 100 dauerhaft aktiven Clients grob 120 Fallback-Leseabfragen pro Minute ohne aktive Pflichtabfrage und etwa 200 pro Minute mit aktiver Pflichtabfrage; Realtime und App-Fokus sind der Primärweg.
+- Antwortwellen werden in den Adminpanels 250 ms gebündelt. Die Benutzer-RPC wird in 200er-Seiten geladen, die Fragenansicht zeigt maximal 50 weitere Einträge pro Schritt.
+- Ein realer Lasttest mit dem gewählten Supabase-Tarif, Reise-WLAN/Mobilfunk und den Zielgeräten bleibt vor Freigabe erforderlich.
 
 ## Plattformunterschiede
 
@@ -284,9 +296,7 @@ Der Status des verbundenen Remote-Projekts ist nicht aus dem Repository ableitba
 Für bedeutsame Änderungen:
 
 ```bash
-npx tsc --noEmit
-npm run lint
-npx expo install --check
+npm run validate
 npx expo export --platform web
 npx expo-doctor@latest
 ```
@@ -294,23 +304,24 @@ npx expo-doctor@latest
 Für Datenbankänderungen zusätzlich:
 
 ```bash
-npx supabase db lint
-npx supabase migration list
+npx supabase db lint --linked --level warning
+npx supabase migration list --linked
 ```
 
-Es existiert derzeit kein Jest-/E2E-Testsetup und kein `npm test`-Script. Registrierung, Auth-Guards, Adminrechte, Gruppenblockade, Fragerunde, Kartenberechtigung, Offlinekatalog, Persistenz, alle Sprachen und beide Themes müssen deshalb proportional zur Änderung manuell geprüft werden.
+`npm test` führt derzeit sechs Jest-Tests für eindeutige Katalogschlüssel, auflösbare Relationen, Legacy-Links, Diakritika-/Arabisch-Suche und nicht verlinkbare Handlungen aus. `.github/workflows/ci.yml` führt bei Pushes und Pull Requests Installation, Validierung, Web-Export und einen Critical-Audit-Gate aus. E2E- und native Gerätetests fehlen weiterhin; Registrierung, Auth-Guards, Adminrechte, Gruppenblockade, Fragerunde, Kartenberechtigung, Offlinekatalog, Persistenz, alle Sprachen und beide Themes müssen proportional zur Änderung manuell geprüft werden.
 
 ## Bekannte Lücken und Risiken
 
 - Sämtliche kuratierten Orts- und religiösen Inhalte benötigen weiterhin qualifizierte Prüfung.
 - Ziyarat Ashura enthält bereits Volltext, steht aber noch auf `needs_review` und `pending_rights_review`.
-- SQLite ist vorbereitet, aber nicht als Datenspeicher implementiert.
-- Gespeicherte Reader-Positionen werden noch nicht wiederhergestellt.
 - Native Kartenkacheln sind offline nicht garantiert.
-- Es fehlen automatisierte Tests, CI, `eas.json`, finale Store-Metadaten und veröffentlichungsfertige Datenschutz-/Supportseiten.
-- `supabase/config.toml` verweist auf `supabase/seed.sql`; diese Datei ist derzeit nicht vorhanden. Einen lokalen `db reset` deshalb nicht ungeprüft voraussetzen.
+- Finale Store-Metadaten, veröffentlichungsfertige Datenschutz-/Supportseiten und ein echter Fehler-Monitoringdienst fehlen.
+- App-Icon und Splash-Grafik sind noch Expo-Startergrafiken und müssen vor einem Store-Release durch freigegebene Markenassets ersetzt werden.
 - Bundle-Identifier und finale Store-/Build-Konfiguration sind in `app.json` noch nicht vollständig.
-- Ob lokale Migrationen bereits remote ausgerollt sind, muss gegen das verbundene Supabase-Projekt geprüft werden.
+- Passwort-Zurücksetzen und vollständige native Deep-Link-Verarbeitung sind noch nicht implementiert.
+- Arabisch richtet Texte aus, schaltet aber die gesamte native Layoutreihenfolge noch nicht über `I18nManager` auf RTL um.
+- Der npm-Audit meldet weiterhin High-Warnungen in Expo/Metro-Buildabhängigkeiten (`image-size`) sowie Moderate-Warnungen in `xcode/uuid`. `npm audit fix --force` würde inkompatibel auf Expo 53/React Native 0.72 zurückstufen und darf nicht verwendet werden; auf ein kompatibles SDK-/Toolchain-Update warten.
+- Es fehlen weiterhin E2E-Tests, native Store-Builds und der reale Last-/Netzwerktest mit etwa 100 Geräten.
 
 ## Definition of Done
 

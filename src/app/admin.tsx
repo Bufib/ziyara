@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -58,8 +58,8 @@ async function fetchAllAdminUsers() {
 export default function AdminScreen() {
   const theme = useTheme();
   const { isRTL, language, t } = useI18n();
-  const { activeCheck } = useGroupCheck();
-  const { activeRound } = useQuestionRound();
+  const { activeCheck, hasSyncError: hasGroupCheckSyncError } = useGroupCheck();
+  const { activeRound, hasSyncError: hasQuestionRoundSyncError } = useQuestionRound();
   const [users, setUsers] = useState<AdminUserSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -68,6 +68,7 @@ export default function AdminScreen() {
   const [expandedRoleUserId, setExpandedRoleUserId] = useState<string | null>(null);
   const [roleFeedback, setRoleFeedback] = useState<RoleFeedback | null>(null);
   const [updatingRoleUserId, setUpdatingRoleUserId] = useState<string | null>(null);
+  const usersRequestSequence = useRef(0);
   const [expandedSections, setExpandedSections] = useState<Record<AdminSection, boolean>>({
     questions: false,
     status: false,
@@ -91,16 +92,25 @@ export default function AdminScreen() {
   }, [language, searchQuery, users]);
 
   const loadUsers = useCallback(async () => {
+    const requestSequence = ++usersRequestSequence.current;
     setHasError(false);
     setIsLoading(true);
 
     try {
-      setUsers(await fetchAllAdminUsers());
+      const nextUsers = await fetchAllAdminUsers();
+
+      if (requestSequence === usersRequestSequence.current) {
+        setUsers(nextUsers);
+      }
     } catch {
-      setHasError(true);
+      if (requestSequence === usersRequestSequence.current) {
+        setHasError(true);
+      }
     } finally {
-      setHasLoaded(true);
-      setIsLoading(false);
+      if (requestSequence === usersRequestSequence.current) {
+        setHasLoaded(true);
+        setIsLoading(false);
+      }
     }
   }, []);
 
@@ -131,35 +141,13 @@ export default function AdminScreen() {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const loadInitialUsers = async () => {
-      try {
-        const data = await fetchAllAdminUsers();
-
-        if (!isMounted) {
-          return;
-        }
-
-        setUsers(data);
-      } catch {
-        if (isMounted) {
-          setHasError(true);
-        }
-      } finally {
-        if (isMounted) {
-          setHasLoaded(true);
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void loadInitialUsers();
+    const initialLoadTimeout = setTimeout(() => void loadUsers(), 0);
 
     return () => {
-      isMounted = false;
+      clearTimeout(initialLoadTimeout);
+      usersRequestSequence.current += 1;
     };
-  }, []);
+  }, [loadUsers]);
 
   const toggleSection = (section: AdminSection) => {
     setExpandedSections((current) => ({ ...current, [section]: !current[section] }));
@@ -197,9 +185,15 @@ export default function AdminScreen() {
                   icon="confirm"
                   onToggle={() => toggleSection('status')}
                   status={t(
-                    activeCheck ? 'admin.section.status.active' : 'admin.section.status.inactive',
+                    hasGroupCheckSyncError
+                      ? 'admin.section.status.error'
+                      : activeCheck
+                        ? 'admin.section.status.active'
+                        : 'admin.section.status.inactive',
                   )}
-                  statusColor={activeCheck ? 'warning' : 'textSecondary'}
+                  statusColor={
+                    hasGroupCheckSyncError ? 'danger' : activeCheck ? 'warning' : 'textSecondary'
+                  }
                   title={t('admin.section.status.title')}
                 />
                 {expandedSections.status ? <AdminGroupCheckPanel /> : null}
@@ -212,11 +206,19 @@ export default function AdminScreen() {
                   icon="question"
                   onToggle={() => toggleSection('questions')}
                   status={t(
-                    activeRound
-                      ? 'admin.section.questions.open'
-                      : 'admin.section.questions.closed',
+                    hasQuestionRoundSyncError
+                      ? 'admin.section.questions.error'
+                      : activeRound
+                        ? 'admin.section.questions.open'
+                        : 'admin.section.questions.closed',
                   )}
-                  statusColor={activeRound ? 'success' : 'textSecondary'}
+                  statusColor={
+                    hasQuestionRoundSyncError
+                      ? 'danger'
+                      : activeRound
+                        ? 'success'
+                        : 'textSecondary'
+                  }
                   title={t('admin.section.questions.title')}
                 />
                 {expandedSections.questions ? <AdminQuestionRoundPanel /> : null}

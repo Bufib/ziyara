@@ -86,7 +86,12 @@ export function AuthFormScreen({ mode }: AuthFormScreenProps) {
       return;
     }
 
-    if (password.length < 8) {
+    if (!isRegister && password.length === 0) {
+      showFeedback(t('auth.validation.passwordRequired'), true);
+      return;
+    }
+
+    if (isRegister && password.length < 8) {
       showFeedback(t('auth.validation.password'), true);
       return;
     }
@@ -200,7 +205,7 @@ export function AuthFormScreen({ mode }: AuthFormScreenProps) {
                     <ThemedText type="small" themeColor="textSecondary">
                       {t('auth.memberTypeBody')}
                     </ThemedText>
-                    <View style={styles.choiceRow}>
+                    <View accessibilityRole="radiogroup" style={styles.choiceRow}>
                       <RegistrationChoice
                         disabled={isSubmitting}
                         label={t('auth.memberType.brother')}
@@ -218,7 +223,7 @@ export function AuthFormScreen({ mode }: AuthFormScreenProps) {
 
                   <View style={styles.field}>
                     <ThemedText type="smallBold">{t('auth.accountCoverageTitle')}</ThemedText>
-                    <View style={styles.choiceList}>
+                    <View accessibilityRole="radiogroup" style={styles.choiceList}>
                       <RegistrationChoice
                         description={t('auth.accountCoverage.individualBody')}
                         disabled={isSubmitting}

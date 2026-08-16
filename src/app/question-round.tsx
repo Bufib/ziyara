@@ -15,7 +15,7 @@ export default function QuestionRoundScreen() {
   const { isRTL, t } = useI18n();
   const { activeRound, submitQuestion } = useQuestionRound();
   const [question, setQuestion] = useState('');
-  const [feedback, setFeedback] = useState<'error' | 'success' | null>(null);
+  const [feedback, setFeedback] = useState<'error' | 'limit' | 'success' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const normalizedQuestion = question.trim();
 
@@ -37,7 +37,7 @@ export default function QuestionRoundScreen() {
       const { error } = await submitQuestion(activeRound.id, normalizedQuestion);
 
       if (error) {
-        setFeedback('error');
+        setFeedback(error.code === 'P0001' ? 'limit' : 'error');
       } else {
         setQuestion('');
         setFeedback('success');
@@ -106,15 +106,18 @@ export default function QuestionRoundScreen() {
             style={[
               styles.feedback,
               {
-                backgroundColor: feedback === 'error' ? theme.dangerSoft : theme.successSoft,
-                borderColor: feedback === 'error' ? theme.danger : theme.success,
+                backgroundColor:
+                  feedback === 'success' ? theme.successSoft : theme.dangerSoft,
+                borderColor: feedback === 'success' ? theme.success : theme.danger,
               },
             ]}>
             <ThemedText
               type="small"
-              themeColor={feedback === 'error' ? 'danger' : 'success'}>
+              themeColor={feedback === 'success' ? 'success' : 'danger'}>
               {t(
-                feedback === 'error'
+                feedback === 'limit'
+                  ? 'questionRound.submitLimit'
+                  : feedback === 'error'
                   ? normalizedQuestion.length < 3
                     ? 'questionRound.validation'
                     : 'questionRound.submitError'

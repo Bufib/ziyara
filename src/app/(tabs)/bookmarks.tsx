@@ -1,5 +1,5 @@
 import { router, type Href } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -42,6 +42,12 @@ function isBookmarkItem(item: BookmarkItem | null): item is BookmarkItem {
 export default function BookmarksScreen() {
   const { bookmarks, clearBookmarks } = useBookmarks();
   const { language, t } = useI18n();
+  const confirmClearBookmarks = () => {
+    Alert.alert(t('bookmarks.clearConfirmTitle'), t('bookmarks.clearConfirmBody'), [
+      { style: 'cancel', text: t('bookmarks.clearCancel') },
+      { onPress: clearBookmarks, style: 'destructive', text: t('bookmarks.clearAction') },
+    ]);
+  };
   const items: BookmarkItem[] = bookmarks
     .map<BookmarkItem | null>((bookmark) => {
       const [kind, slug] = bookmark.split(':');
@@ -75,7 +81,7 @@ export default function BookmarksScreen() {
       <Section
         title={t('bookmarks.title')}
         actionLabel={items.length > 0 ? t('bookmarks.clear') : undefined}
-        onAction={items.length > 0 ? clearBookmarks : undefined}>
+        onAction={items.length > 0 ? confirmClearBookmarks : undefined}>
         <View style={styles.list}>
           {items.map((item) =>
             item.kind === 'place' ? (

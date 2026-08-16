@@ -11,5 +11,7 @@ export function getNavigationUrl(place: Pick<Place, 'latitude' | 'longitude' | '
 }
 
 export function openNavigation(place: Pick<Place, 'latitude' | 'longitude' | 'name'>) {
-  return Linking.openURL(getNavigationUrl(place));
+  return Linking.openURL(getNavigationUrl(place))
+    .then(() => true)
+    .catch(() => false);
 }

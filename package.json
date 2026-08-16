@@ -2,6 +2,9 @@
   "name": "ziyara",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "engines": {
+    "node": "^20.19.4 || ^22.13.0 || ^24.3.0 || >=25.0.0"
+  },
   "dependencies": {
     "@expo/ui": "~57.0.11",
     "@likashefqet/react-native-image-zoom": "^4.3.0",
@@ -10,7 +13,6 @@
     "expo": "~57.0.13",
     "expo-clipboard": "~57.0.1",
     "expo-constants": "~57.0.11",
-    "expo-device": "~57.0.1",
     "expo-font": "~57.0.0",
     "expo-glass-effect": "~57.0.1",
     "expo-image": "~57.0.3",
@@ -18,11 +20,9 @@
     "expo-location": "~57.0.10",
     "expo-router": "~57.0.13",
     "expo-splash-screen": "~57.0.6",
-    "expo-sqlite": "~57.0.1",
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.2",
     "expo-system-ui": "~57.0.2",
-    "expo-web-browser": "~57.0.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.2",
@@ -36,9 +36,12 @@
     "react-native-worklets": "0.10.1"
   },
   "devDependencies": {
+    "@types/jest": "29.5.14",
     "@types/react": "~19.2.2",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~57.0.1",
+    "jest": "~29.7.0",
+    "jest-expo": "~57.0.4",
     "supabase": "^2.114.0",
     "typescript": "~6.0.3"
   },
@@ -48,7 +51,22 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch",
+    "typecheck": "tsc --noEmit",
+    "validate": "npm run typecheck && npm run lint && npm test && npx expo install --check"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "setupFiles": [
+      "<rootDir>/jest.setup.js"
+    ],
+    "watchman": false,
+    "moduleNameMapper": {
+      "^@/assets/(.*)$": "<rootDir>/assets/$1",
+      "^@/(.*)$": "<rootDir>/src/$1"
+    }
   },
   "private": true
 }

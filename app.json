@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Ziyarah",
+    "name": "Shia Ziyarah Iraq",
     "slug": "ziyara",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -39,8 +39,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ],
-      "expo-sqlite"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -11,6 +11,8 @@ import { supabase } from '@/features/auth/supabase';
 import { useI18n } from '@/features/i18n/i18n';
 import { useTheme } from '@/hooks/use-theme';
 
+const questionDisplayBatchSize = 50;
+
 export function AdminQuestionRoundPanel() {
   const theme = useTheme();
   const { t } = useI18n();
@@ -20,13 +22,28 @@ export function AdminQuestionRoundPanel() {
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
   const [isWorking, setIsWorking] = useState(false);
   const [updatingQuestionId, setUpdatingQuestionId] = useState<number | null>(null);
-  const [hasError, setHasError] = useState(false);
+  const [hasRoundError, setHasRoundError] = useState(false);
+  const [hasQuestionsError, setHasQuestionsError] = useState(false);
+  const [hasActionError, setHasActionError] = useState(false);
+  const [questionsRoundId, setQuestionsRoundId] = useState<number | null>(null);
+  const [questionDisplay, setQuestionDisplay] = useState({
+    count: questionDisplayBatchSize,
+    roundId: null as number | null,
+  });
+  const latestRoundRequestSequence = useRef(0);
+  const questionsRequestSequence = useRef(0);
   const roundId = latestRound?.id ?? null;
   const isOpen = Boolean(latestRound && !latestRound.closed_at);
+  const displayedQuestions = questionsRoundId === roundId ? questions : [];
+  const visibleQuestionCount =
+    questionDisplay.roundId === roundId ? questionDisplay.count : questionDisplayBatchSize;
+  const visibleQuestions = displayedQuestions.slice(0, visibleQuestionCount);
+  const hasError = hasRoundError || hasQuestionsError || hasActionError;
 
   const loadLatestRound = useCallback(async () => {
+    const requestSequence = ++latestRoundRequestSequence.current;
     setIsLoadingRound(true);
-    setHasError(false);
+    setHasRoundError(false);
 
     try {
       const { data, error } = await supabase
@@ -40,21 +57,32 @@ export function AdminQuestionRoundPanel() {
         throw error;
       }
 
-      setLatestRound(data);
+      if (requestSequence === latestRoundRequestSequence.current) {
+        setLatestRound(data);
+      }
     } catch {
-      setHasError(true);
+      if (requestSequence === latestRoundRequestSequence.current) {
+        setHasRoundError(true);
+      }
     } finally {
-      setIsLoadingRound(false);
+      if (requestSequence === latestRoundRequestSequence.current) {
+        setIsLoadingRound(false);
+      }
     }
   }, []);
 
   const loadQuestions = useCallback(async () => {
     if (roundId === null) {
+      setQuestions([]);
+      setQuestionsRoundId(null);
+      setIsLoadingQuestions(false);
       return;
     }
 
+    const requestedRoundId = roundId;
+    const requestSequence = ++questionsRequestSequence.current;
     setIsLoadingQuestions(true);
-    setHasError(false);
+    setHasQuestionsError(false);
 
     try {
       const { data, error } = await supabase
@@ -68,11 +96,18 @@ export function AdminQuestionRoundPanel() {
         throw error;
       }
 
-      setQuestions(data ?? []);
+      if (requestSequence === questionsRequestSequence.current) {
+        setQuestions(data ?? []);
+        setQuestionsRoundId(requestedRoundId);
+      }
     } catch {
-      setHasError(true);
+      if (requestSequence === questionsRequestSequence.current) {
+        setHasQuestionsError(true);
+      }
     } finally {
-      setIsLoadingQuestions(false);
+      if (requestSequence === questionsRequestSequence.current) {
+        setIsLoadingQuestions(false);
+      }
     }
   }, [roundId]);
 
@@ -89,6 +124,7 @@ export function AdminQuestionRoundPanel() {
 
     return () => {
       clearTimeout(initialLoadTimeout);
+      latestRoundRequestSequence.current += 1;
       void supabase.removeChannel(channel);
     };
   }, [loadLatestRound]);
@@ -99,6 +135,7 @@ export function AdminQuestionRoundPanel() {
     }
 
     const initialLoadTimeout = setTimeout(() => void loadQuestions(), 0);
+    let realtimeRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
     const channel = supabase
       .channel(`admin-anonymous-questions:${roundId}`)
       .on(
@@ -109,12 +146,22 @@ export function AdminQuestionRoundPanel() {
           schema: 'public',
           table: 'anonymous_questions',
         },
-        () => void loadQuestions(),
+        () => {
+          if (realtimeRefreshTimeout) {
+            clearTimeout(realtimeRefreshTimeout);
+          }
+
+          realtimeRefreshTimeout = setTimeout(() => void loadQuestions(), 250);
+        },
       )
       .subscribe();
 
     return () => {
       clearTimeout(initialLoadTimeout);
+      if (realtimeRefreshTimeout) {
+        clearTimeout(realtimeRefreshTimeout);
+      }
+      questionsRequestSequence.current += 1;
       void supabase.removeChannel(channel);
     };
   }, [loadQuestions, roundId]);
@@ -125,7 +172,7 @@ export function AdminQuestionRoundPanel() {
     }
 
     setIsWorking(true);
-    setHasError(false);
+    setHasActionError(false);
 
     try {
       const { error } = await supabase.rpc('open_question_round');
@@ -136,7 +183,7 @@ export function AdminQuestionRoundPanel() {
 
       await loadLatestRound();
     } catch {
-      setHasError(true);
+      setHasActionError(true);
     } finally {
       setIsWorking(false);
     }
@@ -148,7 +195,7 @@ export function AdminQuestionRoundPanel() {
     }
 
     setIsWorking(true);
-    setHasError(false);
+    setHasActionError(false);
 
     try {
       const { error } = await supabase.rpc('close_question_round', {
@@ -161,7 +208,7 @@ export function AdminQuestionRoundPanel() {
 
       await loadLatestRound();
     } catch {
-      setHasError(true);
+      setHasActionError(true);
     } finally {
       setIsWorking(false);
     }
@@ -173,7 +220,7 @@ export function AdminQuestionRoundPanel() {
     }
 
     setUpdatingQuestionId(question.id);
-    setHasError(false);
+    setHasActionError(false);
 
     try {
       const { error } = await supabase.rpc('set_anonymous_question_checked', {
@@ -185,9 +232,19 @@ export function AdminQuestionRoundPanel() {
         throw error;
       }
 
-      await loadQuestions();
+      setQuestions((current) =>
+        current.map((item) =>
+          item.id === question.id
+            ? {
+                ...item,
+                checked_at: question.is_checked ? null : new Date().toISOString(),
+                is_checked: !question.is_checked,
+              }
+            : item,
+        ),
+      );
     } catch {
-      setHasError(true);
+      setHasActionError(true);
     } finally {
       setUpdatingQuestionId(null);
     }
@@ -219,19 +276,39 @@ export function AdminQuestionRoundPanel() {
           {latestRound ? (
             <View style={styles.questionList}>
               <ThemedText type="smallBold">
-                {t('questionRound.questionCount', { count: questions.length })}
+                {t('questionRound.questionCount', { count: displayedQuestions.length })}
               </ThemedText>
               {isLoadingQuestions ? (
                 <ActivityIndicator color={theme.accent} />
-              ) : questions.length > 0 ? (
-                questions.map((question) => (
-                  <QuestionItem
-                    disabled={updatingQuestionId !== null}
-                    key={question.id}
-                    onPress={() => void toggleQuestion(question)}
-                    question={question}
-                  />
-                ))
+              ) : displayedQuestions.length > 0 ? (
+                <>
+                  {visibleQuestions.map((question) => (
+                    <QuestionItem
+                      disabled={updatingQuestionId !== null}
+                      key={question.id}
+                      onPress={() => void toggleQuestion(question)}
+                      question={question}
+                    />
+                  ))}
+                  {visibleQuestions.length < displayedQuestions.length ? (
+                    <Button
+                      icon="plus"
+                      label={t('questionRound.showMore', {
+                        count: Math.min(
+                          questionDisplayBatchSize,
+                          displayedQuestions.length - visibleQuestions.length,
+                        ),
+                      })}
+                      onPress={() =>
+                        setQuestionDisplay({
+                          count: visibleQuestionCount + questionDisplayBatchSize,
+                          roundId,
+                        })
+                      }
+                      variant="secondary"
+                    />
+                  ) : null}
+                </>
               ) : (
                 <ThemedText type="small" themeColor="textSecondary">
                   {t('questionRound.empty')}

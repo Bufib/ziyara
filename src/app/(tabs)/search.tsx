@@ -49,12 +49,13 @@ export default function SearchScreen() {
           ]}
           value={query}
         />
-        <View style={styles.filters}>
+        <View accessibilityRole="radiogroup" style={styles.filters}>
           {filters.map((item) => {
             const selected = item === filter;
             return (
               <Pressable
-                accessibilityRole="button"
+                accessibilityRole="radio"
+                accessibilityState={{ checked: selected }}
                 key={item}
                 onPress={() => setFilter(item)}
                 style={({ pressed }) => [
@@ -107,10 +108,15 @@ function SearchResultCard({ result }: { result: SearchResult }) {
     }
   }
 
-  const route = result.kind === 'place' ? placeRoute(result.slug) : readerRoute(result.slug);
+  const route =
+    result.kind === 'place'
+      ? placeRoute(result.slug)
+      : result.slug
+        ? readerRoute(result.slug)
+        : undefined;
 
   return (
-    <Card onPress={() => router.push(route)}>
+    <Card onPress={route ? () => router.push(route) : undefined}>
       <View style={styles.resultHeader}>
         <View style={styles.resultTitle}>
           <ThemedText type="heading">{result.title}</ThemedText>

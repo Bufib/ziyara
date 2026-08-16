@@ -1,0 +1,2 @@
+-- Production data is created through Supabase Auth and the app's administrative RPCs.
+-- This file intentionally contains no users, credentials, or religious content.

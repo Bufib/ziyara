@@ -5,7 +5,7 @@ import {
   useMemo,
 } from "react";
 
-import { usePersistentState } from "@/features/storage/persistentState";
+import { createPersistentState } from "@/features/storage/persistentState";
 
 export type Language = "de" | "en" | "ar";
 
@@ -14,6 +14,7 @@ type TranslationParams = Record<string, number | string>;
 type I18nContextValue = {
   isRTL: boolean;
   language: Language;
+  loaded: boolean;
   setLanguage: (language: Language) => void;
   t: (key: string, params?: TranslationParams) => string;
 };
@@ -27,6 +28,12 @@ export const languageOptions: {
   { label: "English", nativeLabel: "English", value: "en" },
   { label: "Arabic", nativeLabel: "العربية", value: "ar" },
 ];
+
+const useLanguageState = createPersistentState<Language>(
+  "ziyara.language",
+  "de",
+  (value) => (value === "de" || value === "en" || value === "ar" ? value : undefined),
+);
 
 const dictionaries: Record<Language, Record<string, string>> = {
   de: {
@@ -111,7 +118,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "Die Fragerunde konnte nicht aktualisiert werden. Prüfe die Verbindung und versuche es erneut.",
     "questionRound.adminTitle": "Anonyme Fragerunde",
     "questionRound.anonymousBody":
-      "In der Fragentabelle werden weder dein Name noch deine Konto- oder Profil-ID gespeichert. Schreibe keine persönlichen Daten in den Fragetext.",
+      "In der Fragentabelle werden weder dein Name noch deine Konto- oder Profil-ID gespeichert. Zum Missbrauchsschutz wird getrennt nur die Anzahl deiner Einsendungen für die laufende Runde gezählt; diese Zählung wird beim Schließen gelöscht. Schreibe keine persönlichen Daten in den Fragetext.",
     "questionRound.anonymousTitle": "Anonyme Einreichung",
     "questionRound.checked": "Abgehakt",
     "questionRound.close": "Fragerunde schließen",
@@ -127,11 +134,17 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "questionRound.questionCount": "Eingereichte Fragen: {count}",
     "questionRound.questionLabel": "Deine Frage",
     "questionRound.questionPlaceholder": "Schreibe hier deine Frage …",
+    "questionRound.showMore": "Weitere {count} Fragen anzeigen",
     "questionRound.statusClosed": "Letzte Fragerunde geschlossen",
     "questionRound.statusOpen": "Fragerunde geöffnet – Nutzer können Fragen senden",
+    "questionRound.syncErrorBody":
+      "Der Status der anonymen Fragerunde konnte nicht geladen werden. Versuche es erneut.",
+    "questionRound.syncErrorTitle": "Fragerunde nicht synchronisiert",
     "questionRound.submit": "Frage anonym senden",
     "questionRound.submitError":
       "Die Frage konnte nicht gesendet werden. Prüfe, ob die Runde noch geöffnet ist.",
+    "questionRound.submitLimit":
+      "Du hast das Limit von fünf Fragen für diese Runde erreicht.",
     "questionRound.submitSuccess": "Deine Frage wurde anonym gespeichert.",
     "questionRound.userBody":
       "Der Admin kann den Fragetext lesen und später als erledigt abhaken.",
@@ -221,6 +234,10 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.password": "Passwort",
     "auth.passwordConfirm": "Passwort wiederholen",
     "auth.passwordHint": "Mindestens 8 Zeichen sowie mindestens ein Buchstabe und eine Zahl.",
+    "auth.profileErrorBody":
+      "Dein Profil und deine Rolle konnten nicht sicher geladen werden. Prüfe die Verbindung und versuche es erneut.",
+    "auth.profileErrorTitle": "Profil nicht verfügbar",
+    "auth.profileRetry": "Profil erneut laden",
     "auth.registerBody":
       "Erstelle ein Konto für dich oder für deine Familie, wenn nicht alle ein eigenes Telefon haben.",
     "auth.registerTitle": "Konto erstellen",
@@ -236,8 +253,9 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.validation.passwordMatch": "Die eingegebenen Passwörter stimmen nicht überein.",
     "auth.validation.passwordPattern":
       "Das Passwort muss mindestens einen Buchstaben und eine Zahl enthalten.",
+    "auth.validation.passwordRequired": "Gib dein Passwort ein.",
     "about.build":
-      "Der aktuelle Build nutzt Expo SDK 57, Expo Router, TypeScript, React Native Maps, Expo Location, SQLite-Vorbereitung und lokal gespeicherte Einstellungen.",
+      "Der aktuelle Build nutzt Expo SDK 57, Expo Router, TypeScript, React Native Maps, Expo Location und lokal gespeicherte Einstellungen.",
     "about.editorialBody":
       "Religiöse Texte, Übersetzungen, Transliterationen und Aussagen dürfen nur mit Quellenangaben und qualifizierter Prüfung ergänzt werden. Platzhalter bleiben sichtbar, bis diese Prüfung abgeschlossen ist.",
     "about.editorialTitle": "Redaktionelles Prinzip",
@@ -245,6 +263,10 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "Shia Ziyarah Iraq ist als Offline-First-Begleiter für Pilgerinnen und Pilger aufgebaut, die wichtige schiitische Ziyarah-Orte im Irak besuchen.",
     "about.title": "Über Shia Ziyarah Iraq",
     "bookmarks.clear": "Leeren",
+    "bookmarks.clearAction": "Entfernen",
+    "bookmarks.clearCancel": "Abbrechen",
+    "bookmarks.clearConfirmBody": "Alle lokal gespeicherten Merkliste-Einträge entfernen?",
+    "bookmarks.clearConfirmTitle": "Merkliste leeren?",
     "bookmarks.emptyBody":
       "Speichere Orte oder Leseeinträge, um sie offline schnell wiederzufinden.",
     "bookmarks.emptyTitle": "Noch keine Einträge",
@@ -503,7 +525,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "The question round could not be updated. Check your connection and try again.",
     "questionRound.adminTitle": "Anonymous question round",
     "questionRound.anonymousBody":
-      "Neither your name nor your account or profile ID is stored in the question table. Do not include personal information in the question text.",
+      "Neither your name nor your account or profile ID is stored in the question table. For abuse prevention, only your submission count for the current round is tracked separately and deleted when the round closes. Do not include personal information in the question text.",
     "questionRound.anonymousTitle": "Anonymous submission",
     "questionRound.checked": "Checked off",
     "questionRound.close": "Close question round",
@@ -519,11 +541,17 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "questionRound.questionCount": "Submitted questions: {count}",
     "questionRound.questionLabel": "Your question",
     "questionRound.questionPlaceholder": "Write your question here …",
+    "questionRound.showMore": "Show {count} more questions",
     "questionRound.statusClosed": "Latest question round closed",
     "questionRound.statusOpen": "Question round open – users can submit questions",
+    "questionRound.syncErrorBody":
+      "The anonymous question round status could not be loaded. Try again.",
+    "questionRound.syncErrorTitle": "Question round not synchronized",
     "questionRound.submit": "Send question anonymously",
     "questionRound.submitError":
       "The question could not be sent. Check whether the round is still open.",
+    "questionRound.submitLimit":
+      "You have reached the limit of five questions for this round.",
     "questionRound.submitSuccess": "Your question was saved anonymously.",
     "questionRound.userBody":
       "The admin can read the question text and check it off as completed later.",
@@ -612,6 +640,10 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.password": "Password",
     "auth.passwordConfirm": "Confirm password",
     "auth.passwordHint": "At least 8 characters with at least one letter and one number.",
+    "auth.profileErrorBody":
+      "Your profile and role could not be loaded safely. Check the connection and try again.",
+    "auth.profileErrorTitle": "Profile unavailable",
+    "auth.profileRetry": "Reload profile",
     "auth.registerBody":
       "Create an account for yourself or your family if not everyone has their own phone.",
     "auth.registerTitle": "Create account",
@@ -627,8 +659,9 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.validation.passwordMatch": "The passwords do not match.",
     "auth.validation.passwordPattern":
       "The password must contain at least one letter and one number.",
+    "auth.validation.passwordRequired": "Enter your password.",
     "about.build":
-      "This build uses Expo SDK 57, Expo Router, TypeScript, React Native Maps, Expo Location, SQLite preparation, and locally stored settings.",
+      "This build uses Expo SDK 57, Expo Router, TypeScript, React Native Maps, Expo Location, and locally stored settings.",
     "about.editorialBody":
       "Religious texts, translations, transliterations, and claims should only be added with source references and qualified review. Placeholders remain visible until that review is complete.",
     "about.editorialTitle": "Editorial Principle",
@@ -636,6 +669,10 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "Shia Ziyarah Iraq is built as an offline-first companion for pilgrims visiting important Shia Ziyarah sites in Iraq.",
     "about.title": "About Shia Ziyarah Iraq",
     "bookmarks.clear": "Clear",
+    "bookmarks.clearAction": "Remove",
+    "bookmarks.clearCancel": "Cancel",
+    "bookmarks.clearConfirmBody": "Remove all locally saved bookmark entries?",
+    "bookmarks.clearConfirmTitle": "Clear bookmarks?",
     "bookmarks.emptyBody":
       "Save places or reading entries so you can quickly find them offline.",
     "bookmarks.emptyTitle": "No entries yet",
@@ -893,7 +930,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "تعذر تحديث جولة الأسئلة. تحقق من الاتصال وحاول مرة أخرى.",
     "questionRound.adminTitle": "جولة أسئلة مجهولة",
     "questionRound.anonymousBody":
-      "لا يُحفظ اسمك ولا معرف حسابك أو ملفك في جدول الأسئلة. لا تكتب بيانات شخصية داخل نص السؤال.",
+      "لا يُحفظ اسمك ولا معرف حسابك أو ملفك في جدول الأسئلة. ولمنع إساءة الاستخدام يُحسب بشكل منفصل عدد مشاركاتك في الجولة الحالية فقط، ويُحذف هذا العداد عند إغلاق الجولة. لا تكتب بيانات شخصية داخل نص السؤال.",
     "questionRound.anonymousTitle": "إرسال مجهول",
     "questionRound.checked": "تم وضع علامة",
     "questionRound.close": "إغلاق جولة الأسئلة",
@@ -909,11 +946,17 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "questionRound.questionCount": "الأسئلة المرسلة: {count}",
     "questionRound.questionLabel": "سؤالك",
     "questionRound.questionPlaceholder": "اكتب سؤالك هنا …",
+    "questionRound.showMore": "عرض {count} أسئلة إضافية",
     "questionRound.statusClosed": "أُغلقت آخر جولة أسئلة",
     "questionRound.statusOpen": "جولة الأسئلة مفتوحة – يمكن للمستخدمين إرسال الأسئلة",
+    "questionRound.syncErrorBody":
+      "تعذر تحميل حالة جولة الأسئلة المجهولة. حاول مرة أخرى.",
+    "questionRound.syncErrorTitle": "لم تتم مزامنة جولة الأسئلة",
     "questionRound.submit": "إرسال السؤال دون اسم",
     "questionRound.submitError":
       "تعذر إرسال السؤال. تحقق مما إذا كانت الجولة لا تزال مفتوحة.",
+    "questionRound.submitLimit":
+      "لقد وصلت إلى حد خمسة أسئلة لهذه الجولة.",
     "questionRound.submitSuccess": "تم حفظ سؤالك دون اسم.",
     "questionRound.userBody":
       "يمكن للمشرف قراءة نص السؤال ووضع علامة عليه كمنجز لاحقاً.",
@@ -1002,6 +1045,10 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.password": "كلمة المرور",
     "auth.passwordConfirm": "تأكيد كلمة المرور",
     "auth.passwordHint": "8 أحرف على الأقل، مع حرف واحد ورقم واحد على الأقل.",
+    "auth.profileErrorBody":
+      "تعذر تحميل ملفك ودورك بأمان. تحقق من الاتصال وحاول مرة أخرى.",
+    "auth.profileErrorTitle": "الملف غير متاح",
+    "auth.profileRetry": "إعادة تحميل الملف",
     "auth.registerBody":
       "أنشئ حساباً لك أو لعائلتك إذا لم يكن لدى الجميع هاتف خاص.",
     "auth.registerTitle": "إنشاء حساب",
@@ -1017,8 +1064,9 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.validation.passwordMatch": "كلمتا المرور غير متطابقتين.",
     "auth.validation.passwordPattern":
       "يجب أن تحتوي كلمة المرور على حرف واحد ورقم واحد على الأقل.",
+    "auth.validation.passwordRequired": "أدخل كلمة المرور.",
     "about.build":
-      "يعتمد هذا الإصدار على Expo SDK 57 و Expo Router و TypeScript و React Native Maps و Expo Location مع إعداد SQLite وحفظ الإعدادات محليا.",
+      "يعتمد هذا الإصدار على Expo SDK 57 و Expo Router و TypeScript و React Native Maps و Expo Location مع حفظ الإعدادات محليا.",
     "about.editorialBody":
       "لا تضاف النصوص الدينية والترجمات والنقول إلا مع المصادر والمراجعة المؤهلة. تبقى النصوص المؤقتة ظاهرة حتى تكتمل المراجعة.",
     "about.editorialTitle": "المبدأ التحريري",
@@ -1026,6 +1074,10 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "تطبيق Shia Ziyarah Iraq رفيق يعمل أولا دون اتصال للحجاج والزائرين إلى أهم مواقع الزيارة الشيعية في العراق.",
     "about.title": "حول Shia Ziyarah Iraq",
     "bookmarks.clear": "مسح",
+    "bookmarks.clearAction": "إزالة",
+    "bookmarks.clearCancel": "إلغاء",
+    "bookmarks.clearConfirmBody": "هل تريد إزالة جميع عناصر المحفوظات المحلية؟",
+    "bookmarks.clearConfirmTitle": "مسح المحفوظات؟",
     "bookmarks.emptyBody":
       "احفظ الأماكن أو نصوص القراءة لتجدها بسرعة دون اتصال.",
     "bookmarks.emptyTitle": "لا توجد عناصر بعد",
@@ -1205,6 +1257,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
 const defaultContext: I18nContextValue = {
   isRTL: false,
   language: "de",
+  loaded: false,
   setLanguage: () => undefined,
   t: (key, params) => translate("de", key, params),
 };
@@ -1230,19 +1283,17 @@ export function translate(
 }
 
 export function AppI18nProvider({ children }: PropsWithChildren) {
-  const [language, setLanguage] = usePersistentState<Language>(
-    "ziyara.language",
-    "de",
-  );
+  const [language, setLanguage, loaded] = useLanguageState();
 
   const value = useMemo<I18nContextValue>(
     () => ({
       isRTL: language === "ar",
       language,
+      loaded,
       setLanguage,
       t: (key, params) => translate(language, key, params),
     }),
-    [language, setLanguage],
+    [language, loaded, setLanguage],
   );
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;

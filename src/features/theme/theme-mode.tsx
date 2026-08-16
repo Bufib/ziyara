@@ -1,10 +1,16 @@
 import { createContext, type PropsWithChildren, useContext, useMemo } from 'react';
 import { useColorScheme as useSystemColorScheme } from 'react-native';
 
-import { usePersistentState } from '@/features/storage/persistentState';
+import { createPersistentState } from '@/features/storage/persistentState';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 export type ResolvedTheme = 'light' | 'dark';
+
+const useThemeModeState = createPersistentState<ThemeMode>(
+  'ziyara.theme-mode',
+  'system',
+  (value) => (value === 'system' || value === 'light' || value === 'dark' ? value : undefined),
+);
 
 type ThemeModeContextValue = {
   loaded: boolean;
@@ -27,7 +33,7 @@ function resolveTheme(mode: ThemeMode, systemTheme: ResolvedTheme): ResolvedThem
 export function AppThemeProvider({ children }: PropsWithChildren) {
   const systemColorScheme = useSystemColorScheme();
   const systemTheme: ResolvedTheme = systemColorScheme === 'dark' ? 'dark' : 'light';
-  const [mode, setMode, loaded] = usePersistentState<ThemeMode>('ziyara.theme-mode', 'system');
+  const [mode, setMode, loaded] = useThemeModeState();
 
   const value = useMemo(
     () => ({

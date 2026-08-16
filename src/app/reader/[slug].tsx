@@ -1,6 +1,7 @@
 import * as Clipboard from 'expo-clipboard';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Share, StyleSheet, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { ScrollView, Share, StyleSheet, View } from 'react-native';
 
 import { SourceLinkButtons, SourceReferenceList } from '@/components/source-reference-list';
 import { Badge } from '@/components/ui/badge';
@@ -28,9 +29,26 @@ export default function ReaderScreen() {
   const rawContent = getReligiousContentBySlug(slug);
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const { preferences, setArabicFontScale } = useReaderPreferences();
-  const { saveReadingPosition } = useReadingPosition();
+  const { loaded: positionsLoaded, positions, saveReadingPosition } = useReadingPosition();
   const { language, t } = useI18n();
   const content = rawContent ? localizeReligiousContent(rawContent, language) : undefined;
+  const scrollViewRef = useRef<ScrollView>(null);
+  const restoredSlugRef = useRef<string | null>(null);
+  const initialReadingPosition = content ? (positions[content.slug] ?? 0) : 0;
+
+  useEffect(() => {
+    if (!content || !positionsLoaded || restoredSlugRef.current === content.slug) {
+      return;
+    }
+
+    const slugToRestore = content.slug;
+    const restoreTimeout = setTimeout(() => {
+      restoredSlugRef.current = slugToRestore;
+      scrollViewRef.current?.scrollTo({ animated: false, y: initialReadingPosition });
+    }, 0);
+
+    return () => clearTimeout(restoreTimeout);
+  }, [content, initialReadingPosition, positionsLoaded]);
 
   if (!content) {
     return (
@@ -59,8 +77,22 @@ export default function ReaderScreen() {
 
   return (
     <Screen
+      scrollViewRef={scrollViewRef}
+      onContentSizeChange={() => {
+        if (!positionsLoaded || restoredSlugRef.current === content.slug) {
+          return;
+        }
+
+        restoredSlugRef.current = content.slug;
+        scrollViewRef.current?.scrollTo({
+          animated: false,
+          y: positions[content.slug] ?? 0,
+        });
+      }}
       onScroll={(event) => {
-        saveReadingPosition(content.slug, event.nativeEvent.contentOffset.y);
+        if (restoredSlugRef.current === content.slug) {
+          saveReadingPosition(content.slug, event.nativeEvent.contentOffset.y);
+        }
       }}>
       <View style={styles.header}>
         <View style={styles.headerText}>
@@ -88,13 +120,15 @@ export default function ReaderScreen() {
           icon="copy"
           label={t('reader.copy')}
           variant="secondary"
-          onPress={() => Clipboard.setStringAsync(readerText)}
+          onPress={() => void Clipboard.setStringAsync(readerText).catch(() => undefined)}
         />
         <Button
           icon="share"
           label={t('reader.share')}
           variant="secondary"
-          onPress={() => Share.share({ title: content.title, message: readerText })}
+          onPress={() =>
+            void Share.share({ title: content.title, message: readerText }).catch(() => undefined)
+          }
         />
       </View>
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -14,7 +14,7 @@ import { useTheme } from '@/hooks/use-theme';
 export function AdminGroupCheckPanel() {
   const theme = useTheme();
   const { isRTL, t } = useI18n();
-  const { activeCheck, closeCheck, startCheck } = useGroupCheck();
+  const { activeCheck, closeCheck, hasSyncError, refresh, startCheck } = useGroupCheck();
   const [results, setResults] = useState<AdminGroupCheckResult[]>([]);
   const [isLoadingResults, setIsLoadingResults] = useState(false);
   const [isWorking, setIsWorking] = useState(false);
@@ -22,17 +22,23 @@ export function AdminGroupCheckPanel() {
   const [hasResultsError, setHasResultsError] = useState(false);
   const [question, setQuestion] = useState('');
   const [hasQuestionError, setHasQuestionError] = useState(false);
+  const [resultsCheckId, setResultsCheckId] = useState<number | null>(null);
+  const resultsRequestSequence = useRef(0);
 
   const checkId = activeCheck?.id ?? null;
+  const displayedResults = resultsCheckId === checkId ? results : [];
 
   const loadResults = useCallback(async () => {
     if (checkId === null) {
       setResults([]);
+      setResultsCheckId(null);
       setHasResultsError(false);
       setIsLoadingResults(false);
       return;
     }
 
+    const requestedCheckId = checkId;
+    const requestSequence = ++resultsRequestSequence.current;
     setIsLoadingResults(true);
     setHasResultsError(false);
 
@@ -45,11 +51,18 @@ export function AdminGroupCheckPanel() {
         throw error;
       }
 
-      setResults(data ?? []);
+      if (requestSequence === resultsRequestSequence.current) {
+        setResults(data ?? []);
+        setResultsCheckId(requestedCheckId);
+      }
     } catch {
-      setHasResultsError(true);
+      if (requestSequence === resultsRequestSequence.current) {
+        setHasResultsError(true);
+      }
     } finally {
-      setIsLoadingResults(false);
+      if (requestSequence === resultsRequestSequence.current) {
+        setIsLoadingResults(false);
+      }
     }
   }, [checkId]);
 
@@ -59,6 +72,7 @@ export function AdminGroupCheckPanel() {
     }
 
     const initialLoadTimeout = setTimeout(() => void loadResults(), 0);
+    let realtimeRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const channel = supabase
       .channel(`admin-group-check-results:${checkId}`)
@@ -70,12 +84,22 @@ export function AdminGroupCheckPanel() {
           schema: 'public',
           table: 'group_check_responses',
         },
-        () => void loadResults(),
+        () => {
+          if (realtimeRefreshTimeout) {
+            clearTimeout(realtimeRefreshTimeout);
+          }
+
+          realtimeRefreshTimeout = setTimeout(() => void loadResults(), 250);
+        },
       )
       .subscribe();
 
     return () => {
       clearTimeout(initialLoadTimeout);
+      if (realtimeRefreshTimeout) {
+        clearTimeout(realtimeRefreshTimeout);
+      }
+      resultsRequestSequence.current += 1;
       void supabase.removeChannel(channel);
     };
   }, [checkId, loadResults]);
@@ -128,8 +152,12 @@ export function AdminGroupCheckPanel() {
     }
   };
 
-  const confirmedNames = results.filter((result) => result.answer).map((result) => result.display_name);
-  const declinedNames = results.filter((result) => !result.answer).map((result) => result.display_name);
+  const confirmedNames = displayedResults
+    .filter((result) => result.answer)
+    .map((result) => result.display_name);
+  const declinedNames = displayedResults
+    .filter((result) => !result.answer)
+    .map((result) => result.display_name);
 
   return (
     <Card style={styles.panel}>
@@ -137,7 +165,19 @@ export function AdminGroupCheckPanel() {
         {activeCheck ? t('groupCheck.adminActiveBody') : t('groupCheck.adminBody')}
       </ThemedText>
 
-      {activeCheck ? (
+      {hasSyncError && !activeCheck ? (
+        <View style={styles.errorBlock}>
+          <ThemedText type="small" themeColor="danger">
+            {t('groupCheck.syncErrorBody')}
+          </ThemedText>
+          <Button
+            icon="refresh"
+            label={t('groupCheck.retry')}
+            onPress={() => void refresh()}
+            variant="secondary"
+          />
+        </View>
+      ) : activeCheck ? (
         <>
           <View
             style={[

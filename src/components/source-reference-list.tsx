@@ -31,7 +31,7 @@ function hasUrl(source: SourceReference): source is SourceReference & { url: str
 }
 
 function openUrl(url: string) {
-  void Linking.openURL(url);
+  void Linking.openURL(url).catch(() => undefined);
 }
 
 export function SourceLinkButtons({

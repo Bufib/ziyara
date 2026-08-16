@@ -14,15 +14,19 @@ import { useTheme } from "@/hooks/use-theme";
 type ScreenProps = {
   children: React.ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
+  onContentSizeChange?: (contentWidth: number, contentHeight: number) => void;
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   safeAreaEdges?: Edge[];
+  scrollViewRef?: React.RefObject<ScrollView | null>;
 };
 
 export function Screen({
   children,
   contentStyle,
+  onContentSizeChange,
   onScroll,
   safeAreaEdges = ["top", "right", "bottom", "left"],
+  scrollViewRef,
 }: ScreenProps) {
   const theme = useTheme();
 
@@ -32,6 +36,8 @@ export function Screen({
       style={[styles.safeArea, { backgroundColor: theme.background }]}
     >
       <ScrollView
+        ref={scrollViewRef}
+        onContentSizeChange={onContentSizeChange}
         onScroll={onScroll}
         scrollEventThrottle={500}
         contentContainerStyle={[styles.content, contentStyle]}

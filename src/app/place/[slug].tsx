@@ -76,6 +76,7 @@ function PlaceImageViewer({ image, onClose }: PlaceImageViewerProps) {
 
   return (
     <Modal
+      accessibilityViewIsModal
       animationType="fade"
       onRequestClose={onClose}
       transparent
@@ -172,7 +173,7 @@ function PlaceImageCarousel({ images }: PlaceImageCarouselProps) {
                 accessibilityRole="link"
                 hitSlop={8}
                 onPress={() => {
-                  void Linking.openURL(image.source.url);
+                  void Linking.openURL(image.source.url).catch(() => undefined);
                 }}
                 style={styles.sourceLink}
               >
@@ -265,11 +266,9 @@ export default function PlaceDetailScreen() {
             {acts.map((act) => (
               <Card
                 key={act.id}
-                onPress={() => {
-                  if (act.contentId) {
-                    router.push(readerRoute(act.contentId));
-                  }
-                }}
+                onPress={
+                  act.contentId ? () => router.push(readerRoute(act.contentId as string)) : undefined
+                }
               >
                 <View style={styles.cardHeader}>
                   <View style={styles.cardTitle}>

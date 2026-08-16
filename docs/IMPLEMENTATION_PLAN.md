@@ -22,7 +22,7 @@ Risks:
 
 - SDK/package drift if dependencies are manually pinned instead of installed with `npx expo install`.
 - Expo SDK 57 requires a supported Node engine range. Node `23.x` can trigger engine warnings even when commands run.
-- App config changes for location, maps, and SQLite may require a new development build.
+- App config changes for location and maps may require a new development build.
 
 Acceptance criteria:
 
@@ -241,7 +241,7 @@ Acceptance criteria:
 
 - Seeded places and placeholder religious content are bundled locally.
 - Bookmarks, reader preferences, and reading positions persist locally.
-- SQLite is installed and configured for future structured content storage.
+- SQLite should only be added once structured content has a concrete schema and migration need.
 - Offline UI states explain what is available without internet.
 
 Tests/checks:
@@ -288,10 +288,10 @@ Tests/checks:
 
 Files to create or modify:
 
-- Future: `jest.config.js` or Expo-supported Jest config
-- Future: `src/**/*.test.ts`
+- `package.json` with the Expo-supported Jest preset
+- `src/data/catalog.test.ts`
 - Future: `e2e/`
-- Future: `.github/workflows/ci.yml`
+- `.github/workflows/ci.yml`
 - Existing app/data files as test coverage grows
 
 Risks:
@@ -303,7 +303,7 @@ Risks:
 Acceptance criteria:
 
 - TypeScript and lint pass.
-- Unit tests cover data lookups, search, bookmark state helpers, and content validation rules.
+- Unit tests cover catalog relationships, legacy lookups, search normalization, and invalid act routing; persistence and UI coverage still needs expansion.
 - Manual QA checklist covers navigation, map, permissions, reader, search, bookmarks, offline behavior, dark mode, and accessibility.
 - CI runs required checks before merging.
 
@@ -311,7 +311,7 @@ Tests/checks:
 
 - `npx tsc --noEmit`
 - `npm run lint`
-- Future: `npm test`
+- `npm test`
 - Future: E2E smoke tests for route navigation.
 - Manual device QA on iOS and Android.
 

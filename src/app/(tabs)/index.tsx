@@ -30,7 +30,11 @@ export default function HomeScreen() {
   const theme = useTheme();
   const { language, t } = useI18n();
   const { activeCheck } = useGroupCheck();
-  const { activeRound } = useQuestionRound();
+  const {
+    activeRound,
+    hasSyncError: hasQuestionRoundSyncError,
+    refresh: refreshQuestionRound,
+  } = useQuestionRound();
   const featuredPlaces = featuredSlugs
     .map((slug) => allPlaces.find((place) => place.slug === slug))
     .filter(isPlace)
@@ -107,10 +111,29 @@ export default function HomeScreen() {
         </View>
       ) : null}
 
+      {hasQuestionRoundSyncError && !activeRound ? (
+        <View
+          style={[
+            styles.notice,
+            { backgroundColor: theme.warningSoft, borderColor: theme.warning },
+          ]}>
+          <ThemedText type="heading">{t("questionRound.syncErrorTitle")}</ThemedText>
+          <ThemedText themeColor="textSecondary">
+            {t("questionRound.syncErrorBody")}
+          </ThemedText>
+          <Button
+            icon="refresh"
+            label={t("groupCheck.retry")}
+            onPress={() => void refreshQuestionRound()}
+            variant="secondary"
+          />
+        </View>
+      ) : null}
+
       <Section title={t("home.importantCities")}>
         <ScrollView
           style={styles.cityGrid}
-          contentContainerStyle={{ gap: 5 }}
+          contentContainerStyle={{ gap: Spacing.two }}
           horizontal
           showsHorizontalScrollIndicator={false}
         >
@@ -122,13 +145,13 @@ export default function HomeScreen() {
               style={({ pressed }) => [
                 styles.cityPill,
                 {
-                  backgroundColor: "#1F7A5A",
+                  backgroundColor: theme.accent,
                   borderColor: theme.border,
                 },
                 pressed && styles.pressed,
               ]}
             >
-              <ThemedText type="smallBold" style={{color: "#fff"}}>
+              <ThemedText type="smallBold" style={{ color: theme.background }}>
                 {localizeCityName(city, language)}
               </ThemedText>
             </Pressable>
