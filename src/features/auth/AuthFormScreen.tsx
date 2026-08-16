@@ -9,6 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,12 +17,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import type { MemberType } from '@/domain/database';
 import { getAuthErrorTranslationKey, useAuth } from '@/features/auth/auth-context';
 import { getPartySize, PartySizeField } from '@/features/auth/PartySizeField';
 import { useI18n } from '@/features/i18n/i18n';
 import { useTheme } from '@/hooks/use-theme';
 
 type AuthMode = 'login' | 'register';
+type AccountCoverage = 'family' | 'individual';
 
 type AuthFormScreenProps = {
   mode: AuthMode;
@@ -29,13 +32,16 @@ type AuthFormScreenProps = {
 
 export function AuthFormScreen({ mode }: AuthFormScreenProps) {
   const theme = useTheme();
+  const { width } = useWindowDimensions();
   const { t } = useI18n();
   const { signIn, signUp } = useAuth();
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
-  const [partySize, setPartySize] = useState('1');
+  const [memberType, setMemberType] = useState<MemberType | null>(null);
+  const [accountCoverage, setAccountCoverage] = useState<AccountCoverage | null>(null);
+  const [partySize, setPartySize] = useState('2');
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isError, setIsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,7 +58,8 @@ export function AuthFormScreen({ mode }: AuthFormScreenProps) {
 
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedName = displayName.trim();
-    const normalizedPartySize = getPartySize(partySize);
+    const normalizedPartySize =
+      accountCoverage === 'family' ? getPartySize(partySize, 2) : 1;
 
     if (!normalizedEmail.includes('@') || !normalizedEmail.includes('.')) {
       showFeedback(t('auth.validation.email'), true);
@@ -64,7 +71,17 @@ export function AuthFormScreen({ mode }: AuthFormScreenProps) {
       return;
     }
 
-    if (isRegister && normalizedPartySize === null) {
+    if (isRegister && !memberType) {
+      showFeedback(t('auth.validation.memberType'), true);
+      return;
+    }
+
+    if (isRegister && !accountCoverage) {
+      showFeedback(t('auth.validation.accountCoverage'), true);
+      return;
+    }
+
+    if (isRegister && accountCoverage === 'family' && normalizedPartySize === null) {
       showFeedback(t('family.validation.partySize'), true);
       return;
     }
@@ -88,10 +105,16 @@ export function AuthFormScreen({ mode }: AuthFormScreenProps) {
 
     try {
       if (isRegister) {
+        if (!memberType) {
+          showFeedback(t('auth.validation.memberType'), true);
+          return;
+        }
+
         const result = await signUp(
           normalizedName,
           normalizedEmail,
           password,
+          memberType,
           normalizedPartySize ?? 1,
         );
 
@@ -129,7 +152,11 @@ export function AuthFormScreen({ mode }: AuthFormScreenProps) {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled">
-          <View style={styles.container}>
+          <View
+            style={[
+              styles.container,
+              { width: Math.max(0, Math.min(MaxContentWidth, 480, width - Spacing.three * 2)) },
+            ]}>
             <View style={styles.intro}>
               <ThemedText type="eyebrow" themeColor="accent">
                 Shia Ziyarah Iraq
@@ -167,11 +194,56 @@ export function AuthFormScreen({ mode }: AuthFormScreenProps) {
                       value={displayName}
                     />
                   </View>
-                  <PartySizeField
-                    disabled={isSubmitting}
-                    onChange={setPartySize}
-                    value={partySize}
-                  />
+
+                  <View style={styles.field}>
+                    <ThemedText type="smallBold">{t('auth.memberTypeTitle')}</ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {t('auth.memberTypeBody')}
+                    </ThemedText>
+                    <View style={styles.choiceRow}>
+                      <RegistrationChoice
+                        disabled={isSubmitting}
+                        label={t('auth.memberType.brother')}
+                        onPress={() => setMemberType('brother')}
+                        selected={memberType === 'brother'}
+                      />
+                      <RegistrationChoice
+                        disabled={isSubmitting}
+                        label={t('auth.memberType.sister')}
+                        onPress={() => setMemberType('sister')}
+                        selected={memberType === 'sister'}
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.field}>
+                    <ThemedText type="smallBold">{t('auth.accountCoverageTitle')}</ThemedText>
+                    <View style={styles.choiceList}>
+                      <RegistrationChoice
+                        description={t('auth.accountCoverage.individualBody')}
+                        disabled={isSubmitting}
+                        label={t('auth.accountCoverage.individual')}
+                        onPress={() => setAccountCoverage('individual')}
+                        selected={accountCoverage === 'individual'}
+                      />
+                      <RegistrationChoice
+                        description={t('auth.accountCoverage.familyBody')}
+                        disabled={isSubmitting}
+                        label={t('auth.accountCoverage.family')}
+                        onPress={() => setAccountCoverage('family')}
+                        selected={accountCoverage === 'family'}
+                      />
+                    </View>
+                  </View>
+
+                  {accountCoverage === 'family' ? (
+                    <PartySizeField
+                      disabled={isSubmitting}
+                      minimum={2}
+                      onChange={setPartySize}
+                      value={partySize}
+                    />
+                  ) : null}
                 </>
               ) : null}
 
@@ -314,6 +386,55 @@ export function AuthFormScreen({ mode }: AuthFormScreenProps) {
   );
 }
 
+function RegistrationChoice({
+  description,
+  disabled,
+  label,
+  onPress,
+  selected,
+}: {
+  description?: string;
+  disabled: boolean;
+  label: string;
+  onPress: () => void;
+  selected: boolean;
+}) {
+  const theme = useTheme();
+
+  return (
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityState={{ checked: selected, disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.choice,
+        {
+          backgroundColor: selected ? theme.accentSoft : theme.background,
+          borderColor: selected ? theme.accent : theme.border,
+        },
+        pressed && styles.pressed,
+        disabled && styles.disabled,
+      ]}>
+      <View
+        style={[
+          styles.radio,
+          { borderColor: selected ? theme.accent : theme.textSecondary },
+        ]}>
+        {selected ? <View style={[styles.radioDot, { backgroundColor: theme.accent }]} /> : null}
+      </View>
+      <View style={styles.choiceText}>
+        <ThemedText type="smallBold">{label}</ThemedText>
+        {description ? (
+          <ThemedText type="small" themeColor="textSecondary">
+            {description}
+          </ThemedText>
+        ) : null}
+      </View>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -328,13 +449,10 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
   },
   container: {
-    alignSelf: 'stretch',
     flexShrink: 1,
     gap: Spacing.four,
     marginHorizontal: 'auto',
-    maxWidth: Math.min(MaxContentWidth, 480),
     minWidth: 0,
-    width: 'auto',
   },
   intro: {
     gap: Spacing.two,
@@ -349,6 +467,45 @@ const styles = StyleSheet.create({
   field: {
     gap: Spacing.two,
     minWidth: 0,
+  },
+  choiceRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  choiceList: {
+    gap: Spacing.two,
+  },
+  choice: {
+    alignItems: 'flex-start',
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    flex: 1,
+    flexDirection: 'row',
+    gap: Spacing.two,
+    minHeight: 52,
+    minWidth: 0,
+    padding: Spacing.three,
+    paddingBottom: Spacing.four,
+  },
+  choiceText: {
+    flex: 1,
+    flexShrink: 1,
+    gap: Spacing.half,
+    minWidth: 0,
+  },
+  radio: {
+    alignItems: 'center',
+    borderRadius: 999,
+    borderWidth: 2,
+    height: 20,
+    justifyContent: 'center',
+    marginTop: 1,
+    width: 20,
+  },
+  radioDot: {
+    borderRadius: 999,
+    height: 10,
+    width: 10,
   },
   input: {
     borderRadius: 8,

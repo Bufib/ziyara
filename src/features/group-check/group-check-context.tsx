@@ -35,7 +35,7 @@ type GroupCheckContextValue = {
 const GroupCheckContext = createContext<GroupCheckContextValue | null>(null);
 
 export function GroupCheckProvider({ children }: PropsWithChildren) {
-  const { isAdmin, isLoading: isAuthLoading, session } = useAuth();
+  const { isAdmin, isLoading: isAuthLoading, profile, session } = useAuth();
   const [activeCheck, setActiveCheck] = useState<GroupCheck | null>(null);
   const [currentResponse, setCurrentResponse] = useState<boolean | null>(null);
   const [syncState, setSyncState] = useState<SyncState>('loading');
@@ -61,11 +61,12 @@ export function GroupCheckProvider({ children }: PropsWithChildren) {
 
       let response: boolean | null = null;
 
-      if (check && !isAdmin) {
+      if (check && profile) {
         const { data: savedResponse, error: responseError } = await supabase
           .from('group_check_responses')
           .select('answer')
           .eq('check_id', check.id)
+          .eq('profile_id', profile.id)
           .maybeSingle();
 
         if (responseError) {
@@ -81,7 +82,7 @@ export function GroupCheckProvider({ children }: PropsWithChildren) {
     } catch {
       setSyncState('error');
     }
-  }, [isAdmin, session]);
+  }, [profile, session]);
 
   useEffect(() => {
     if (isAuthLoading) {

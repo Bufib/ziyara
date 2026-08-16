@@ -36,7 +36,7 @@ function RootNavigation() {
   const colors = Colors[scheme];
   const { t } = useI18n();
   const { isAdmin, isLoading, session } = useAuth();
-  const { isBlocking, isLoading: isGroupCheckLoading } = useGroupCheck();
+  const { activeCheck, isBlocking, isLoading: isGroupCheckLoading } = useGroupCheck();
   const { activeRound } = useQuestionRound();
 
   useEffect(() => {
@@ -77,7 +77,7 @@ function RootNavigation() {
             <Stack.Screen name="account" options={{ title: t('nav.account') }} />
             <Stack.Screen name="sources" options={{ title: t('nav.sources') }} />
             <Stack.Screen name="disclaimer" options={{ title: t('nav.disclaimer') }} />
-            <Stack.Protected guard={!isAdmin && Boolean(activeRound)}>
+            <Stack.Protected guard={Boolean(activeRound)}>
               <Stack.Screen
                 name="question-round"
                 options={{ title: t('questionRound.navTitle') }}
@@ -85,10 +85,10 @@ function RootNavigation() {
             </Stack.Protected>
           </Stack.Protected>
 
-          <Stack.Protected guard={Boolean(session) && isBlocking}>
+          <Stack.Protected guard={Boolean(session) && (isBlocking || Boolean(activeCheck))}>
             <Stack.Screen
               name="check-in"
-              options={{ headerShown: false, title: t('groupCheck.navTitle') }}
+              options={{ headerShown: !isBlocking, title: t('groupCheck.navTitle') }}
             />
           </Stack.Protected>
 

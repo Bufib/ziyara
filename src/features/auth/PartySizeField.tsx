@@ -9,32 +9,34 @@ import { useTheme } from '@/hooks/use-theme';
 export const minimumPartySize = 1;
 export const maximumPartySize = 50;
 
-export function getPartySize(value: string) {
+export function getPartySize(value: string, minimum = minimumPartySize) {
   const partySize = Number(value);
 
-  return Number.isInteger(partySize) && partySize >= minimumPartySize && partySize <= maximumPartySize
+  return Number.isInteger(partySize) && partySize >= minimum && partySize <= maximumPartySize
     ? partySize
     : null;
 }
 
 export function PartySizeField({
   disabled = false,
+  minimum = minimumPartySize,
   onChange,
   value,
 }: {
   disabled?: boolean;
+  minimum?: number;
   onChange: (value: string) => void;
   value: string;
 }) {
   const theme = useTheme();
   const { t } = useI18n();
-  const parsedValue = getPartySize(value);
-  const displayedValue = parsedValue ?? minimumPartySize;
+  const parsedValue = getPartySize(value, minimum);
+  const displayedValue = parsedValue ?? minimum;
 
   const changeBy = (difference: number) => {
     const nextValue = Math.min(
       maximumPartySize,
-      Math.max(minimumPartySize, displayedValue + difference),
+      Math.max(minimum, displayedValue + difference),
     );
     onChange(String(nextValue));
   };
@@ -59,7 +61,7 @@ export function PartySizeField({
 
       <View style={styles.controls}>
         <PartySizeButton
-          disabled={disabled || displayedValue <= minimumPartySize}
+          disabled={disabled || displayedValue <= minimum}
           label={t('family.decrease')}
           name="minus"
           onPress={() => changeBy(-1)}
@@ -72,7 +74,7 @@ export function PartySizeField({
           maxLength={2}
           onBlur={() => {
             if (parsedValue === null) {
-              onChange(String(minimumPartySize));
+              onChange(String(minimum));
             }
           }}
           onChangeText={changeText}
@@ -96,7 +98,7 @@ export function PartySizeField({
       </View>
 
       <ThemedText type="small" themeColor="textSecondary">
-        {t('family.partySizeLimit', { maximum: maximumPartySize })}
+        {t('family.partySizeLimit', { maximum: maximumPartySize, minimum })}
       </ThemedText>
     </View>
   );

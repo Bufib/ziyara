@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { SymbolIcon } from '@/components/ui/symbol-icon';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useAuth } from '@/features/auth/auth-context';
 import { useGroupCheck } from '@/features/group-check/group-check-context';
 import { useI18n } from '@/features/i18n/i18n';
 import { useTheme } from '@/hooks/use-theme';
@@ -14,6 +15,7 @@ import { useTheme } from '@/hooks/use-theme';
 export default function CheckInScreen() {
   const theme = useTheme();
   const { t } = useI18n();
+  const { isAdmin } = useAuth();
   const {
     activeCheck,
     currentResponse,
@@ -111,7 +113,7 @@ export default function CheckInScreen() {
         </Card>
 
         <ThemedText type="small" themeColor="textSecondary" style={styles.waitingText}>
-          {t('groupCheck.lockedBody')}
+          {t(isAdmin ? 'groupCheck.adminParticipantBody' : 'groupCheck.lockedBody')}
         </ThemedText>
       </View>
     </SafeAreaView>

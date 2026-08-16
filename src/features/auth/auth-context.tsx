@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { AppState, Platform } from 'react-native';
 
-import type { UserProfile } from '@/domain/database';
+import type { MemberType, UserProfile } from '@/domain/database';
 import { supabase } from '@/features/auth/supabase';
 
 type AuthResult = {
@@ -38,6 +38,7 @@ type AuthContextValue = {
     displayName: string,
     email: string,
     password: string,
+    memberType: MemberType,
     partySize: number,
   ) => Promise<SignUpResult>;
   updatePartySize: (partySize: number) => Promise<ProfileUpdateResult>;
@@ -123,7 +124,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, user_id, display_name, party_size, role, created_at, updated_at')
+          .select('id, user_id, display_name, member_type, party_size, role, created_at, updated_at')
           .eq('user_id', userId)
           .maybeSingle();
 
@@ -154,12 +155,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   const signUp = useCallback(
-    async (displayName: string, email: string, password: string, partySize: number) => {
+    async (
+      displayName: string,
+      email: string,
+      password: string,
+      memberType: MemberType,
+      partySize: number,
+    ) => {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { display_name: displayName, party_size: partySize },
+          data: { display_name: displayName, member_type: memberType, party_size: partySize },
         },
       });
 
@@ -240,7 +247,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         .from('profiles')
         .update({ party_size: partySize })
         .eq('user_id', userId)
-        .select('id, user_id, display_name, party_size, role, created_at, updated_at')
+        .select('id, user_id, display_name, member_type, party_size, role, created_at, updated_at')
         .single();
 
       if (!error) {

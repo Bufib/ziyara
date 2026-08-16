@@ -2,6 +2,12 @@
 
 Produktionsorientierte Expo-SDK-57-App für schiitische Ziyarah im Irak.
 
+## Dokumentation
+
+- [`LLM_CONTEXT.md`](./LLM_CONTEXT.md): verbindlicher Gesamtüberblick für LLMs und neue Mitwirkende
+- [`AGENTS.md`](./AGENTS.md): Arbeits-, Qualitäts- und Inhaltsregeln
+- [`docs/IMPLEMENTATION_PLAN.md`](./docs/IMPLEMENTATION_PLAN.md): ursprüngliche Roadmap
+
 ## Stack
 
 - Expo SDK 57

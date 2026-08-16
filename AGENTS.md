@@ -4,6 +4,7 @@ This repository is a production-oriented Expo SDK 57 app for Shia ziyarah in Ira
 
 Before writing code, read:
 
+- `LLM_CONTEXT.md` for the current product state, architecture, data flows, and known gaps.
 - `docs/IMPLEMENTATION_PLAN.md`
 - The exact Expo SDK docs for this project: https://docs.expo.dev/versions/v57.0.0/
 
@@ -63,4 +64,5 @@ When native dependencies or app config change, also run a development build or c
 - New UI is reachable through navigation and has empty, loading, denied-permission, or error states where relevant.
 - Persistence changes survive an app restart where applicable.
 - Native/app-config changes include a note that a new development build is required.
+- `LLM_CONTEXT.md` is updated whenever architecture, navigation, core features, backend schema, environment requirements, or known gaps change.
 - The final handoff summarizes changed files, checks run, and known risks.

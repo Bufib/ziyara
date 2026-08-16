@@ -1,9 +1,12 @@
-export type AppRole = 'admin' | 'user';
+export type AppRole = 'admin' | 'medical_staff' | 'organization_team' | 'user';
+export type AssignableAppRole = Exclude<AppRole, 'admin'>;
+export type MemberType = 'brother' | 'sister';
 
 export type UserProfile = {
   created_at: string;
   display_name: string;
   id: number;
+  member_type: MemberType | null;
   party_size: number;
   role: AppRole;
   updated_at: string;
@@ -11,12 +14,8 @@ export type UserProfile = {
 };
 
 export type AdminUserSummary = {
-  created_at: string;
   display_name: string;
-  email: string;
-  last_sign_in_at: string | null;
   party_size: number;
-  profile_id: number;
   role: AppRole;
   user_id: string;
 };
@@ -112,6 +111,7 @@ export type Database = {
           created_at?: string;
           display_name: string;
           id?: never;
+          member_type?: MemberType | null;
           party_size?: number;
           role?: AppRole;
           updated_at?: string;
@@ -121,6 +121,7 @@ export type Database = {
         Row: UserProfile;
         Update: {
           display_name?: string;
+          member_type?: MemberType | null;
           party_size?: number;
           role?: AppRole;
           updated_at?: string;
@@ -148,6 +149,10 @@ export type Database = {
       admin_list_users: {
         Args: never;
         Returns: AdminUserSummary[];
+      };
+      admin_set_user_role: {
+        Args: { p_role: AssignableAppRole; p_user_id: string };
+        Returns: UserProfile;
       };
       is_admin: {
         Args: never;
@@ -184,6 +189,7 @@ export type Database = {
     };
     Enums: {
       app_role: AppRole;
+      member_type: MemberType;
     };
     CompositeTypes: Record<string, never>;
   };

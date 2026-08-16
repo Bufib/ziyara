@@ -8,7 +8,7 @@ import { Spacing } from "@/constants/theme";
 import { allPlaces } from "@/data/places";
 import type { Place } from "@/domain/types";
 import { useI18n } from "@/features/i18n/i18n";
-import { useAuth } from "@/features/auth/auth-context";
+import { useGroupCheck } from "@/features/group-check/group-check-context";
 import { localizeCityName, localizePlace } from "@/features/i18n/localizedData";
 import { cityRoute } from "@/features/navigation/routes";
 import { PlaceImageCard } from "@/features/places/PlaceImageCard";
@@ -29,7 +29,7 @@ function isPlace(place: Place | undefined): place is Place {
 export default function HomeScreen() {
   const theme = useTheme();
   const { language, t } = useI18n();
-  const { isAdmin } = useAuth();
+  const { activeCheck } = useGroupCheck();
   const { activeRound } = useQuestionRound();
   const featuredPlaces = featuredSlugs
     .map((slug) => allPlaces.find((place) => place.slug === slug))
@@ -69,7 +69,26 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {activeRound && !isAdmin ? (
+      {activeCheck ? (
+        <View
+          style={[
+            styles.notice,
+            { backgroundColor: theme.warningSoft, borderColor: theme.warning },
+          ]}
+        >
+          <ThemedText type="heading">{t("groupCheck.homeTitle")}</ThemedText>
+          <ThemedText themeColor="textSecondary">
+            {t("groupCheck.homeBody")}
+          </ThemedText>
+          <Button
+            icon="confirm"
+            label={t("groupCheck.openForm")}
+            onPress={() => router.push("/check-in")}
+          />
+        </View>
+      ) : null}
+
+      {activeRound ? (
         <View
           style={[
             styles.notice,
