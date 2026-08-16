@@ -1,5 +1,4 @@
 export type AppRole = 'admin' | 'medical_staff' | 'organization_team' | 'user';
-export type AssignableAppRole = Exclude<AppRole, 'admin'>;
 export type MemberType = 'brother' | 'sister';
 
 export type UserProfile = {
@@ -191,7 +190,7 @@ export type Database = {
         Returns: AdminUserSummary[];
       };
       admin_set_user_role: {
-        Args: { p_role: AssignableAppRole; p_user_id: string };
+        Args: { p_role: AppRole; p_user_id: string };
         Returns: UserProfile;
       };
       is_admin: {

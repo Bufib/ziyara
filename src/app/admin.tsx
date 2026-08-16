@@ -15,8 +15,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { SymbolIcon } from '@/components/ui/symbol-icon';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
-import type { AdminUserSummary, AssignableAppRole } from '@/domain/database';
+import type { AdminUserSummary, AppRole } from '@/domain/database';
 import { AdminSectionHeader } from '@/features/admin/AdminSectionHeader';
+import { useAuth } from '@/features/auth/auth-context';
 import { supabase } from '@/features/auth/supabase';
 import { AdminGroupCheckPanel } from '@/features/group-check/AdminGroupCheckPanel';
 import { useGroupCheck } from '@/features/group-check/group-check-context';
@@ -26,11 +27,11 @@ import { useI18n } from '@/features/i18n/i18n';
 import { useTheme } from '@/hooks/use-theme';
 
 const adminPageSize = 200;
-const assignableRoles: AssignableAppRole[] = ['user', 'medical_staff', 'organization_team'];
+const assignableRoles: AppRole[] = ['user', 'medical_staff', 'organization_team', 'admin'];
 
 type AdminSection = 'questions' | 'status' | 'users';
 type RoleFeedback = {
-  type: 'error' | 'success';
+  type: 'error' | 'last-admin' | 'success';
   userId: string;
 };
 
@@ -58,6 +59,7 @@ async function fetchAllAdminUsers() {
 export default function AdminScreen() {
   const theme = useTheme();
   const { isRTL, language, t } = useI18n();
+  const { profile, refreshProfile } = useAuth();
   const { activeCheck, hasSyncError: hasGroupCheckSyncError } = useGroupCheck();
   const { activeRound, hasSyncError: hasQuestionRoundSyncError } = useQuestionRound();
   const [users, setUsers] = useState<AdminUserSummary[]>([]);
@@ -114,31 +116,46 @@ export default function AdminScreen() {
     }
   }, []);
 
-  const assignRole = useCallback(async (userId: string, role: AssignableAppRole) => {
-    setRoleFeedback(null);
-    setUpdatingRoleUserId(userId);
+  const assignRole = useCallback(
+    async (userId: string, role: AppRole) => {
+      setRoleFeedback(null);
+      setUpdatingRoleUserId(userId);
 
-    try {
-      const { error } = await supabase.rpc('admin_set_user_role', {
-        p_role: role,
-        p_user_id: userId,
-      });
+      try {
+        const { error } = await supabase.rpc('admin_set_user_role', {
+          p_role: role,
+          p_user_id: userId,
+        });
 
-      if (error) {
-        throw error;
+        if (error) {
+          setRoleFeedback({
+            type:
+              error.code === 'P0001' &&
+              error.message === 'At least one administrator must remain.'
+                ? 'last-admin'
+                : 'error',
+            userId,
+          });
+          return;
+        }
+
+        setUsers((current) =>
+          current.map((user) => (user.user_id === userId ? { ...user, role } : user)),
+        );
+        setRoleFeedback({ type: 'success', userId });
+        setExpandedRoleUserId(null);
+
+        if (profile?.user_id === userId) {
+          await refreshProfile();
+        }
+      } catch {
+        setRoleFeedback({ type: 'error', userId });
+      } finally {
+        setUpdatingRoleUserId(null);
       }
-
-      setUsers((current) =>
-        current.map((user) => (user.user_id === userId ? { ...user, role } : user)),
-      );
-      setRoleFeedback({ type: 'success', userId });
-      setExpandedRoleUserId(null);
-    } catch {
-      setRoleFeedback({ type: 'error', userId });
-    } finally {
-      setUpdatingRoleUserId(null);
-    }
-  }, []);
+    },
+    [profile, refreshProfile],
+  );
 
   useEffect(() => {
     const initialLoadTimeout = setTimeout(() => void loadUsers(), 0);
@@ -338,61 +355,62 @@ export default function AdminScreen() {
               {t('admin.partySize', { count: item.party_size })}
             </ThemedText>
 
-            {item.role !== 'admin' ? (
-              <>
-                <Button
-                  icon={expandedRoleUserId === item.user_id ? 'close' : 'settings'}
-                  label={t(
-                    expandedRoleUserId === item.user_id
-                      ? 'admin.roleAssignment.close'
-                      : 'admin.roleAssignment.title',
-                  )}
-                  onPress={() => {
-                    setRoleFeedback(null);
-                    setExpandedRoleUserId((current) =>
-                      current === item.user_id ? null : item.user_id,
-                    );
-                  }}
-                  style={styles.roleAssignmentButton}
-                  variant="secondary"
-                />
+            <Button
+              icon={expandedRoleUserId === item.user_id ? 'close' : 'settings'}
+              label={t(
+                expandedRoleUserId === item.user_id
+                  ? 'admin.roleAssignment.close'
+                  : 'admin.roleAssignment.title',
+              )}
+              onPress={() => {
+                setRoleFeedback(null);
+                setExpandedRoleUserId((current) =>
+                  current === item.user_id ? null : item.user_id,
+                );
+              }}
+              style={styles.roleAssignmentButton}
+              variant="secondary"
+            />
 
-                {expandedRoleUserId === item.user_id ? (
-                  <View style={[styles.roleAssignment, { borderColor: theme.border }]}>
-                    <View accessibilityRole="radiogroup" style={styles.roleChoices}>
-                      {assignableRoles.map((role) => (
-                        <RoleChoice
-                          disabled={updatingRoleUserId !== null}
-                          key={role}
-                          label={t(`admin.role.${role}`)}
-                          onPress={() => void assignRole(item.user_id, role)}
-                          selected={item.role === role}
-                        />
-                      ))}
-                    </View>
+            {expandedRoleUserId === item.user_id ? (
+              <View style={[styles.roleAssignment, { borderColor: theme.border }]}>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t('admin.roleAssignment.body')}
+                </ThemedText>
+                <View accessibilityRole="radiogroup" style={styles.roleChoices}>
+                  {assignableRoles.map((role) => (
+                    <RoleChoice
+                      disabled={updatingRoleUserId !== null}
+                      key={role}
+                      label={t(`admin.role.${role}`)}
+                      onPress={() => void assignRole(item.user_id, role)}
+                      selected={item.role === role}
+                    />
+                  ))}
+                </View>
 
-                    {updatingRoleUserId === item.user_id ? (
-                      <View style={styles.roleProgress}>
-                        <ActivityIndicator color={theme.accent} size="small" />
-                        <ThemedText type="small" themeColor="textSecondary">
-                          {t('admin.roleAssignment.saving')}
-                        </ThemedText>
-                      </View>
-                    ) : null}
+                {updatingRoleUserId === item.user_id ? (
+                  <View style={styles.roleProgress}>
+                    <ActivityIndicator color={theme.accent} size="small" />
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {t('admin.roleAssignment.saving')}
+                    </ThemedText>
                   </View>
                 ) : null}
-              </>
+              </View>
             ) : null}
 
             {roleFeedback?.userId === item.user_id ? (
               <ThemedText
                 accessibilityLiveRegion="polite"
                 type="small"
-                themeColor={roleFeedback.type === 'error' ? 'danger' : 'success'}>
+                themeColor={roleFeedback.type === 'success' ? 'success' : 'danger'}>
                 {t(
-                  roleFeedback.type === 'error'
-                    ? 'admin.roleAssignment.error'
-                    : 'admin.roleAssignment.saved',
+                  roleFeedback.type === 'success'
+                    ? 'admin.roleAssignment.saved'
+                    : roleFeedback.type === 'last-admin'
+                      ? 'admin.roleAssignment.lastAdmin'
+                      : 'admin.roleAssignment.error',
                 )}
               </ThemedText>
             ) : null}

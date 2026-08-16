@@ -151,12 +151,43 @@ export function AuthProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     const profileLoadTimeout = setTimeout(() => void refreshProfile(), 0);
 
-
     return () => {
       clearTimeout(profileLoadTimeout);
       profileRequestSequence.current += 1;
     };
   }, [refreshProfile]);
+
+  useEffect(() => {
+    const userId = session?.user.id;
+
+    if (!userId) {
+      return;
+    }
+
+    const channel = supabase
+      .channel(`own-profile:${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          filter: `user_id=eq.${userId}`,
+          schema: 'public',
+          table: 'profiles',
+        },
+        () => void refreshProfile(),
+      )
+      .subscribe();
+    const appStateSubscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        void refreshProfile();
+      }
+    });
+
+    return () => {
+      appStateSubscription.remove();
+      void supabase.removeChannel(channel);
+    };
+  }, [refreshProfile, session?.user.id]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });

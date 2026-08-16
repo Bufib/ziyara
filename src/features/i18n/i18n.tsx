@@ -32,7 +32,8 @@ export const languageOptions: {
 const useLanguageState = createPersistentState<Language>(
   "ziyara.language",
   "de",
-  (value) => (value === "de" || value === "en" || value === "ar" ? value : undefined),
+  (value) =>
+    value === "de" || value === "en" || value === "ar" ? value : undefined,
 );
 
 const dictionaries: Record<Language, Record<string, string>> = {
@@ -50,8 +51,10 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "account.error.currentPassword": "Das aktuelle Passwort ist nicht korrekt.",
     "account.error.reauthentication":
       "Supabase verlangt eine erneute Bestätigung. Melde dich neu an und versuche es noch einmal.",
-    "account.error.sameEmail": "Die neue E-Mail-Adresse entspricht der aktuellen Adresse.",
-    "account.error.samePassword": "Das neue Passwort muss sich vom aktuellen Passwort unterscheiden.",
+    "account.error.sameEmail":
+      "Die neue E-Mail-Adresse entspricht der aktuellen Adresse.",
+    "account.error.samePassword":
+      "Das neue Passwort muss sich vom aktuellen Passwort unterscheiden.",
     "account.newEmail": "Neue E-Mail-Adresse",
     "account.newPassword": "Neues Passwort",
     "account.passwordBody":
@@ -72,7 +75,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "family.partySize": "Anzahl der Personen",
     "family.partySizeBody":
       "Zähle dich selbst und nur mitreisende Familienmitglieder ohne eigenes Telefon. Wer ein eigenes Telefon hat – auch dein Ehepartner – erstellt ein eigenes Konto.",
-    "family.partySizeLimit": "Mindestens {minimum}, höchstens {maximum} Personen.",
+    "family.partySizeLimit":
+      "Mindestens {minimum}, höchstens {maximum} Personen.",
     "family.validation.partySize": "Gib eine gültige Personenzahl ein.",
     "groupCheck.actionError":
       "Die Aktion konnte nicht ausgeführt werden. Prüfe die Verbindung und versuche es erneut.",
@@ -99,8 +103,10 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "groupCheck.noDeclined": "Noch keine Ablehnung",
     "groupCheck.openForm": "Statusabfrage beantworten",
     "groupCheck.questionLabel": "Frage",
-    "groupCheck.questionPlaceholder": "Zum Beispiel: Seid ihr alle bereits im Bus?",
-    "groupCheck.questionValidation": "Die Frage muss mindestens 3 Zeichen enthalten.",
+    "groupCheck.questionPlaceholder":
+      "Zum Beispiel: Seid ihr alle bereits im Bus?",
+    "groupCheck.questionValidation":
+      "Die Frage muss mindestens 3 Zeichen enthalten.",
     "groupCheck.resultsError": "Die Antworten konnten nicht geladen werden.",
     "groupCheck.retry": "Erneut versuchen",
     "groupCheck.start": "Frage stellen",
@@ -136,7 +142,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "questionRound.questionPlaceholder": "Schreibe hier deine Frage …",
     "questionRound.showMore": "Weitere {count} Fragen anzeigen",
     "questionRound.statusClosed": "Letzte Fragerunde geschlossen",
-    "questionRound.statusOpen": "Fragerunde geöffnet – Nutzer können Fragen senden",
+    "questionRound.statusOpen":
+      "Fragerunde geöffnet – Nutzer können Fragen senden",
     "questionRound.syncErrorBody":
       "Der Status der anonymen Fragerunde konnte nicht geladen werden. Versuche es erneut.",
     "questionRound.syncErrorTitle": "Fragerunde nicht synchronisiert",
@@ -149,10 +156,12 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "questionRound.userBody":
       "Der Admin kann den Fragetext lesen und später als erledigt abhaken.",
     "questionRound.userTitle": "Frage anonym stellen",
-    "questionRound.validation": "Die Frage muss mindestens 3 Zeichen enthalten.",
+    "questionRound.validation":
+      "Die Frage muss mindestens 3 Zeichen enthalten.",
     "admin.description":
       "Verwalte Statusabfragen, anonyme Fragen und Benutzer in getrennten Bereichen.",
-    "admin.emptyBody": "Sobald sich Personen registrieren, erscheinen sie hier.",
+    "admin.emptyBody":
+      "Sobald sich Personen registrieren, erscheinen sie hier.",
     "admin.emptyTitle": "Noch keine Konten",
     "admin.errorBody":
       "Die Nutzerliste konnte nicht geladen werden. Prüfe die Verbindung oder deine Admin-Rolle.",
@@ -177,26 +186,29 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "admin.role.medical_staff": "Medizinisches Personal",
     "admin.role.organization_team": "Organisationsteam-Mitglied",
     "admin.role.user": "Nutzer",
-    "admin.roleAssignment.adminProtected":
-      "Adminrollen sind geschützt und können hier weder vergeben noch verändert werden.",
     "admin.roleAssignment.body":
-      "Nur Admins können Rollen vergeben. Medizinisches Personal und Organisationsteam-Mitglieder haben vorerst dieselben App-Zugriffe wie normale Nutzer.",
+      "Nur Admins können Rollen vergeben. Die Adminrolle erlaubt die Benutzer- und Gruppenverwaltung. Mindestens ein Admin muss erhalten bleiben.",
     "admin.roleAssignment.close": "Rollenwahl schließen",
     "admin.roleAssignment.error":
       "Die Rolle konnte nicht gespeichert werden. Prüfe die Verbindung und versuche es erneut.",
+    "admin.roleAssignment.lastAdmin":
+      "Der letzte Admin kann nicht auf eine andere Rolle gesetzt werden. Weise zuerst einer weiteren Person die Adminrolle zu.",
     "admin.roleAssignment.saved": "Die Rolle wurde gespeichert.",
     "admin.roleAssignment.saving": "Rolle wird gespeichert …",
     "admin.roleAssignment.title": "Rolle vergeben",
     "admin.section.questions.closed": "Geschlossen",
-    "admin.section.questions.description": "Fragerunde freigeben, Fragen lesen und abhaken.",
+    "admin.section.questions.description":
+      "Fragerunde freigeben, Fragen lesen und abhaken.",
     "admin.section.questions.open": "Geöffnet",
     "admin.section.questions.title": "Anonyme Fragen",
     "admin.section.status.active": "Aktiv",
-    "admin.section.status.description": "Verpflichtende Abfrage starten und Antworten prüfen.",
+    "admin.section.status.description":
+      "Verpflichtende Abfrage starten und Antworten prüfen.",
     "admin.section.status.inactive": "Bereit",
     "admin.section.status.title": "Statusabfrage",
     "admin.section.users.count": "{count} Konten",
-    "admin.section.users.description": "Konten, Rollen und vertretene Personen ansehen.",
+    "admin.section.users.description":
+      "Konten, Rollen und vertretene Personen ansehen.",
     "admin.section.users.error": "Fehler",
     "admin.section.users.loading": "Wird geladen …",
     "admin.section.users.title": "Benutzer",
@@ -208,19 +220,24 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "Bestätige zuerst deine E-Mail-Adresse und versuche es danach erneut.",
     "auth.error.generic":
       "Das hat nicht funktioniert. Prüfe deine Internetverbindung und versuche es erneut.",
-    "auth.error.invalidCredentials": "E-Mail-Adresse oder Passwort ist nicht korrekt.",
+    "auth.error.invalidCredentials":
+      "E-Mail-Adresse oder Passwort ist nicht korrekt.",
     "auth.error.rateLimit":
       "Zu viele Versuche in kurzer Zeit. Bitte warte einen Moment.",
-    "auth.error.signupDisabled": "Neue Registrierungen sind derzeit deaktiviert.",
-    "auth.error.userExists": "Für diese E-Mail-Adresse existiert bereits ein Konto.",
-    "auth.error.weakPassword": "Das Passwort erfüllt die Sicherheitsanforderungen nicht.",
+    "auth.error.signupDisabled":
+      "Neue Registrierungen sind derzeit deaktiviert.",
+    "auth.error.userExists":
+      "Für diese E-Mail-Adresse existiert bereits ein Konto.",
+    "auth.error.weakPassword":
+      "Das Passwort erfüllt die Sicherheitsanforderungen nicht.",
     "auth.errorTitle": "Anmeldung fehlgeschlagen",
     "auth.haveAccount": "Du hast bereits ein Konto?",
     "auth.accountCoverage.family": "Ich und Familie ohne eigenes Telefon",
     "auth.accountCoverage.familyBody":
-      "Nur Kinder oder Angehörige ohne eigenes Telefon mitzählen. Erwachsene mit eigenem Telefon – zum Beispiel dein Ehepartner – erstellen ein eigenes Konto.",
+      "Nur Kinder oder Angehörige ohne eigenes Telefon mitzählen. Erwachsene mit eigenem Telefon erstellen bitte ein eigenes Konto.",
     "auth.accountCoverage.individual": "Nur ich",
-    "auth.accountCoverage.individualBody": "Dieses Konto vertritt ausschließlich mich.",
+    "auth.accountCoverage.individualBody":
+      "Dieses Konto vertritt ausschließlich mich.",
     "auth.accountCoverageTitle": "Für wen ist dieses Konto?",
     "auth.loginBody": "Melde dich an, um die App zu verwenden.",
     "auth.loginTitle": "Willkommen zurück",
@@ -233,7 +250,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.noAccount": "Du hast noch kein Konto?",
     "auth.password": "Passwort",
     "auth.passwordConfirm": "Passwort wiederholen",
-    "auth.passwordHint": "Mindestens 8 Zeichen sowie mindestens ein Buchstabe und eine Zahl.",
+    "auth.passwordHint":
+      "Mindestens 8 Zeichen sowie mindestens ein Buchstabe und eine Zahl.",
     "auth.profileErrorBody":
       "Dein Profil und deine Rolle konnten nicht sicher geladen werden. Prüfe die Verbindung und versuche es erneut.",
     "auth.profileErrorTitle": "Profil nicht verfügbar",
@@ -248,9 +266,12 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.validation.accountCoverage": "Wähle aus, für wen dieses Konto gilt.",
     "auth.validation.email": "Gib eine gültige E-Mail-Adresse ein.",
     "auth.validation.memberType": "Wähle Bruder oder Schwester aus.",
-    "auth.validation.name": "Der Anzeigename muss mindestens 2 Zeichen lang sein.",
-    "auth.validation.password": "Das Passwort muss mindestens 8 Zeichen lang sein.",
-    "auth.validation.passwordMatch": "Die eingegebenen Passwörter stimmen nicht überein.",
+    "auth.validation.name":
+      "Der Anzeigename muss mindestens 2 Zeichen lang sein.",
+    "auth.validation.password":
+      "Das Passwort muss mindestens 8 Zeichen lang sein.",
+    "auth.validation.passwordMatch":
+      "Die eingegebenen Passwörter stimmen nicht überein.",
     "auth.validation.passwordPattern":
       "Das Passwort muss mindestens einen Buchstaben und eine Zahl enthalten.",
     "auth.validation.passwordRequired": "Gib dein Passwort ein.",
@@ -265,7 +286,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "bookmarks.clear": "Leeren",
     "bookmarks.clearAction": "Entfernen",
     "bookmarks.clearCancel": "Abbrechen",
-    "bookmarks.clearConfirmBody": "Alle lokal gespeicherten Merkliste-Einträge entfernen?",
+    "bookmarks.clearConfirmBody":
+      "Alle lokal gespeicherten Merkliste-Einträge entfernen?",
     "bookmarks.clearConfirmTitle": "Merkliste leeren?",
     "bookmarks.emptyBody":
       "Speichere Orte oder Leseeinträge, um sie offline schnell wiederzufinden.",
@@ -460,8 +482,10 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "account.error.currentPassword": "The current password is incorrect.",
     "account.error.reauthentication":
       "Supabase requires another confirmation. Sign in again and retry.",
-    "account.error.sameEmail": "The new email address is the same as the current address.",
-    "account.error.samePassword": "The new password must differ from the current password.",
+    "account.error.sameEmail":
+      "The new email address is the same as the current address.",
+    "account.error.samePassword":
+      "The new password must differ from the current password.",
     "account.newEmail": "New email address",
     "account.newPassword": "New password",
     "account.passwordBody": "Choose a new, unique password and keep it secure.",
@@ -471,7 +495,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "account.validation.currentPassword": "Enter your current password.",
     "account.partySizeBody":
       "Change how many people this account represents. Include only relatives without their own phone; people with their own phone create a separate account.",
-    "account.partySizeError": "The number of people could not be saved. Try again.",
+    "account.partySizeError":
+      "The number of people could not be saved. Try again.",
     "account.partySizeSave": "Save number of people",
     "account.partySizeSuccess": "The number of people has been saved.",
     "account.partySizeTitle": "Family and group size",
@@ -507,8 +532,10 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "groupCheck.noDeclined": "No declines yet",
     "groupCheck.openForm": "Answer status check",
     "groupCheck.questionLabel": "Question",
-    "groupCheck.questionPlaceholder": "For example: Is everyone already on the bus?",
-    "groupCheck.questionValidation": "The question must contain at least 3 characters.",
+    "groupCheck.questionPlaceholder":
+      "For example: Is everyone already on the bus?",
+    "groupCheck.questionValidation":
+      "The question must contain at least 3 characters.",
     "groupCheck.resultsError": "The responses could not be loaded.",
     "groupCheck.retry": "Try again",
     "groupCheck.start": "Ask question",
@@ -543,7 +570,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "questionRound.questionPlaceholder": "Write your question here …",
     "questionRound.showMore": "Show {count} more questions",
     "questionRound.statusClosed": "Latest question round closed",
-    "questionRound.statusOpen": "Question round open – users can submit questions",
+    "questionRound.statusOpen":
+      "Question round open – users can submit questions",
     "questionRound.syncErrorBody":
       "The anonymous question round status could not be loaded. Try again.",
     "questionRound.syncErrorTitle": "Question round not synchronized",
@@ -556,7 +584,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "questionRound.userBody":
       "The admin can read the question text and check it off as completed later.",
     "questionRound.userTitle": "Ask anonymously",
-    "questionRound.validation": "The question must contain at least 3 characters.",
+    "questionRound.validation":
+      "The question must contain at least 3 characters.",
     "admin.description":
       "Manage status checks, anonymous questions, and users in separate sections.",
     "admin.emptyBody": "Registered people will appear here.",
@@ -584,26 +613,29 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "admin.role.medical_staff": "Medical staff",
     "admin.role.organization_team": "Organization team member",
     "admin.role.user": "User",
-    "admin.roleAssignment.adminProtected":
-      "Administrator roles are protected and cannot be assigned or changed here.",
     "admin.roleAssignment.body":
-      "Only administrators can assign roles. Medical staff and organization team members currently have the same app access as regular users.",
+      "Only administrators can assign roles. The administrator role grants access to user and group management. At least one administrator must remain.",
     "admin.roleAssignment.close": "Close role selection",
     "admin.roleAssignment.error":
       "The role could not be saved. Check the connection and try again.",
+    "admin.roleAssignment.lastAdmin":
+      "The last administrator cannot be assigned another role. Assign the administrator role to another person first.",
     "admin.roleAssignment.saved": "The role has been saved.",
     "admin.roleAssignment.saving": "Saving role…",
     "admin.roleAssignment.title": "Assign role",
     "admin.section.questions.closed": "Closed",
-    "admin.section.questions.description": "Open a round, read questions, and check them off.",
+    "admin.section.questions.description":
+      "Open a round, read questions, and check them off.",
     "admin.section.questions.open": "Open",
     "admin.section.questions.title": "Anonymous questions",
     "admin.section.status.active": "Active",
-    "admin.section.status.description": "Start a required check and review responses.",
+    "admin.section.status.description":
+      "Start a required check and review responses.",
     "admin.section.status.inactive": "Ready",
     "admin.section.status.title": "Status check",
     "admin.section.users.count": "{count} accounts",
-    "admin.section.users.description": "View accounts, roles, and represented people.",
+    "admin.section.users.description":
+      "View accounts, roles, and represented people.",
     "admin.section.users.error": "Error",
     "admin.section.users.loading": "Loading…",
     "admin.section.users.title": "Users",
@@ -615,16 +647,20 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "Confirm your email address first, then try again.",
     "auth.error.generic":
       "That did not work. Check your internet connection and try again.",
-    "auth.error.invalidCredentials": "The email address or password is incorrect.",
-    "auth.error.rateLimit": "Too many attempts in a short time. Please wait a moment.",
+    "auth.error.invalidCredentials":
+      "The email address or password is incorrect.",
+    "auth.error.rateLimit":
+      "Too many attempts in a short time. Please wait a moment.",
     "auth.error.signupDisabled": "New registrations are currently disabled.",
-    "auth.error.userExists": "An account already exists for this email address.",
-    "auth.error.weakPassword": "The password does not meet the security requirements.",
+    "auth.error.userExists":
+      "An account already exists for this email address.",
+    "auth.error.weakPassword":
+      "The password does not meet the security requirements.",
     "auth.errorTitle": "Sign-in failed",
     "auth.haveAccount": "Already have an account?",
     "auth.accountCoverage.family": "Me and family without their own phone",
     "auth.accountCoverage.familyBody":
-      "Only include children or relatives without their own phone. Adults with their own phone – for example your spouse – create a separate account.",
+      "Only include children or relatives without their own phone. Adults with their own phone should create a separate account.",
     "auth.accountCoverage.individual": "Only me",
     "auth.accountCoverage.individualBody": "This account represents only me.",
     "auth.accountCoverageTitle": "Who is this account for?",
@@ -639,7 +675,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.noAccount": "Do not have an account yet?",
     "auth.password": "Password",
     "auth.passwordConfirm": "Confirm password",
-    "auth.passwordHint": "At least 8 characters with at least one letter and one number.",
+    "auth.passwordHint":
+      "At least 8 characters with at least one letter and one number.",
     "auth.profileErrorBody":
       "Your profile and role could not be loaded safely. Check the connection and try again.",
     "auth.profileErrorTitle": "Profile unavailable",
@@ -654,8 +691,10 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.validation.accountCoverage": "Choose who this account represents.",
     "auth.validation.email": "Enter a valid email address.",
     "auth.validation.memberType": "Choose brother or sister.",
-    "auth.validation.name": "The display name must be at least 2 characters long.",
-    "auth.validation.password": "The password must be at least 8 characters long.",
+    "auth.validation.name":
+      "The display name must be at least 2 characters long.",
+    "auth.validation.password":
+      "The password must be at least 8 characters long.",
     "auth.validation.passwordMatch": "The passwords do not match.",
     "auth.validation.passwordPattern":
       "The password must contain at least one letter and one number.",
@@ -866,7 +905,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "account.error.reauthentication":
       "يتطلب Supabase تأكيدا جديدا. سجل الدخول من جديد ثم حاول مرة أخرى.",
     "account.error.sameEmail": "البريد الإلكتروني الجديد مطابق للعنوان الحالي.",
-    "account.error.samePassword": "يجب أن تختلف كلمة المرور الجديدة عن الحالية.",
+    "account.error.samePassword":
+      "يجب أن تختلف كلمة المرور الجديدة عن الحالية.",
     "account.newEmail": "البريد الإلكتروني الجديد",
     "account.newPassword": "كلمة المرور الجديدة",
     "account.passwordBody": "اختر كلمة مرور جديدة وفريدة واحفظها بأمان.",
@@ -885,7 +925,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "family.partySize": "عدد الأشخاص",
     "family.partySizeBody":
       "احسب نفسك فقط وأفراد العائلة المرافقين الذين ليس لديهم هاتف خاص. كل من لديه هاتف خاص، بما في ذلك الزوج أو الزوجة، ينشئ حساباً منفصلاً.",
-    "family.partySizeLimit": "الحد الأدنى {minimum} والحد الأقصى {maximum} شخصاً.",
+    "family.partySizeLimit":
+      "الحد الأدنى {minimum} والحد الأقصى {maximum} شخصاً.",
     "family.validation.partySize": "أدخل عدداً صحيحاً للأشخاص.",
     "groupCheck.actionError":
       "تعذر تنفيذ الإجراء. تحقق من الاتصال وحاول مرة أخرى.",
@@ -913,7 +954,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "groupCheck.openForm": "الإجابة عن استطلاع الحالة",
     "groupCheck.questionLabel": "السؤال",
     "groupCheck.questionPlaceholder": "مثلاً: هل أصبح الجميع في الحافلة؟",
-    "groupCheck.questionValidation": "يجب أن يحتوي السؤال على 3 أحرف على الأقل.",
+    "groupCheck.questionValidation":
+      "يجب أن يحتوي السؤال على 3 أحرف على الأقل.",
     "groupCheck.resultsError": "تعذر تحميل الإجابات.",
     "groupCheck.retry": "المحاولة مرة أخرى",
     "groupCheck.start": "طرح السؤال",
@@ -921,8 +963,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "groupCheck.syncErrorBody":
       "يتعذر تحميل حالة الاستطلاع بأمان الآن. سيبقى التطبيق مقفلاً كإجراء احترازي.",
     "groupCheck.syncErrorTitle": "الاتصال مطلوب",
-    "groupCheck.userBody":
-      "اختر إجابتك. يمكنك تغييرها ما دام الاستطلاع نشطاً.",
+    "groupCheck.userBody": "اختر إجابتك. يمكنك تغييرها ما دام الاستطلاع نشطاً.",
     "groupCheck.yes": "تأكيد",
     "questionRound.adminBody":
       "افتح الجولة واقرأ الأسئلة المرسلة دون أسماء، ثم ضع علامة على الأسئلة المنجزة.",
@@ -948,15 +989,15 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "questionRound.questionPlaceholder": "اكتب سؤالك هنا …",
     "questionRound.showMore": "عرض {count} أسئلة إضافية",
     "questionRound.statusClosed": "أُغلقت آخر جولة أسئلة",
-    "questionRound.statusOpen": "جولة الأسئلة مفتوحة – يمكن للمستخدمين إرسال الأسئلة",
+    "questionRound.statusOpen":
+      "جولة الأسئلة مفتوحة – يمكن للمستخدمين إرسال الأسئلة",
     "questionRound.syncErrorBody":
       "تعذر تحميل حالة جولة الأسئلة المجهولة. حاول مرة أخرى.",
     "questionRound.syncErrorTitle": "لم تتم مزامنة جولة الأسئلة",
     "questionRound.submit": "إرسال السؤال دون اسم",
     "questionRound.submitError":
       "تعذر إرسال السؤال. تحقق مما إذا كانت الجولة لا تزال مفتوحة.",
-    "questionRound.submitLimit":
-      "لقد وصلت إلى حد خمسة أسئلة لهذه الجولة.",
+    "questionRound.submitLimit": "لقد وصلت إلى حد خمسة أسئلة لهذه الجولة.",
     "questionRound.submitSuccess": "تم حفظ سؤالك دون اسم.",
     "questionRound.userBody":
       "يمكن للمشرف قراءة نص السؤال ووضع علامة عليه كمنجز لاحقاً.",
@@ -989,26 +1030,29 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "admin.role.medical_staff": "الطاقم الطبي",
     "admin.role.organization_team": "عضو فريق التنظيم",
     "admin.role.user": "مستخدم",
-    "admin.roleAssignment.adminProtected":
-      "أدوار المشرفين محمية ولا يمكن منحها أو تغييرها من هنا.",
     "admin.roleAssignment.body":
-      "يمكن للمشرفين فقط منح الأدوار. يتمتع الطاقم الطبي وأعضاء فريق التنظيم حالياً بصلاحيات التطبيق نفسها التي يتمتع بها المستخدمون العاديون.",
+      "يمكن للمشرفين فقط منح الأدوار. يمنح دور المشرف صلاحية إدارة المستخدمين والمجموعة، ويجب أن يبقى مشرف واحد على الأقل.",
     "admin.roleAssignment.close": "إغلاق اختيار الدور",
     "admin.roleAssignment.error":
       "تعذر حفظ الدور. تحقق من الاتصال وحاول مرة أخرى.",
+    "admin.roleAssignment.lastAdmin":
+      "لا يمكن تغيير دور المشرف الأخير. امنح شخصاً آخر دور المشرف أولاً.",
     "admin.roleAssignment.saved": "تم حفظ الدور.",
     "admin.roleAssignment.saving": "جارٍ حفظ الدور…",
     "admin.roleAssignment.title": "منح الدور",
     "admin.section.questions.closed": "مغلقة",
-    "admin.section.questions.description": "افتح جولة واقرأ الأسئلة وضع علامة على المنجز منها.",
+    "admin.section.questions.description":
+      "افتح جولة واقرأ الأسئلة وضع علامة على المنجز منها.",
     "admin.section.questions.open": "مفتوحة",
     "admin.section.questions.title": "الأسئلة المجهولة",
     "admin.section.status.active": "نشطة",
-    "admin.section.status.description": "ابدأ استطلاعاً إلزامياً وراجع الإجابات.",
+    "admin.section.status.description":
+      "ابدأ استطلاعاً إلزامياً وراجع الإجابات.",
     "admin.section.status.inactive": "جاهزة",
     "admin.section.status.title": "استطلاع الحالة",
     "admin.section.users.count": "{count} حسابات",
-    "admin.section.users.description": "اعرض الحسابات والأدوار وعدد الأشخاص الممثلين.",
+    "admin.section.users.description":
+      "اعرض الحسابات والأدوار وعدد الأشخاص الممثلين.",
     "admin.section.users.error": "خطأ",
     "admin.section.users.loading": "جارٍ التحميل…",
     "admin.section.users.title": "المستخدمون",
@@ -1020,7 +1064,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "أكد عنوان بريدك الإلكتروني أولا، ثم حاول مرة أخرى.",
     "auth.error.generic":
       "لم تنجح العملية. تحقق من اتصال الإنترنت وحاول مرة أخرى.",
-    "auth.error.invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    "auth.error.invalidCredentials":
+      "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
     "auth.error.rateLimit": "محاولات كثيرة خلال وقت قصير. يرجى الانتظار قليلا.",
     "auth.error.signupDisabled": "التسجيلات الجديدة معطلة حاليا.",
     "auth.error.userExists": "يوجد حساب بالفعل لهذا البريد الإلكتروني.",
@@ -1029,7 +1074,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.haveAccount": "لديك حساب بالفعل؟",
     "auth.accountCoverage.family": "أنا وعائلتي ممن ليس لديهم هاتف خاص",
     "auth.accountCoverage.familyBody":
-      "أضف فقط الأطفال أو الأقارب الذين ليس لديهم هاتف خاص. البالغون الذين لديهم هاتف خاص، مثل الزوج أو الزوجة، ينشئون حساباً منفصلاً.",
+      "يُرجى إضافة الأطفال أو أفراد العائلة الذين لا يملكون هواتف خاصة بهم فقط؛ أما البالغون الذين لديهم هواتفهم الخاصة، فيُرجى منهم إنشاء حساب منفصل.",
     "auth.accountCoverage.individual": "أنا فقط",
     "auth.accountCoverage.individualBody": "هذا الحساب يمثلني أنا فقط.",
     "auth.accountCoverageTitle": "من يمثل هذا الحساب؟",

@@ -1,6 +1,6 @@
 # Ziyarah – verbindlicher Projektkontext für LLMs
 
-Stand: 16. August 2026
+Stand: 17. August 2026
 
 ## Zweck und Pflege
 
@@ -33,8 +33,8 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 - Bestehende Konten aus der Zeit vor Einführung von `member_type` können dort `null` haben. Die aktuelle Registrierung verlangt die Auswahl.
 - Nutzer können später E-Mail, Passwort und `party_size` auf der Kontoseite ändern.
 - Profile besitzen die Rollen `user`, `medical_staff`, `organization_team` und `admin`.
-- Neue Konten starten immer als `user`. Nur ein Admin kann über die abgesicherte RPC normale Nutzer zu medizinischem Personal oder Organisationsteam-Mitgliedern machen beziehungsweise wieder auf `user` setzen.
-- Adminrollen bleiben geschützt: Sie werden nicht über die App vergeben und bestehende Adminprofile können dort nicht umgestuft werden.
+- Neue Konten starten immer als `user`. Nur ein Admin kann über die abgesicherte RPC die Rollen `user`, `medical_staff`, `organization_team` und `admin` vergeben.
+- Bestehende Adminprofile können umgestuft werden, solange mindestens ein Admin erhalten bleibt. Rollenwechsel sind datenbankseitig serialisiert und werden protokolliert, damit auch bei mehreren gleichzeitig arbeitenden Admins nie versehentlich alle Adminrechte entfernt werden.
 - `medical_staff` und `organization_team` besitzen derzeit dieselben Navigations- und Funktionsrechte wie `user`. Eigene Berechtigungen müssen später ausdrücklich implementiert werden.
 
 ### Reise- und Inhaltsfunktionen
@@ -55,7 +55,7 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 - Bei einem Synchronisationsfehler bleibt die App für Konten ohne Adminrolle vorsorglich gesperrt.
 - Ein Admin kann eine anonyme Fragerunde öffnen und schließen, Fragen lesen und als erledigt markieren.
 - Jede angemeldete Rolle einschließlich Admin kann während einer offenen Runde bis zu fünf anonyme Fragen absenden. Die Fragentabelle speichert keine Profil- oder User-ID. Eine getrennte, für Clients nicht lesbare Zähltabelle hält während der offenen Runde nur Profil, Runde und Anzahl fest und wird beim Schließen geleert. Nutzer sollten trotzdem keine personenbezogenen Daten in den Freitext schreiben.
-- Die Personenübersicht im Adminbereich zeigt nur Name, vertretene Personenzahl und Rolle und kann nach Namen gefiltert werden. Die geschützte Vergabe von Nicht-Admin-Rollen öffnet sich erst über einen Knopf am Personeneintrag; neue Konten besitzen standardmäßig die Rolle `user`.
+- Die Personenübersicht im Adminbereich zeigt nur Name, vertretene Personenzahl und Rolle und kann nach Namen gefiltert werden. Die Vergabe aller Rollen einschließlich `admin` öffnet sich erst über einen Knopf am Personeneintrag; neue Konten besitzen standardmäßig die Rolle `user`.
 - Gruppenstatus wird primär über Supabase Realtime und beim App-Fokus aktualisiert. Als gestaffelter Ausfallschutz läuft die Pflichtabfrage etwa alle 60–90 Sekunden und die Fragerunde alle 120–150 Sekunden. Parallele Antworten dürfen ältere Ergebnisse nicht mehr über neuere schreiben.
 
 ## Technischer Stack
@@ -249,7 +249,9 @@ Die Migration `20260816040000_minimize_admin_user_list.sql` reduziert `admin_lis
 
 Die Migration `20260816050000_harden_multi_admin_and_questions.sql` serialisiert konkurrierende Rollenwechsel und protokolliert echte Änderungen, sperrt Antworten transaktionssicher gegen das gleichzeitige Schließen einer Runde und begrenzt anonyme Einsendungen auf fünf pro Profil und Runde. Die temporären Zähler werden beim Schließen gelöscht.
 
-Am 16. August 2026 waren alle lokalen Migrationen bis `20260816050000` im verknüpften Remote-Projekt ausgerollt und `db lint --linked` meldete keine Schemafehler. Dieser Zustand kann sich ändern; vor späteren Annahmen erneut `npx supabase migration list --linked` prüfen. Migrationen nur innerhalb eines ausdrücklich beauftragten Implementierungs- oder Deployment-Schritts pushen.
+Die Migration `20260817000000_allow_admin_role_assignment.sql` erlaubt Admins, auch die Rolle `admin` zu vergeben und bestehende Admins umzustufen. Eine transaktionsweite Advisory-Sperre und eine erneute Berechtigungsprüfung schützen konkurrierende Änderungen; der letzte Admin kann nicht herabgestuft werden. Profiländerungen werden über Realtime veröffentlicht, damit Rollen in bereits geöffneten Sitzungen aktualisiert werden; beim App-Fokus wird das eigene Profil zusätzlich neu geladen.
+
+Am 17. August 2026 waren alle lokalen Migrationen bis `20260817000000` im verknüpften Remote-Projekt ausgerollt; `db lint --linked --level warning` meldete danach keine Schemafehler. Dieser Zustand kann sich ändern; vor späteren Annahmen erneut `npx supabase migration list --linked` prüfen. Migrationen nur innerhalb eines ausdrücklich beauftragten Implementierungs- oder Deployment-Schritts pushen.
 
 ## Kapazität für die Reisegruppe
 

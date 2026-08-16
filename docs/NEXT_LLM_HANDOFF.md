@@ -1,22 +1,22 @@
 # Übergabe an die nächste LLM
 
-Stand: 16. August 2026
+Stand: 17. August 2026
 
 Dieses Dokument beschreibt den aktuellen Arbeitsstand und die noch offenen Aufgaben. Vor weiteren Änderungen zuerst `AGENTS.md`, `LLM_CONTEXT.md` und dieses Dokument vollständig lesen.
 
 ## Wichtig: aktueller Zustand
 
 - Im Git-Arbeitsverzeichnis liegt ein größerer, noch nicht committeter Review- und Production-Readiness-Stand. Diese Änderungen nicht verwerfen oder überschreiben.
-- Die Supabase-Migration `20260816050000_harden_multi_admin_and_questions.sql` wurde bereits auf die verknüpfte Remote-Datenbank ausgerollt. Nicht erneut erstellen.
+- Die Supabase-Migrationen bis `20260817000000_allow_admin_role_assignment.sql` wurden bereits auf die verknüpfte Remote-Datenbank ausgerollt. Nicht erneut erstellen.
 - Der Abschlussstand besteht `npm run validate`: TypeScript, ESLint, alle 6 Jest-Tests und der Expo-Abhängigkeitscheck sind erfolgreich.
 - Der Web-Export wurde nach den letzten Änderungen erfolgreich mit 24 statischen Routen erzeugt. Expo Doctor besteht 21/21 Prüfungen.
-- Die Übersetzungsprüfung ist erfolgreich: Deutsch, Englisch und Arabisch besitzen jeweils dieselben 341 Schlüssel ohne Lücken; alle 248 statisch verwendeten `t(...)`-Schlüssel sind vorhanden.
+- Die Übersetzungsprüfung ist erfolgreich: Deutsch, Englisch und Arabisch besitzen jeweils dieselben 341 Schlüssel ohne Lücken; alle 249 statisch verwendeten `t(...)`-Schlüssel sind vorhanden.
 - `git diff --check` ist sauber; die Suche nach `TODO`, `FIXME`, `HACK`, `XXX`, `@ts-ignore` und `eslint-disable` in `src` und `supabase` liefert keine Treffer.
 - Lokal läuft derzeit Node 23.3.0. Das Projekt ist über `.nvmrc` und `engines` auf Node 22.13.0 festgelegt; möglichst damit weiterarbeiten.
 
 ## Bereits umgesetzt
 
-- Rollenmodell mit `user`, `medical_staff`, `organization_team` und `admin`. Nur Admins dürfen Rollen vergeben; Standard ist `user`.
+- Rollenmodell mit `user`, `medical_staff`, `organization_team` und `admin`. Nur Admins dürfen alle Rollen einschließlich `admin` vergeben; Standard ist `user`. Der letzte Admin kann nicht herabgestuft werden.
 - Admins sehen weiterhin Statusabfragen und anonyme Fragerunden und können daran teilnehmen.
 - Registrierung unterscheidet Bruder/Schwester und erlaubt vertretene Familienmitglieder ohne eigenes Telefon. Erwachsene mit eigenem Telefon sollen einen eigenen Account anlegen.
 - Admin-Personenliste wurde auf Name, vertretene Person und Rolle reduziert; Suche und aufklappbare Rollenvergabe sind vorhanden.
@@ -25,6 +25,7 @@ Dieses Dokument beschreibt den aktuellen Arbeitsstand und die noch offenen Aufga
 - Statusabfragen und Fragerunden verwenden Supabase Realtime mit gestaffelten Fallback-Abfragen statt aggressivem Polling. Das ist für ungefähr 100 gleichzeitige Nutzer wesentlich geeigneter.
 - Veraltete Netzwerkanfragen werden abgefangen, Admin-Aktualisierungen gebündelt und anonyme Fragen in 50er-Blöcken dargestellt.
 - Rollenänderungen werden in `role_assignment_audit` protokolliert und datenbankseitig serialisiert.
+- Rollenänderungen werden für die betroffene offene Sitzung über Profil-Realtime beziehungsweise beim App-Fokus aktualisiert.
 - Anonyme Fragen sind auf fünf Einreichungen pro Profil und Runde begrenzt. Der Zähler enthält weder Frage noch Text noch Zeitpunkt und wird beim Schließen der Runde gelöscht.
 - Kritische Datenbankaktionen werden gegen gleichzeitig geschlossene Runden abgesichert.
 - Fehler beim Laden von Profil/Rolle führen nicht mehr stillschweigend zu falscher Navigation, sondern zu einer Wiederholen-Ansicht.
@@ -60,7 +61,7 @@ Dieses Dokument beschreibt den aktuellen Arbeitsstand und die noch offenen Aufga
    npx supabase db lint --linked
    ```
 
-6. Erst nach erfolgreicher Prüfung einen Commit vorbereiten; nicht ohne ausdrücklichen Auftrag committen oder veröffentlichen.
+6. Niemals selbst einen Git-Commit oder Git-Push ausführen. Der Auftraggeber übernimmt sämtliche Git-Aktionen.
 
 ## Noch offene Code- und Qualitätsaufgaben
 
@@ -71,7 +72,6 @@ Dieses Dokument beschreibt den aktuellen Arbeitsstand und die noch offenen Aufga
 - Native End-to-End-Tests und ein Lasttest mit etwa 100 Geräten beziehungsweise simulierten Clients fehlen.
 - Offline-Verfügbarkeit nativer Kartenkacheln ist nicht garantiert.
 - `medical_staff` und `organization_team` haben absichtlich dieselben Berechtigungen wie normale Nutzer. Keine zusätzlichen Rechte erfinden; zuerst mit dem Auftraggeber klären.
-- Admins können die Admin-Rolle nicht innerhalb der App vergeben. Für mehrere Admins wird ein dokumentierter, vertrauenswürdiger Bootstrap-/Provisionierungsweg benötigt.
 
 ## Externe Release-Blocker
 
@@ -91,7 +91,7 @@ Diese Punkte können nicht sinnvoll ohne Angaben oder Freigabe des Auftraggebers
 
 ## Datenbankstatus
 
-Die Remote-Datenbank ist bis einschließlich Migration `20260816050000` synchron. Migration List, ein `db push --dry-run` und Remote-Lint wurden zum Abschluss erneut erfolgreich ausgeführt: Die Remote-Datenbank ist aktuell und der Lint meldet keine Schemafehler. Ein lokaler Supabase-Stack konnte nicht gestartet werden, weil Docker nicht lief; `supabase/seed.sql` ist inzwischen vorhanden.
+Die Remote-Datenbank ist bis einschließlich Migration `20260817000000` synchron. Migration List und Remote-Lint wurden danach erfolgreich ausgeführt; der Lint meldet keine Schemafehler. Diese Migration erlaubt die Vergabe der Adminrolle und schützt den letzten Admin. Ein lokaler Supabase-Stack konnte nicht gestartet werden, weil Docker nicht lief; `supabase/seed.sql` ist vorhanden.
 
 ## Definition für die nächste Übergabe
 
