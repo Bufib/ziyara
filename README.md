@@ -23,9 +23,10 @@ Keine arabischen Duas, Ziyarat, Transliterationen, Übersetzungen, Hadithe oder 
 ## Entwicklung
 
 ```bash
+nvm use
 npm install
 npx expo start
 ```
 
-SDK 57 erwartet Node `22.13.x` oder eine andere in `package.json` deklarierte React-Native-0.86-Engine-Version. `npm run validate` führt Typprüfung, Lint, Tests und den Expo-Abhängigkeitscheck aus.
+Lokale Projektbefehle und CI verwenden die in `.nvmrc` festgelegte Node-Version `22.13.0`. `npm run validate` führt Typprüfung, Lint, Tests und den Expo-Abhängigkeitscheck aus. Die CI ergänzt Expo Doctor, getrennte Web-/iOS-/Android-Exports und einen Critical-Audit-Gate.
 # ziyara

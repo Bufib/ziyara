@@ -255,6 +255,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.profileErrorBody":
       "Dein Profil und deine Rolle konnten nicht sicher geladen werden. Prüfe die Verbindung und versuche es erneut.",
     "auth.profileErrorTitle": "Profil nicht verfügbar",
+    "auth.profileRefreshError":
+      "Das Profil konnte nicht aktualisiert werden. Die angezeigten Daten bleiben erhalten.",
     "auth.profileRetry": "Profil erneut laden",
     "auth.registerBody":
       "Erstelle ein Konto für dich oder für deine Familie, wenn nicht alle ein eigenes Telefon haben.",
@@ -680,6 +682,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.profileErrorBody":
       "Your profile and role could not be loaded safely. Check the connection and try again.",
     "auth.profileErrorTitle": "Profile unavailable",
+    "auth.profileRefreshError":
+      "The profile could not be refreshed. The displayed data remains available.",
     "auth.profileRetry": "Reload profile",
     "auth.registerBody":
       "Create an account for yourself or your family if not everyone has their own phone.",
@@ -1093,6 +1097,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.profileErrorBody":
       "تعذر تحميل ملفك ودورك بأمان. تحقق من الاتصال وحاول مرة أخرى.",
     "auth.profileErrorTitle": "الملف غير متاح",
+    "auth.profileRefreshError":
+      "تعذر تحديث الملف الشخصي. ستظل البيانات المعروضة متاحة.",
     "auth.profileRetry": "إعادة تحميل الملف",
     "auth.registerBody":
       "أنشئ حساباً لك أو لعائلتك إذا لم يكن لدى الجميع هاتف خاص.",

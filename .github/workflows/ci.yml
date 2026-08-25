@@ -27,5 +27,8 @@ jobs:
           node-version-file: .nvmrc
       - run: npm ci
       - run: npm run validate
-      - run: npx expo export --platform web
+      - run: npx expo-doctor@latest
+      - run: npx expo export --platform web --output-dir dist/web
+      - run: npx expo export --platform ios --output-dir dist/ios
+      - run: npx expo export --platform android --output-dir dist/android
       - run: npm audit --omit=dev --audit-level=critical

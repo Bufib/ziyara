@@ -1,6 +1,6 @@
 # Ziyarah – verbindlicher Projektkontext für LLMs
 
-Stand: 17. August 2026
+Stand: 26. August 2026
 
 ## Zweck und Pflege
 
@@ -60,11 +60,11 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 
 ## Technischer Stack
 
-- Expo SDK `57` (`expo ~57.0.13`)
+- Expo SDK `57` (`expo ~57.0.16`)
 - React Native `0.86.2`
 - React `19.2.3`
 - TypeScript `~6.0.3`, Strict Mode
-- Expo Router `~57.0.13` mit typed routes
+- Expo Router `~57.0.16` mit typed routes
 - Native Tabs aus `expo-router/unstable-native-tabs`
 - Supabase JS `^2.112.3` für Auth, Postgres, RPC und Realtime
 - AsyncStorage `2.2.0` für lokale Einstellungen
@@ -72,13 +72,14 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 - Expo Image, Clipboard und Linking
 - Jest/Jest Expo für Katalog- und Integritätstests
 
-Bevorzugt die in `.nvmrc` festgelegte Node-Version `22.13.x` verwenden; `package.json` bildet zusätzlich die von React Native 0.86 unterstützten Engine-Bereiche ab. Node 23 ist nicht unterstützt. Expo-/React-Native-Pakete mit `npx expo install <paket>` installieren, damit SDK-Versionen ausgerichtet bleiben.
+Für lokale Projektbefehle und CI die in `.nvmrc` festgelegte Node-Version `22.13.0` verwenden; `package.json` bildet zusätzlich die von React Native 0.86 unterstützten Engine-Bereiche ab. Node 23 ist nicht unterstützt. Expo-/React-Native-Pakete mit `npx expo install <paket>` installieren, damit SDK-Versionen ausgerichtet bleiben.
 
 ## Projektstart
 
 Der Projektstamm ist das Verzeichnis mit `package.json`.
 
 ```bash
+nvm use
 npm install
 cp .env.example .env
 npx expo start
@@ -142,6 +143,8 @@ AppI18nProvider
 ```
 
 Die Reihenfolge ist relevant: Gruppen- und Fragerunden benötigen den Auth-State; Navigation benötigt alle Zustände. Der Splash Screen wird erst ausgeblendet, wenn Sprache, Theme, Auth, Gruppenabfrage und Fragerunde initial geladen wurden. Kann das Profil samt Rolle nicht sicher geladen werden, erscheint ein eigener Fehlerzustand mit Wiederholen statt einer Navigation mit falschen Rechten.
+
+`AuthProvider` trennt das initiale Session-/Profil-Laden und echte Benutzerwechsel von Hintergrundaktualisierungen. Beim App-Resume, einem manuellen Refresh oder einer Realtime-Profiländerung bleiben das vorhandene Profil, die Navigation und der Screen-State erhalten; `isRefreshing` und `profileRefreshError` bilden den nicht-blockierenden Zustand ab. Ein fehlgeschlagener Hintergrundrefresh zeigt global einen wiederholbaren Hinweis. Logout, Wechsel der Auth-User-ID oder eine erfolgreiche Serverantwort ohne Profil entfernen alte Profildaten dagegen sofort. Rollen stammen weiterhin ausschließlich aus dem serverseitigen Profil; RLS und geschützte RPCs bleiben auch bei vorübergehend veraltetem Client-State die Berechtigungsinstanz.
 
 ## Navigation und Zugriffsschutz
 
@@ -299,8 +302,11 @@ Für bedeutsame Änderungen:
 
 ```bash
 npm run validate
-npx expo export --platform web
 npx expo-doctor@latest
+npx expo export --platform web
+npx expo export --platform ios
+npx expo export --platform android
+npm audit
 ```
 
 Für Datenbankänderungen zusätzlich:
@@ -310,7 +316,7 @@ npx supabase db lint --linked --level warning
 npx supabase migration list --linked
 ```
 
-`npm test` führt derzeit sechs Jest-Tests für eindeutige Katalogschlüssel, auflösbare Relationen, Legacy-Links, Diakritika-/Arabisch-Suche und nicht verlinkbare Handlungen aus. `.github/workflows/ci.yml` führt bei Pushes und Pull Requests Installation, Validierung, Web-Export und einen Critical-Audit-Gate aus. E2E- und native Gerätetests fehlen weiterhin; Registrierung, Auth-Guards, Adminrechte, Gruppenblockade, Fragerunde, Kartenberechtigung, Offlinekatalog, Persistenz, alle Sprachen und beide Themes müssen proportional zur Änderung manuell geprüft werden.
+`npm test` führt derzeit zwölf Jest-Tests aus: sechs Katalogtests für eindeutige Schlüssel, auflösbare Relationen, Legacy-Links, Suchnormalisierung und nicht verlinkbare Handlungen sowie sechs Auth-Provider-Integrationstests für initialen Login, App-Resume, erfolgreichen und fehlgeschlagenen Profilrefresh, Realtime-Rollenänderungen, Logout und Benutzerwechsel. `.github/workflows/ci.yml` führt bei Pushes und Pull Requests Installation, Validierung, Expo Doctor, getrennte Web-/iOS-/Android-Exports und einen Critical-Audit-Gate aus. E2E- und native Gerätetests fehlen weiterhin; Registrierung, Auth-Guards, Adminrechte, Gruppenblockade, Fragerunde, Kartenberechtigung, Offlinekatalog, Persistenz, alle Sprachen und beide Themes müssen proportional zur Änderung manuell geprüft werden.
 
 ## Bekannte Lücken und Risiken
 
@@ -322,7 +328,7 @@ npx supabase migration list --linked
 - Bundle-Identifier und finale Store-/Build-Konfiguration sind in `app.json` noch nicht vollständig.
 - Passwort-Zurücksetzen und vollständige native Deep-Link-Verarbeitung sind noch nicht implementiert.
 - Arabisch richtet Texte aus, schaltet aber die gesamte native Layoutreihenfolge noch nicht über `I18nManager` auf RTL um.
-- Der npm-Audit meldet weiterhin High-Warnungen in Expo/Metro-Buildabhängigkeiten (`image-size`) sowie Moderate-Warnungen in `xcode/uuid`. `npm audit fix --force` würde inkompatibel auf Expo 53/React Native 0.72 zurückstufen und darf nicht verwendet werden; auf ein kompatibles SDK-/Toolchain-Update warten.
+- Der vollständige npm-Audit meldete am 26. August 2026 keine Critical-, aber 8 High- und 11 Moderate-Einträge. Die High-Einträge hängen an der von Expo SDK 57 erwarteten React-Native-`0.86.2`-/Metro-Kette und deren `image-size`-Parsern; der angebotene Wechsel auf React Native `0.86.3` darf nicht isoliert gegen Expo Doctors Erwartung erfolgen. Die Moderate-Einträge hängen an Expo-Konfigurationswerkzeugen sowie `xcode`/`uuid`; npm bietet dafür nur inkompatible Expo-/Splash-Screen-Downgrades an. Auf kompatible Expo-SDK-57-Patches warten und keinen `npm audit fix --force` ausführen.
 - Es fehlen weiterhin E2E-Tests, native Store-Builds und der reale Last-/Netzwerktest mit etwa 100 Geräten.
 
 ## Definition of Done

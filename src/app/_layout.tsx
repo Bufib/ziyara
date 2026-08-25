@@ -1,12 +1,13 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider as NavigationThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
-import { Colors } from '@/constants/theme';
+import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/features/auth/auth-context';
 import { GroupCheckProvider, useGroupCheck } from '@/features/group-check/group-check-context';
 import { AppI18nProvider, useI18n } from '@/features/i18n/i18n';
@@ -38,7 +39,14 @@ function RootNavigation() {
   const { loaded: isThemeLoaded, resolvedTheme: scheme } = useThemeMode();
   const colors = Colors[scheme];
   const { loaded: isLanguageLoaded, t } = useI18n();
-  const { hasProfileError, isAdmin, isLoading, refreshProfile, session } = useAuth();
+  const {
+    hasProfileError,
+    isAdmin,
+    isLoading,
+    profileRefreshError,
+    refreshProfile,
+    session,
+  } = useAuth();
   const { activeCheck, isBlocking, isLoading: isGroupCheckLoading } = useGroupCheck();
   const { activeRound, isLoading: isQuestionRoundLoading } = useQuestionRound();
 
@@ -132,6 +140,46 @@ function RootNavigation() {
           </Stack.Protected>
         </Stack>
       </NavigationThemeProvider>
+      {profileRefreshError ? (
+        <View
+          accessibilityLiveRegion="polite"
+          accessibilityRole="alert"
+          style={[
+            styles.profileRefreshError,
+            { backgroundColor: colors.warningSoft, borderColor: colors.warning },
+          ]}>
+          <ThemedText style={styles.profileRefreshErrorText} themeColor="warning" type="small">
+            {t('auth.profileRefreshError')}
+          </ThemedText>
+          <Button
+            icon="refresh"
+            label={t('auth.profileRetry')}
+            onPress={() => void refreshProfile()}
+            variant="secondary"
+          />
+        </View>
+      ) : null}
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  profileRefreshError: {
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    bottom: BottomTabInset + Spacing.three,
+    flexDirection: 'row',
+    gap: Spacing.two,
+    left: Spacing.three,
+    marginHorizontal: 'auto',
+    maxWidth: 640,
+    padding: Spacing.two,
+    position: 'absolute',
+    right: Spacing.three,
+    zIndex: 10,
+  },
+  profileRefreshErrorText: {
+    flex: 1,
+  },
+});

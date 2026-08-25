@@ -31,8 +31,10 @@ type AuthContextValue = {
   changePassword: (currentPassword: string, newPassword: string) => Promise<AuthResult>;
   isAdmin: boolean;
   isLoading: boolean;
+  isRefreshing: boolean;
   hasProfileError: boolean;
   profile: UserProfile | null;
+  profileRefreshError: Error | null;
   refreshProfile: () => Promise<void>;
   session: Session | null;
   signIn: (email: string, password: string) => Promise<AuthResult>;
@@ -48,29 +50,87 @@ type AuthContextValue = {
   user: User | null;
 };
 
+type ProfileSyncState = {
+  error: Error | null;
+  profile: UserProfile | null;
+  status: 'error' | 'idle' | 'loading' | 'ready' | 'refreshing';
+  userId: string | null;
+};
+
+const initialProfileSyncState: ProfileSyncState = {
+  error: null,
+  profile: null,
+  status: 'idle',
+  userId: null,
+};
+
+function getProfileRefreshError(error: unknown) {
+  if (error instanceof Error) {
+    return error;
+  }
+
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof error.message === 'string'
+  ) {
+    return new Error(error.message);
+  }
+
+  return new Error('Das Profil konnte nicht geladen werden.');
+}
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [isSessionLoading, setIsSessionLoading] = useState(true);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  const [profileSyncState, setProfileSyncState] = useState(initialProfileSyncState);
   const [session, setSession] = useState<Session | null>(null);
+  const profileSyncStateRef = useRef(initialProfileSyncState);
   const profileRequestSequence = useRef(0);
+  const sessionUserIdRef = useRef<string | null>(null);
+
+  const updateProfileSyncState = useCallback(
+    (update: (current: ProfileSyncState) => ProfileSyncState) => {
+      const nextState = update(profileSyncStateRef.current);
+      profileSyncStateRef.current = nextState;
+      setProfileSyncState(nextState);
+    },
+    [],
+  );
+
+  const applySession = useCallback(
+    (nextSession: Session | null) => {
+      const nextUserId = nextSession?.user.id ?? null;
+
+      if (sessionUserIdRef.current !== nextUserId) {
+        sessionUserIdRef.current = nextUserId;
+        profileRequestSequence.current += 1;
+        updateProfileSyncState(() => ({
+          error: null,
+          profile: null,
+          status: nextUserId ? 'loading' : 'idle',
+          userId: nextUserId,
+        }));
+      }
+
+      setSession(nextSession);
+    },
+    [updateProfileSyncState],
+  );
 
   useEffect(() => {
     let isMounted = true;
+    let hasReceivedAuthEvent = false;
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (isMounted) {
-        setSession(nextSession);
+        hasReceivedAuthEvent = true;
+        applySession(nextSession);
         setIsSessionLoading(false);
-
-        if (!nextSession) {
-          setProfile(null);
-          setProfileUserId(null);
-        }
       }
     });
 
@@ -81,7 +141,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
           return;
         }
 
-        setSession(error ? null : data.session);
+        if (!hasReceivedAuthEvent) {
+          applySession(error ? null : data.session);
+        }
       })
       .finally(() => {
         if (isMounted) {
@@ -113,19 +175,32 @@ export function AuthProvider({ children }: PropsWithChildren) {
         supabase.auth.stopAutoRefresh();
       }
     };
-  }, []);
+  }, [applySession]);
 
   const refreshProfile = useCallback(async () => {
-    const userId = session?.user.id;
+    const userId = sessionUserIdRef.current;
     const requestSequence = ++profileRequestSequence.current;
 
     if (!userId) {
-      setProfile(null);
-      setProfileUserId(null);
       return;
     }
 
-    setProfileUserId(null);
+    const hasCurrentProfile =
+      profileSyncStateRef.current.userId === userId &&
+      profileSyncStateRef.current.profile?.user_id === userId;
+
+    updateProfileSyncState((current) => {
+      if (current.userId !== userId) {
+        return current;
+      }
+
+      return {
+        ...current,
+        error: null,
+        profile: hasCurrentProfile ? current.profile : null,
+        status: hasCurrentProfile ? 'refreshing' : 'loading',
+      };
+    });
 
     try {
       const { data, error } = await supabase
@@ -134,28 +209,68 @@ export function AuthProvider({ children }: PropsWithChildren) {
         .eq('user_id', userId)
         .maybeSingle();
 
-      if (requestSequence === profileRequestSequence.current) {
-        setProfile(error ? null : data);
+      if (error) {
+        throw error;
       }
-    } catch {
-      if (requestSequence === profileRequestSequence.current) {
-        setProfile(null);
+
+      if (
+        requestSequence === profileRequestSequence.current &&
+        sessionUserIdRef.current === userId
+      ) {
+        updateProfileSyncState((current) => {
+          if (current.userId !== userId) {
+            return current;
+          }
+
+          if (!data) {
+            return {
+              error: new Error('Das Profil wurde nicht gefunden.'),
+              profile: null,
+              status: 'error',
+              userId,
+            };
+          }
+
+          return { error: null, profile: data, status: 'ready', userId };
+        });
       }
-    } finally {
-      if (requestSequence === profileRequestSequence.current) {
-        setProfileUserId(userId);
+    } catch (error) {
+      if (
+        requestSequence === profileRequestSequence.current &&
+        sessionUserIdRef.current === userId
+      ) {
+        const profileRefreshError = getProfileRefreshError(error);
+
+        updateProfileSyncState((current) => {
+          if (current.userId !== userId) {
+            return current;
+          }
+
+          const canKeepProfile = current.profile?.user_id === userId;
+
+          return {
+            ...current,
+            error: profileRefreshError,
+            profile: canKeepProfile ? current.profile : null,
+            status: canKeepProfile ? 'ready' : 'error',
+          };
+        });
       }
     }
-  }, [session?.user.id]);
+  }, [updateProfileSyncState]);
 
   useEffect(() => {
+    if (!session?.user.id || isSessionLoading) {
+      return;
+    }
+
     const profileLoadTimeout = setTimeout(() => void refreshProfile(), 0);
 
     return () => {
       clearTimeout(profileLoadTimeout);
       profileRequestSequence.current += 1;
     };
-  }, [refreshProfile]);
+  }, [isSessionLoading, refreshProfile, session?.user.id]);
 
   useEffect(() => {
     const userId = session?.user.id;
@@ -220,8 +335,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
+
+    if (!error) {
+      applySession(null);
+    }
+
     return { error };
-  }, []);
+  }, [applySession]);
 
   const verifyCurrentPassword = useCallback(
     async (currentPassword: string) => {
@@ -290,18 +410,34 @@ export function AuthProvider({ children }: PropsWithChildren) {
         .select('id, user_id, display_name, member_type, party_size, role, created_at, updated_at')
         .single();
 
-      if (!error) {
-        setProfile(data);
+      if (!error && sessionUserIdRef.current === userId) {
+        profileRequestSequence.current += 1;
+        updateProfileSyncState((current) =>
+          current.userId === userId
+            ? { error: null, profile: data, status: 'ready', userId }
+            : current,
+        );
       }
 
       return { error };
     },
-    [session],
+    [session, updateProfileSyncState],
   );
 
-  const currentProfile = profile?.user_id === session?.user.id ? profile : null;
-  const isLoading = isSessionLoading || Boolean(session && profileUserId !== session.user.id);
+  const currentProfile =
+    profileSyncState.userId === session?.user.id &&
+    profileSyncState.profile?.user_id === session?.user.id
+      ? profileSyncState.profile
+      : null;
+  const isLoading =
+    isSessionLoading ||
+    Boolean(
+      session &&
+        (profileSyncState.userId !== session.user.id || profileSyncState.status === 'loading'),
+    );
+  const isRefreshing = Boolean(currentProfile && profileSyncState.status === 'refreshing');
   const hasProfileError = Boolean(session && !isLoading && currentProfile === null);
+  const profileRefreshError = currentProfile ? profileSyncState.error : null;
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -310,7 +446,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       hasProfileError,
       isAdmin: currentProfile?.role === 'admin',
       isLoading,
+      isRefreshing,
       profile: currentProfile,
+      profileRefreshError,
       refreshProfile,
       session,
       signIn,
@@ -325,6 +463,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
       currentProfile,
       hasProfileError,
       isLoading,
+      isRefreshing,
+      profileRefreshError,
       refreshProfile,
       session,
       signIn,
