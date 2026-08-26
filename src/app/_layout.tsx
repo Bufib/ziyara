@@ -6,15 +6,12 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
-import { Screen } from '@/components/ui/screen';
 import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/features/auth/auth-context';
 import { GroupCheckProvider, useGroupCheck } from '@/features/group-check/group-check-context';
 import { AppI18nProvider, useI18n } from '@/features/i18n/i18n';
-import {
-  QuestionRoundProvider,
-  useQuestionRound,
-} from '@/features/question-round/question-round-context';
+import { supabaseReadFailureTranslationKey } from '@/features/network/supabase-read';
+import { QuestionRoundProvider } from '@/features/question-round/question-round-context';
 import { AppThemeProvider, useThemeMode } from '@/features/theme/theme-mode';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -39,57 +36,17 @@ function RootNavigation() {
   const { loaded: isThemeLoaded, resolvedTheme: scheme } = useThemeMode();
   const colors = Colors[scheme];
   const { loaded: isLanguageLoaded, t } = useI18n();
-  const {
-    hasProfileError,
-    isAdmin,
-    isLoading,
-    profileRefreshError,
-    refreshProfile,
-    session,
-  } = useAuth();
-  const { activeCheck, isBlocking, isLoading: isGroupCheckLoading } = useGroupCheck();
-  const { activeRound, isLoading: isQuestionRoundLoading } = useQuestionRound();
+  const { profileSyncErrorKind, refreshProfile } = useAuth();
+  const { isBlocking } = useGroupCheck();
 
   useEffect(() => {
-    if (
-      !isLoading &&
-      !isGroupCheckLoading &&
-      !isQuestionRoundLoading &&
-      isLanguageLoaded &&
-      isThemeLoaded
-    ) {
+    if (isLanguageLoaded && isThemeLoaded) {
       SplashScreen.hideAsync().catch(() => undefined);
     }
-  }, [
-    isGroupCheckLoading,
-    isLanguageLoaded,
-    isLoading,
-    isQuestionRoundLoading,
-    isThemeLoaded,
-  ]);
+  }, [isLanguageLoaded, isThemeLoaded]);
 
-  if (
-    isLoading ||
-    isGroupCheckLoading ||
-    isQuestionRoundLoading ||
-    !isLanguageLoaded ||
-    !isThemeLoaded
-  ) {
+  if (!isLanguageLoaded || !isThemeLoaded) {
     return null;
-  }
-
-  if (session && hasProfileError) {
-    return (
-      <Screen>
-        <ThemedText type="title">{t('auth.profileErrorTitle')}</ThemedText>
-        <ThemedText themeColor="textSecondary">{t('auth.profileErrorBody')}</ThemedText>
-        <Button
-          icon="refresh"
-          label={t('auth.profileRetry')}
-          onPress={() => void refreshProfile()}
-        />
-      </Screen>
-    );
   }
 
   return (
@@ -103,15 +60,16 @@ function RootNavigation() {
             headerShadowVisible: false,
             contentStyle: { backgroundColor: colors.background },
           }}>
-          <Stack.Protected guard={!session}>
-            <Stack.Screen name="login" options={{ headerShown: false, title: t('auth.loginTitle') }} />
-            <Stack.Screen
-              name="register"
-              options={{ headerShown: false, title: t('auth.registerTitle') }}
-            />
-          </Stack.Protected>
+          <Stack.Screen
+            name="login"
+            options={{ headerShown: false, title: t('auth.loginTitle') }}
+          />
+          <Stack.Screen
+            name="register"
+            options={{ headerShown: false, title: t('auth.registerTitle') }}
+          />
 
-          <Stack.Protected guard={Boolean(session) && !isBlocking}>
+          <Stack.Protected guard={!isBlocking}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false, title: t('nav.home') }} />
             <Stack.Screen name="city/[city]" options={{ title: t('nav.city') }} />
             <Stack.Screen name="place/[slug]" options={{ title: t('nav.placeDetails') }} />
@@ -120,27 +78,20 @@ function RootNavigation() {
             <Stack.Screen name="account" options={{ title: t('nav.account') }} />
             <Stack.Screen name="sources" options={{ title: t('nav.sources') }} />
             <Stack.Screen name="disclaimer" options={{ title: t('nav.disclaimer') }} />
-            <Stack.Protected guard={Boolean(activeRound)}>
-              <Stack.Screen
-                name="question-round"
-                options={{ title: t('questionRound.navTitle') }}
-              />
-            </Stack.Protected>
-          </Stack.Protected>
-
-          <Stack.Protected guard={Boolean(session) && (isBlocking || Boolean(activeCheck))}>
             <Stack.Screen
-              name="check-in"
-              options={{ headerShown: !isBlocking, title: t('groupCheck.navTitle') }}
+              name="question-round"
+              options={{ title: t('questionRound.navTitle') }}
             />
           </Stack.Protected>
 
-          <Stack.Protected guard={Boolean(session) && isAdmin}>
-            <Stack.Screen name="admin" options={{ title: t('nav.admin') }} />
-          </Stack.Protected>
+          <Stack.Screen
+            name="check-in"
+            options={{ headerShown: !isBlocking, title: t('groupCheck.navTitle') }}
+          />
+          <Stack.Screen name="admin" options={{ title: t('nav.admin') }} />
         </Stack>
       </NavigationThemeProvider>
-      {profileRefreshError ? (
+      {profileSyncErrorKind ? (
         <View
           accessibilityLiveRegion="polite"
           accessibilityRole="alert"
@@ -149,7 +100,7 @@ function RootNavigation() {
             { backgroundColor: colors.warningSoft, borderColor: colors.warning },
           ]}>
           <ThemedText style={styles.profileRefreshErrorText} themeColor="warning" type="small">
-            {t('auth.profileRefreshError')}
+            {t(supabaseReadFailureTranslationKey(profileSyncErrorKind))}
           </ThemedText>
           <Button
             icon="refresh"

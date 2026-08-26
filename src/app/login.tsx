@@ -1,5 +1,32 @@
+import { Redirect, useLocalSearchParams } from 'expo-router';
+
 import { AuthFormScreen } from '@/features/auth/AuthFormScreen';
+import { useAuth } from '@/features/auth/auth-context';
+import { useGroupCheck } from '@/features/group-check/group-check-context';
+import { checkInRoute, getProtectedReturnRoute } from '@/features/navigation/routes';
 
 export default function LoginScreen() {
-  return <AuthFormScreen mode="login" />;
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string | string[] }>();
+  const { session } = useAuth();
+  const { isBlocking } = useGroupCheck();
+  const safeReturnTo = getProtectedReturnRoute(returnTo);
+
+  if (session) {
+    if (isBlocking) {
+      return (
+        <Redirect
+          href={checkInRoute(safeReturnTo === '/check-in' ? '/' : safeReturnTo)}
+        />
+      );
+    }
+
+    return <Redirect href={safeReturnTo} />;
+  }
+
+  return (
+    <AuthFormScreen
+      mode="login"
+      returnTo={safeReturnTo === '/' ? undefined : safeReturnTo}
+    />
+  );
 }

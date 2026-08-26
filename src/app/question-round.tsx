@@ -1,3 +1,4 @@
+import { Redirect } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Keyboard, StyleSheet, TextInput, View } from 'react-native';
 
@@ -6,18 +7,63 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
+import { RequireAuth } from '@/features/auth/RequireAuth';
 import { useI18n } from '@/features/i18n/i18n';
+import { supabaseReadFailureTranslationKey } from '@/features/network/supabase-read';
 import { useQuestionRound } from '@/features/question-round/question-round-context';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function QuestionRoundScreen() {
+  return (
+    <RequireAuth returnTo="/question-round">
+      <QuestionRoundContent />
+    </RequireAuth>
+  );
+}
+
+function QuestionRoundContent() {
   const theme = useTheme();
   const { isRTL, t } = useI18n();
-  const { activeRound, submitQuestion } = useQuestionRound();
+  const {
+    activeRound,
+    hasSyncError,
+    isLoading,
+    refresh,
+    submitQuestion,
+    syncErrorKind,
+  } = useQuestionRound();
   const [question, setQuestion] = useState('');
   const [feedback, setFeedback] = useState<'error' | 'limit' | 'success' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const normalizedQuestion = question.trim();
+
+  if (!activeRound && !isLoading && !hasSyncError) {
+    return <Redirect href="/" />;
+  }
+
+  if (!activeRound) {
+    return (
+      <Screen safeAreaEdges={['right', 'bottom', 'left']}>
+        <Card style={styles.card}>
+          {hasSyncError ? (
+            <>
+              <ThemedText type="heading">{t('questionRound.syncErrorTitle')}</ThemedText>
+              <ThemedText themeColor="textSecondary">
+                {t(supabaseReadFailureTranslationKey(syncErrorKind ?? 'server'))}
+              </ThemedText>
+              <Button
+                icon="refresh"
+                label={t('groupCheck.retry')}
+                onPress={() => void refresh()}
+              />
+            </>
+          ) : (
+            <ActivityIndicator color={theme.accent} size="large" />
+          )}
+        </Card>
+      </Screen>
+    );
+  }
 
   const submit = async () => {
     if (!activeRound || isSubmitting) {

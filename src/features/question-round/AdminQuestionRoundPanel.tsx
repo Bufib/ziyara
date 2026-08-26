@@ -9,6 +9,12 @@ import { Spacing } from '@/constants/theme';
 import type { AnonymousQuestion, QuestionRound } from '@/domain/database';
 import { supabase } from '@/features/auth/supabase';
 import { useI18n } from '@/features/i18n/i18n';
+import {
+  getSupabaseReadFailureKind,
+  supabaseReadFailureTranslationKey,
+  type SupabaseReadFailureKind,
+  withSupabaseReadTimeout,
+} from '@/features/network/supabase-read';
 import { useTheme } from '@/hooks/use-theme';
 
 const questionDisplayBatchSize = 50;
@@ -22,8 +28,9 @@ export function AdminQuestionRoundPanel() {
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
   const [isWorking, setIsWorking] = useState(false);
   const [updatingQuestionId, setUpdatingQuestionId] = useState<number | null>(null);
-  const [hasRoundError, setHasRoundError] = useState(false);
-  const [hasQuestionsError, setHasQuestionsError] = useState(false);
+  const [roundErrorKind, setRoundErrorKind] = useState<SupabaseReadFailureKind | null>(null);
+  const [questionsErrorKind, setQuestionsErrorKind] =
+    useState<SupabaseReadFailureKind | null>(null);
   const [hasActionError, setHasActionError] = useState(false);
   const [questionsRoundId, setQuestionsRoundId] = useState<number | null>(null);
   const [questionDisplay, setQuestionDisplay] = useState({
@@ -38,20 +45,24 @@ export function AdminQuestionRoundPanel() {
   const visibleQuestionCount =
     questionDisplay.roundId === roundId ? questionDisplay.count : questionDisplayBatchSize;
   const visibleQuestions = displayedQuestions.slice(0, visibleQuestionCount);
-  const hasError = hasRoundError || hasQuestionsError || hasActionError;
+  const readErrorKind = roundErrorKind ?? questionsErrorKind;
+  const hasError = Boolean(readErrorKind || hasActionError);
 
   const loadLatestRound = useCallback(async () => {
     const requestSequence = ++latestRoundRequestSequence.current;
     setIsLoadingRound(true);
-    setHasRoundError(false);
+    setRoundErrorKind(null);
 
     try {
-      const { data, error } = await supabase
-        .from('question_rounds')
-        .select('id, created_at, closed_at')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const { data, error } = await withSupabaseReadTimeout((signal) =>
+        supabase
+          .from('question_rounds')
+          .select('id, created_at, closed_at')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .abortSignal(signal)
+          .maybeSingle(),
+      );
 
       if (error) {
         throw error;
@@ -60,9 +71,9 @@ export function AdminQuestionRoundPanel() {
       if (requestSequence === latestRoundRequestSequence.current) {
         setLatestRound(data);
       }
-    } catch {
+    } catch (error) {
       if (requestSequence === latestRoundRequestSequence.current) {
-        setHasRoundError(true);
+        setRoundErrorKind(getSupabaseReadFailureKind(error));
       }
     } finally {
       if (requestSequence === latestRoundRequestSequence.current) {
@@ -82,15 +93,18 @@ export function AdminQuestionRoundPanel() {
     const requestedRoundId = roundId;
     const requestSequence = ++questionsRequestSequence.current;
     setIsLoadingQuestions(true);
-    setHasQuestionsError(false);
+    setQuestionsErrorKind(null);
 
     try {
-      const { data, error } = await supabase
-        .from('anonymous_questions')
-        .select('id, round_id, question, is_checked, created_at, checked_at')
-        .eq('round_id', roundId)
-        .order('is_checked', { ascending: true })
-        .order('created_at', { ascending: true });
+      const { data, error } = await withSupabaseReadTimeout((signal) =>
+        supabase
+          .from('anonymous_questions')
+          .select('id, round_id, question, is_checked, created_at, checked_at')
+          .eq('round_id', roundId)
+          .order('is_checked', { ascending: true })
+          .order('created_at', { ascending: true })
+          .abortSignal(signal),
+      );
 
       if (error) {
         throw error;
@@ -100,9 +114,9 @@ export function AdminQuestionRoundPanel() {
         setQuestions(data ?? []);
         setQuestionsRoundId(requestedRoundId);
       }
-    } catch {
+    } catch (error) {
       if (requestSequence === questionsRequestSequence.current) {
-        setHasQuestionsError(true);
+        setQuestionsErrorKind(getSupabaseReadFailureKind(error));
       }
     } finally {
       if (requestSequence === questionsRequestSequence.current) {
@@ -339,7 +353,11 @@ export function AdminQuestionRoundPanel() {
       {isWorking ? <ActivityIndicator color={theme.accent} /> : null}
       {hasError ? (
         <ThemedText type="small" themeColor="danger" accessibilityLiveRegion="polite">
-          {t('questionRound.adminError')}
+          {t(
+            readErrorKind
+              ? supabaseReadFailureTranslationKey(readErrorKind)
+              : 'questionRound.adminError',
+          )}
         </ThemedText>
       ) : null}
     </Card>

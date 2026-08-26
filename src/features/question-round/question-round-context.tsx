@@ -14,6 +14,11 @@ import { AppState, Platform } from 'react-native';
 import type { QuestionRound } from '@/domain/database';
 import { useAuth } from '@/features/auth/auth-context';
 import { supabase } from '@/features/auth/supabase';
+import {
+  getSupabaseReadFailureKind,
+  type SupabaseReadFailureKind,
+  withSupabaseReadTimeout,
+} from '@/features/network/supabase-read';
 
 type QuestionRoundActionResult = {
   error: PostgrestError | null;
@@ -25,6 +30,7 @@ type QuestionRoundContextValue = {
   isLoading: boolean;
   refresh: () => Promise<void>;
   submitQuestion: (roundId: number, question: string) => Promise<QuestionRoundActionResult>;
+  syncErrorKind: SupabaseReadFailureKind | null;
 };
 
 type SyncState = 'error' | 'loading' | 'ready';
@@ -38,6 +44,7 @@ export function QuestionRoundProvider({ children }: PropsWithChildren) {
   const [activeRound, setActiveRound] = useState<QuestionRound | null>(null);
   const [syncedUserId, setSyncedUserId] = useState<string | null>(null);
   const [syncState, setSyncState] = useState<SyncState>('loading');
+  const [syncErrorKind, setSyncErrorKind] = useState<SupabaseReadFailureKind | null>(null);
   const refreshSequence = useRef(0);
   const userId = session?.user.id ?? null;
 
@@ -47,16 +54,20 @@ export function QuestionRoundProvider({ children }: PropsWithChildren) {
     if (!userId) {
       setActiveRound(null);
       setSyncedUserId(null);
+      setSyncErrorKind(null);
       setSyncState('ready');
       return;
     }
 
     try {
-      const { data, error } = await supabase
-        .from('question_rounds')
-        .select('id, created_at, closed_at')
-        .is('closed_at', null)
-        .maybeSingle();
+      const { data, error } = await withSupabaseReadTimeout((signal) =>
+        supabase
+          .from('question_rounds')
+          .select('id, created_at, closed_at')
+          .is('closed_at', null)
+          .abortSignal(signal)
+          .maybeSingle(),
+      );
 
       if (error) {
         throw error;
@@ -65,11 +76,13 @@ export function QuestionRoundProvider({ children }: PropsWithChildren) {
       if (requestSequence === refreshSequence.current) {
         setActiveRound(data);
         setSyncedUserId(userId);
+        setSyncErrorKind(null);
         setSyncState('ready');
       }
-    } catch {
+    } catch (error) {
       if (requestSequence === refreshSequence.current) {
         setSyncedUserId(userId);
+        setSyncErrorKind(getSupabaseReadFailureKind(error));
         setSyncState('error');
       }
     }
@@ -144,8 +157,18 @@ export function QuestionRoundProvider({ children }: PropsWithChildren) {
       isLoading: isAuthLoading || syncedUserId !== userId || syncState === 'loading',
       refresh,
       submitQuestion,
+      syncErrorKind,
     }),
-    [activeRound, isAuthLoading, refresh, submitQuestion, syncedUserId, syncState, userId],
+    [
+      activeRound,
+      isAuthLoading,
+      refresh,
+      submitQuestion,
+      syncErrorKind,
+      syncedUserId,
+      syncState,
+      userId,
+    ],
   );
 
   return <QuestionRoundContext.Provider value={value}>{children}</QuestionRoundContext.Provider>;

@@ -18,12 +18,19 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 import type { AdminUserSummary, AppRole } from '@/domain/database';
 import { AdminSectionHeader } from '@/features/admin/AdminSectionHeader';
 import { useAuth } from '@/features/auth/auth-context';
+import { RequireAuth } from '@/features/auth/RequireAuth';
 import { supabase } from '@/features/auth/supabase';
 import { AdminGroupCheckPanel } from '@/features/group-check/AdminGroupCheckPanel';
 import { useGroupCheck } from '@/features/group-check/group-check-context';
 import { AdminQuestionRoundPanel } from '@/features/question-round/AdminQuestionRoundPanel';
 import { useQuestionRound } from '@/features/question-round/question-round-context';
 import { useI18n } from '@/features/i18n/i18n';
+import {
+  getSupabaseReadFailureKind,
+  supabaseReadFailureTranslationKey,
+  type SupabaseReadFailureKind,
+  withSupabaseReadTimeout,
+} from '@/features/network/supabase-read';
 import { useTheme } from '@/hooks/use-theme';
 
 const adminPageSize = 200;
@@ -39,9 +46,12 @@ async function fetchAllAdminUsers() {
   const allUsers: AdminUserSummary[] = [];
 
   for (let from = 0; ; from += adminPageSize) {
-    const { data, error } = await supabase
-      .rpc('admin_list_users')
-      .range(from, from + adminPageSize - 1);
+    const { data, error } = await withSupabaseReadTimeout((signal) =>
+      supabase
+        .rpc('admin_list_users')
+        .range(from, from + adminPageSize - 1)
+        .abortSignal(signal),
+    );
 
     if (error) {
       throw error;
@@ -57,6 +67,14 @@ async function fetchAllAdminUsers() {
 }
 
 export default function AdminScreen() {
+  return (
+    <RequireAuth admin returnTo="/admin">
+      <AdminContent />
+    </RequireAuth>
+  );
+}
+
+function AdminContent() {
   const theme = useTheme();
   const { isRTL, language, t } = useI18n();
   const { profile, refreshProfile } = useAuth();
@@ -65,12 +83,13 @@ export default function AdminScreen() {
   const [users, setUsers] = useState<AdminUserSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
+  const [readErrorKind, setReadErrorKind] = useState<SupabaseReadFailureKind | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedRoleUserId, setExpandedRoleUserId] = useState<string | null>(null);
   const [roleFeedback, setRoleFeedback] = useState<RoleFeedback | null>(null);
   const [updatingRoleUserId, setUpdatingRoleUserId] = useState<string | null>(null);
   const usersRequestSequence = useRef(0);
+  const hasError = readErrorKind !== null;
   const [expandedSections, setExpandedSections] = useState<Record<AdminSection, boolean>>({
     questions: false,
     status: false,
@@ -95,7 +114,7 @@ export default function AdminScreen() {
 
   const loadUsers = useCallback(async () => {
     const requestSequence = ++usersRequestSequence.current;
-    setHasError(false);
+    setReadErrorKind(null);
     setIsLoading(true);
 
     try {
@@ -104,9 +123,9 @@ export default function AdminScreen() {
       if (requestSequence === usersRequestSequence.current) {
         setUsers(nextUsers);
       }
-    } catch {
+    } catch (error) {
       if (requestSequence === usersRequestSequence.current) {
-        setHasError(true);
+        setReadErrorKind(getSupabaseReadFailureKind(error));
       }
     } finally {
       if (requestSequence === usersRequestSequence.current) {
@@ -267,7 +286,9 @@ export default function AdminScreen() {
                   ) : hasError ? (
                     <Card style={styles.state}>
                       <ThemedText type="heading">{t('admin.errorTitle')}</ThemedText>
-                      <ThemedText themeColor="textSecondary">{t('admin.errorBody')}</ThemedText>
+                      <ThemedText themeColor="textSecondary">
+                        {t(supabaseReadFailureTranslationKey(readErrorKind ?? 'server'))}
+                      </ThemedText>
                       <Button
                         icon="refresh"
                         label={t('admin.retry')}

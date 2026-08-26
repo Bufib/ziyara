@@ -14,6 +14,11 @@ import { AppState, Platform } from 'react-native';
 import type { GroupCheck } from '@/domain/database';
 import { useAuth } from '@/features/auth/auth-context';
 import { supabase } from '@/features/auth/supabase';
+import {
+  getSupabaseReadFailureKind,
+  type SupabaseReadFailureKind,
+  withSupabaseReadTimeout,
+} from '@/features/network/supabase-read';
 
 type GroupCheckActionResult = {
   error: PostgrestError | null;
@@ -31,6 +36,7 @@ type GroupCheckContextValue = {
   refresh: () => Promise<void>;
   respond: (checkId: number, answer: boolean) => Promise<GroupCheckActionResult>;
   startCheck: (question: string) => Promise<GroupCheckActionResult>;
+  syncErrorKind: SupabaseReadFailureKind | null;
 };
 
 const GroupCheckContext = createContext<GroupCheckContextValue | null>(null);
@@ -43,27 +49,38 @@ export function GroupCheckProvider({ children }: PropsWithChildren) {
   const [currentResponse, setCurrentResponse] = useState<boolean | null>(null);
   const [syncedUserId, setSyncedUserId] = useState<string | null>(null);
   const [syncState, setSyncState] = useState<SyncState>('loading');
-  const refreshSequence = useRef(0);
+  const [syncErrorKind, setSyncErrorKind] = useState<SupabaseReadFailureKind | null>(null);
+  const latestMutationVersion = useRef(0);
+  const stateVersion = useRef(0);
   const profileId = profile?.id ?? null;
   const userId = session?.user.id ?? null;
+  const userIdRef = useRef(userId);
+
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
 
   const refresh = useCallback(async () => {
-    const requestSequence = ++refreshSequence.current;
+    const requestVersion = ++stateVersion.current;
 
     if (!userId) {
       setActiveCheck(null);
       setCurrentResponse(null);
       setSyncedUserId(null);
+      setSyncErrorKind(null);
       setSyncState('ready');
       return;
     }
 
     try {
-      const { data: check, error: checkError } = await supabase
-        .from('group_checks')
-        .select('id, question, created_by_profile_id, created_at, closed_at')
-        .is('closed_at', null)
-        .maybeSingle();
+      const { data: check, error: checkError } = await withSupabaseReadTimeout((signal) =>
+        supabase
+          .from('group_checks')
+          .select('id, question, created_by_profile_id, created_at, closed_at')
+          .is('closed_at', null)
+          .abortSignal(signal)
+          .maybeSingle(),
+      );
 
       if (checkError) {
         throw checkError;
@@ -72,12 +89,16 @@ export function GroupCheckProvider({ children }: PropsWithChildren) {
       let response: boolean | null = null;
 
       if (check && profileId !== null) {
-        const { data: savedResponse, error: responseError } = await supabase
-          .from('group_check_responses')
-          .select('answer')
-          .eq('check_id', check.id)
-          .eq('profile_id', profileId)
-          .maybeSingle();
+        const { data: savedResponse, error: responseError } = await withSupabaseReadTimeout(
+          (signal) =>
+            supabase
+              .from('group_check_responses')
+              .select('answer')
+              .eq('check_id', check.id)
+              .eq('profile_id', profileId)
+              .abortSignal(signal)
+              .maybeSingle(),
+        );
 
         if (responseError) {
           throw responseError;
@@ -86,15 +107,17 @@ export function GroupCheckProvider({ children }: PropsWithChildren) {
         response = savedResponse?.answer ?? null;
       }
 
-      if (requestSequence === refreshSequence.current) {
+      if (requestVersion === stateVersion.current) {
         setActiveCheck(check);
         setCurrentResponse(response);
         setSyncedUserId(userId);
+        setSyncErrorKind(null);
         setSyncState('ready');
       }
-    } catch {
-      if (requestSequence === refreshSequence.current) {
+    } catch (error) {
+      if (requestVersion === stateVersion.current) {
         setSyncedUserId(userId);
+        setSyncErrorKind(getSupabaseReadFailureKind(error));
         setSyncState('error');
       }
     }
@@ -108,7 +131,10 @@ export function GroupCheckProvider({ children }: PropsWithChildren) {
     const initialRefreshTimeout = setTimeout(() => void refresh(), 0);
 
     if (!userId) {
-      return () => clearTimeout(initialRefreshTimeout);
+      return () => {
+        clearTimeout(initialRefreshTimeout);
+        latestMutationVersion.current = ++stateVersion.current;
+      };
     }
 
     const channel = supabase
@@ -145,6 +171,7 @@ export function GroupCheckProvider({ children }: PropsWithChildren) {
     return () => {
       stopped = true;
       clearTimeout(initialRefreshTimeout);
+      latestMutationVersion.current = ++stateVersion.current;
       if (pollingTimeout) {
         clearTimeout(pollingTimeout);
       }
@@ -155,43 +182,81 @@ export function GroupCheckProvider({ children }: PropsWithChildren) {
 
   const startCheck = useCallback(
     async (question: string) => {
-      const { error } = await supabase.rpc('start_group_check', { p_question: question });
-      await refresh();
+      const mutationVersion = ++stateVersion.current;
+      latestMutationVersion.current = mutationVersion;
+      const { data, error } = await supabase.rpc('start_group_check', { p_question: question });
 
-      return { error };
-    },
-    [refresh],
-  );
+      if (!error && userIdRef.current === userId) {
+        if (mutationVersion === latestMutationVersion.current) {
+          stateVersion.current += 1;
+          setActiveCheck(data);
+          setCurrentResponse(null);
+          setSyncedUserId(userId);
+          setSyncErrorKind(null);
+          setSyncState('ready');
+        }
 
-  const closeCheck = useCallback(
-    async (checkId: number) => {
-      const { error } = await supabase.rpc('close_group_check', { p_check_id: checkId });
-      await refresh();
-
-      return { error };
-    },
-    [refresh],
-  );
-
-  const respond = useCallback(
-    async (checkId: number, answer: boolean) => {
-      const { error } = await supabase.rpc('respond_to_group_check', {
-        p_answer: answer,
-        p_check_id: checkId,
-      });
-
-      if (!error) {
-        setCurrentResponse(answer);
+        await refresh();
       }
 
       return { error };
     },
-    [],
+    [refresh, userId],
+  );
+
+  const closeCheck = useCallback(
+    async (checkId: number) => {
+      const mutationVersion = ++stateVersion.current;
+      latestMutationVersion.current = mutationVersion;
+      const { error } = await supabase.rpc('close_group_check', { p_check_id: checkId });
+
+      if (!error && userIdRef.current === userId) {
+        if (mutationVersion === latestMutationVersion.current) {
+          stateVersion.current += 1;
+          setActiveCheck((current) => (current?.id === checkId ? null : current));
+          setCurrentResponse(null);
+          setSyncedUserId(userId);
+          setSyncErrorKind(null);
+          setSyncState('ready');
+        }
+
+        await refresh();
+      }
+
+      return { error };
+    },
+    [refresh, userId],
+  );
+
+  const respond = useCallback(
+    async (checkId: number, answer: boolean) => {
+      const mutationVersion = ++stateVersion.current;
+      latestMutationVersion.current = mutationVersion;
+      const { data, error } = await supabase.rpc('respond_to_group_check', {
+        p_answer: answer,
+        p_check_id: checkId,
+      });
+
+      if (!error && userIdRef.current === userId) {
+        if (mutationVersion === latestMutationVersion.current) {
+          stateVersion.current += 1;
+          setCurrentResponse(data?.answer ?? answer);
+          setSyncedUserId(userId);
+          setSyncErrorKind(null);
+          setSyncState('ready');
+        }
+
+        await refresh();
+      }
+
+      return { error };
+    },
+    [refresh, userId],
   );
 
   const hasSyncError = syncState === 'error';
   const isLoading = isAuthLoading || syncedUserId !== userId || syncState === 'loading';
-  const isBlocking = Boolean(session && !isAdmin && (activeCheck || hasSyncError));
+  const isBlocking = Boolean(session && !isAdmin && (isLoading || activeCheck || hasSyncError));
 
   const value = useMemo<GroupCheckContextValue>(
     () => ({
@@ -204,6 +269,7 @@ export function GroupCheckProvider({ children }: PropsWithChildren) {
       refresh,
       respond,
       startCheck,
+      syncErrorKind,
     }),
     [
       activeCheck,
@@ -215,6 +281,7 @@ export function GroupCheckProvider({ children }: PropsWithChildren) {
       refresh,
       respond,
       startCheck,
+      syncErrorKind,
     ],
   );
 

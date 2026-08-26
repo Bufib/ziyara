@@ -18,6 +18,7 @@ import {
   getAuthErrorTranslationKey,
   useAuth,
 } from "@/features/auth/auth-context";
+import { RequireAuth } from "@/features/auth/RequireAuth";
 import {
   getPartySize,
   PartySizeField,
@@ -44,6 +45,14 @@ function getAccountErrorTranslationKey(error: AuthError) {
 }
 
 export default function AccountScreen() {
+  return (
+    <RequireAuth returnTo="/account">
+      <AccountContent />
+    </RequireAuth>
+  );
+}
+
+function AccountContent() {
   const theme = useTheme();
   const { t } = useI18n();
   const { changeEmail, changePassword, profile, updatePartySize, user } =

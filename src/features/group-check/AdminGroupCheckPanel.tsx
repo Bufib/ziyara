@@ -8,18 +8,37 @@ import { Spacing } from '@/constants/theme';
 import type { AdminGroupCheckResult } from '@/domain/database';
 import { supabase } from '@/features/auth/supabase';
 import { useGroupCheck } from '@/features/group-check/group-check-context';
+import {
+  parseAdminGroupCheckResults,
+  summarizeGroupCheckResults,
+  type GroupCheckResultGroup,
+} from '@/features/group-check/group-check-results';
 import { useI18n } from '@/features/i18n/i18n';
+import {
+  getSupabaseReadFailureKind,
+  supabaseReadFailureTranslationKey,
+  type SupabaseReadFailureKind,
+  withSupabaseReadTimeout,
+} from '@/features/network/supabase-read';
 import { useTheme } from '@/hooks/use-theme';
 
 export function AdminGroupCheckPanel() {
   const theme = useTheme();
   const { isRTL, t } = useI18n();
-  const { activeCheck, closeCheck, hasSyncError, refresh, startCheck } = useGroupCheck();
+  const {
+    activeCheck,
+    closeCheck,
+    hasSyncError,
+    refresh,
+    startCheck,
+    syncErrorKind,
+  } = useGroupCheck();
   const [results, setResults] = useState<AdminGroupCheckResult[]>([]);
   const [isLoadingResults, setIsLoadingResults] = useState(false);
   const [isWorking, setIsWorking] = useState(false);
   const [hasActionError, setHasActionError] = useState(false);
-  const [hasResultsError, setHasResultsError] = useState(false);
+  const [resultsErrorKind, setResultsErrorKind] =
+    useState<SupabaseReadFailureKind | null>(null);
   const [question, setQuestion] = useState('');
   const [hasQuestionError, setHasQuestionError] = useState(false);
   const [resultsCheckId, setResultsCheckId] = useState<number | null>(null);
@@ -27,12 +46,13 @@ export function AdminGroupCheckPanel() {
 
   const checkId = activeCheck?.id ?? null;
   const displayedResults = resultsCheckId === checkId ? results : [];
+  const isInitialResultsLoading = isLoadingResults && resultsCheckId !== checkId;
 
   const loadResults = useCallback(async () => {
     if (checkId === null) {
       setResults([]);
       setResultsCheckId(null);
-      setHasResultsError(false);
+      setResultsErrorKind(null);
       setIsLoadingResults(false);
       return;
     }
@@ -40,24 +60,34 @@ export function AdminGroupCheckPanel() {
     const requestedCheckId = checkId;
     const requestSequence = ++resultsRequestSequence.current;
     setIsLoadingResults(true);
-    setHasResultsError(false);
+    setResultsErrorKind(null);
 
     try {
-      const { data, error } = await supabase.rpc('admin_group_check_results', {
-        p_check_id: checkId,
-      });
+      const { data, error } = await withSupabaseReadTimeout((signal) =>
+        supabase
+          .rpc('admin_group_check_results', {
+            p_check_id: checkId,
+          })
+          .abortSignal(signal),
+      );
 
       if (error) {
         throw error;
       }
 
+      const nextResults = parseAdminGroupCheckResults(data);
+
+      if (!nextResults) {
+        throw new Error('Die Gruppencheck-Ergebnisse entsprechen nicht dem erwarteten Schema.');
+      }
+
       if (requestSequence === resultsRequestSequence.current) {
-        setResults(data ?? []);
+        setResults(nextResults);
         setResultsCheckId(requestedCheckId);
       }
-    } catch {
+    } catch (error) {
       if (requestSequence === resultsRequestSequence.current) {
-        setHasResultsError(true);
+        setResultsErrorKind(getSupabaseReadFailureKind(error));
       }
     } finally {
       if (requestSequence === resultsRequestSequence.current) {
@@ -152,12 +182,7 @@ export function AdminGroupCheckPanel() {
     }
   };
 
-  const confirmedNames = displayedResults
-    .filter((result) => result.answer)
-    .map((result) => result.display_name);
-  const declinedNames = displayedResults
-    .filter((result) => !result.answer)
-    .map((result) => result.display_name);
+  const resultSummary = summarizeGroupCheckResults(displayedResults);
 
   return (
     <Card style={styles.panel}>
@@ -168,7 +193,7 @@ export function AdminGroupCheckPanel() {
       {hasSyncError && !activeCheck ? (
         <View style={styles.errorBlock}>
           <ThemedText type="small" themeColor="danger">
-            {t('groupCheck.syncErrorBody')}
+            {t(supabaseReadFailureTranslationKey(syncErrorKind ?? 'server'))}
           </ThemedText>
           <Button
             icon="refresh"
@@ -190,12 +215,12 @@ export function AdminGroupCheckPanel() {
             <ThemedText type="heading">{activeCheck.question}</ThemedText>
           </View>
 
-          {isLoadingResults ? (
+          {isInitialResultsLoading ? (
             <ActivityIndicator color={theme.accent} />
-          ) : hasResultsError ? (
+          ) : resultsErrorKind ? (
             <View style={styles.errorBlock}>
               <ThemedText type="small" themeColor="danger">
-                {t('groupCheck.resultsError')}
+                {t(supabaseReadFailureTranslationKey(resultsErrorKind))}
               </ThemedText>
               <Button
                 icon="refresh"
@@ -205,20 +230,43 @@ export function AdminGroupCheckPanel() {
               />
             </View>
           ) : (
-            <View style={styles.resultsGrid}>
-              <ResultColumn
-                color={theme.success}
-                emptyLabel={t('groupCheck.noConfirmed')}
-                names={confirmedNames}
-                title={t('groupCheck.confirmedCount', { count: confirmedNames.length })}
-              />
-              <ResultColumn
-                color={theme.danger}
-                emptyLabel={t('groupCheck.noDeclined')}
-                names={declinedNames}
-                title={t('groupCheck.declinedCount', { count: declinedNames.length })}
-              />
-            </View>
+            <>
+              <View
+                style={[
+                  styles.resultsOverview,
+                  { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+                ]}>
+                <ThemedText type="smallBold">
+                  {t('groupCheck.accountCount', { count: resultSummary.totalAccounts })}
+                </ThemedText>
+                <ThemedText type="smallBold">
+                  {t('groupCheck.representedPeopleCount', {
+                    count: resultSummary.totalRepresentedPeople,
+                  })}
+                </ThemedText>
+              </View>
+              <View style={styles.resultsGrid}>
+                <ResultColumn
+                  color={theme.success}
+                  emptyLabel={t('groupCheck.noConfirmed')}
+                  group={resultSummary.yes}
+                  title={t('groupCheck.resultYes')}
+                />
+                <ResultColumn
+                  color={theme.danger}
+                  emptyLabel={t('groupCheck.noDeclined')}
+                  group={resultSummary.no}
+                  title={t('groupCheck.resultNo')}
+                />
+                <ResultColumn
+                  color={theme.warning}
+                  emptyLabel={t('groupCheck.noOpen')}
+                  group={resultSummary.open}
+                  title={t('groupCheck.resultOpen')}
+                />
+              </View>
+              {isLoadingResults ? <ActivityIndicator color={theme.accent} /> : null}
+            </>
           )}
 
           <Button
@@ -291,24 +339,37 @@ export function AdminGroupCheckPanel() {
 function ResultColumn({
   color,
   emptyLabel,
-  names,
+  group,
   title,
 }: {
   color: string;
   emptyLabel: string;
-  names: string[];
+  group: GroupCheckResultGroup;
   title: string;
 }) {
+  const { t } = useI18n();
+
   return (
     <View style={styles.resultColumn}>
-      <ThemedText type="smallBold" style={{ color }}>
+      <ThemedText type="heading" style={{ color }}>
         {title}
       </ThemedText>
-      {names.length > 0 ? (
-        names.map((name, index) => (
-          <ThemedText key={`${name}-${index}`} style={styles.name}>
-            {name}
-          </ThemedText>
+      <View style={styles.resultCounts}>
+        <ThemedText type="tinyBold" themeColor="textSecondary">
+          {t('groupCheck.accountCount', { count: group.accountCount })}
+        </ThemedText>
+        <ThemedText type="tinyBold" themeColor="textSecondary">
+          {t('groupCheck.representedPeopleCount', { count: group.representedPeople })}
+        </ThemedText>
+      </View>
+      {group.results.length > 0 ? (
+        group.results.map((result, index) => (
+          <View key={`${result.display_name}-${index}`} style={styles.name}>
+            <ThemedText>{result.display_name}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('groupCheck.accountPartySize', { count: result.party_size })}
+            </ThemedText>
+          </View>
         ))
       ) : (
         <ThemedText type="small" themeColor="textSecondary">
@@ -359,7 +420,20 @@ const styles = StyleSheet.create({
   },
   name: {
     borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: Spacing.half,
     paddingBottom: Spacing.two,
+  },
+  resultCounts: {
+    gap: Spacing.half,
+  },
+  resultsOverview: {
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.three,
+    justifyContent: 'space-between',
+    padding: Spacing.three,
   },
   errorBlock: {
     gap: Spacing.two,

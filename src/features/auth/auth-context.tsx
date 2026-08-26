@@ -13,6 +13,11 @@ import { AppState, Platform } from 'react-native';
 
 import type { MemberType, UserProfile } from '@/domain/database';
 import { supabase } from '@/features/auth/supabase';
+import {
+  getSupabaseReadFailureKind,
+  type SupabaseReadFailureKind,
+  withSupabaseReadTimeout,
+} from '@/features/network/supabase-read';
 
 type AuthResult = {
   error: AuthError | null;
@@ -35,6 +40,7 @@ type AuthContextValue = {
   hasProfileError: boolean;
   profile: UserProfile | null;
   profileRefreshError: Error | null;
+  profileSyncErrorKind: SupabaseReadFailureKind | null;
   refreshProfile: () => Promise<void>;
   session: Session | null;
   signIn: (email: string, password: string) => Promise<AuthResult>;
@@ -203,11 +209,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
     });
 
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, user_id, display_name, member_type, party_size, role, created_at, updated_at')
-        .eq('user_id', userId)
-        .maybeSingle();
+      const { data, error } = await withSupabaseReadTimeout((signal) =>
+        supabase
+          .from('profiles')
+          .select('id, user_id, display_name, member_type, party_size, role, created_at, updated_at')
+          .eq('user_id', userId)
+          .abortSignal(signal)
+          .maybeSingle(),
+      );
 
       if (error) {
         throw error;
@@ -438,6 +447,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const isRefreshing = Boolean(currentProfile && profileSyncState.status === 'refreshing');
   const hasProfileError = Boolean(session && !isLoading && currentProfile === null);
   const profileRefreshError = currentProfile ? profileSyncState.error : null;
+  const profileSyncErrorKind =
+    session && profileSyncState.error
+      ? getSupabaseReadFailureKind(profileSyncState.error)
+      : null;
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -449,6 +462,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isRefreshing,
       profile: currentProfile,
       profileRefreshError,
+      profileSyncErrorKind,
       refreshProfile,
       session,
       signIn,
@@ -465,6 +479,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isLoading,
       isRefreshing,
       profileRefreshError,
+      profileSyncErrorKind,
       refreshProfile,
       session,
       signIn,

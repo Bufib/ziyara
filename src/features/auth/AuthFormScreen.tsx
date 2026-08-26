@@ -21,6 +21,11 @@ import type { MemberType } from '@/domain/database';
 import { getAuthErrorTranslationKey, useAuth } from '@/features/auth/auth-context';
 import { getPartySize, PartySizeField } from '@/features/auth/PartySizeField';
 import { useI18n } from '@/features/i18n/i18n';
+import {
+  loginRoute,
+  registerRoute,
+  type ProtectedRoutePath,
+} from '@/features/navigation/routes';
 import { useTheme } from '@/hooks/use-theme';
 
 type AuthMode = 'login' | 'register';
@@ -28,9 +33,10 @@ type AccountCoverage = 'family' | 'individual';
 
 type AuthFormScreenProps = {
   mode: AuthMode;
+  returnTo?: ProtectedRoutePath;
 };
 
-export function AuthFormScreen({ mode }: AuthFormScreenProps) {
+export function AuthFormScreen({ mode, returnTo }: AuthFormScreenProps) {
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const { t } = useI18n();
@@ -146,7 +152,7 @@ export function AuthFormScreen({ mode }: AuthFormScreenProps) {
 
   const switchMode = () => {
     setFeedback(null);
-    router.replace(isRegister ? './login' : './register');
+    router.replace(isRegister ? loginRoute(returnTo) : registerRoute(returnTo));
   };
 
   return (

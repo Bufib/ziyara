@@ -267,12 +267,14 @@ describe('AuthProvider profile synchronization', () => {
       }
 
       const query = {
+        abortSignal: jest.fn(),
         eq: jest.fn(),
         maybeSingle: jest.fn(),
         select: jest.fn(),
       };
       query.select.mockReturnValue(query);
       query.eq.mockReturnValue(query);
+      query.abortSignal.mockReturnValue(query);
       query.maybeSingle.mockImplementation(() => {
         const nextResponse = profileResponses.shift();
 
@@ -343,7 +345,7 @@ describe('AuthProvider profile synchronization', () => {
 
     await act(async () => {
       initialProfile.resolve({ data: profile, error: null });
-      await Promise.resolve();
+      await flushAsyncWork();
     });
 
     expect(getAuthValue()).toMatchObject({
@@ -354,6 +356,17 @@ describe('AuthProvider profile synchronization', () => {
       profile,
       profileRefreshError: null,
     });
+  });
+
+  it('startet ohne Session ohne Profilabfrage', async () => {
+    await renderAuthProvider();
+
+    expect(getAuthValue()).toMatchObject({
+      isLoading: false,
+      profile: null,
+      session: null,
+    });
+    expect(mockSupabase.from).not.toHaveBeenCalled();
   });
 
   it('behält Profil und Navigation während App-Resume erhalten', async () => {
@@ -382,7 +395,7 @@ describe('AuthProvider profile synchronization', () => {
 
     await act(async () => {
       refresh.resolve({ data: profile, error: null });
-      await Promise.resolve();
+      await flushAsyncWork();
     });
 
     expect(getAuthValue()).toMatchObject({
@@ -416,7 +429,7 @@ describe('AuthProvider profile synchronization', () => {
 
     await act(async () => {
       refresh.resolve({ data: refreshedProfile, error: null });
-      await Promise.resolve();
+      await flushAsyncWork();
     });
 
     expect(getAuthValue()).toMatchObject({
@@ -442,7 +455,7 @@ describe('AuthProvider profile synchronization', () => {
     });
     await act(async () => {
       refresh.resolve({ data: null, error: createPostgrestError('Netzwerkfehler') });
-      await Promise.resolve();
+      await flushAsyncWork();
     });
 
     expect(getAuthValue()).toMatchObject({
@@ -481,7 +494,7 @@ describe('AuthProvider profile synchronization', () => {
 
     await act(async () => {
       refresh.resolve({ data: adminProfile, error: null });
-      await Promise.resolve();
+      await flushAsyncWork();
     });
 
     expect(getAuthValue()).toMatchObject({
@@ -515,7 +528,7 @@ describe('AuthProvider profile synchronization', () => {
 
     await act(async () => {
       switchedProfile.resolve({ data: secondProfile, error: null });
-      await Promise.resolve();
+      await flushAsyncWork();
     });
 
     expect(getAuthValue()).toMatchObject({

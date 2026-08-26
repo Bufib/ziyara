@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { getAuthErrorTranslationKey, useAuth } from '@/features/auth/auth-context';
 import { languageOptions, useI18n } from '@/features/i18n/i18n';
+import { loginRoute } from '@/features/navigation/routes';
 import { useReaderPreferences } from '@/features/storage/useReaderPreferences';
 import { useThemeMode, type ThemeMode } from '@/features/theme/theme-mode';
 import { useTheme } from '@/hooks/use-theme';
@@ -157,31 +158,46 @@ export default function SettingsScreen() {
 
       <Section title={t('settings.account')}>
         <ThemedView type="surface" style={[styles.panel, { borderColor: theme.border }]}>
-          <View style={styles.rowText}>
-            <ThemedText type="smallBold">{t('settings.accountEmail')}</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {user?.email ?? '—'}
-            </ThemedText>
-          </View>
-          <Button
-            icon="account"
-            label={t('settings.manageAccount')}
-            variant="secondary"
-            onPress={() => router.push('/account')}
-          />
-          <Button
-            icon="logout"
-            label={t('settings.signOut')}
-            variant="secondary"
-            onPress={() => void handleSignOut()}
-          />
-          {isAdmin ? (
-            <Button
-              icon="people"
-              label={t('settings.openAdmin')}
-              onPress={() => router.push('/admin')}
-            />
-          ) : null}
+          {user ? (
+            <>
+              <View style={styles.rowText}>
+                <ThemedText type="smallBold">{t('settings.accountEmail')}</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {user.email ?? '—'}
+                </ThemedText>
+              </View>
+              <Button
+                icon="account"
+                label={t('settings.manageAccount')}
+                variant="secondary"
+                onPress={() => router.push('/account')}
+              />
+              <Button
+                icon="logout"
+                label={t('settings.signOut')}
+                variant="secondary"
+                onPress={() => void handleSignOut()}
+              />
+              {isAdmin ? (
+                <Button
+                  icon="people"
+                  label={t('settings.openAdmin')}
+                  onPress={() => router.push('/admin')}
+                />
+              ) : null}
+            </>
+          ) : (
+            <>
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('settings.accountGuestBody')}
+              </ThemedText>
+              <Button
+                icon="account"
+                label={t('settings.signIn')}
+                onPress={() => router.push(loginRoute('/account'))}
+              />
+            </>
+          )}
         </ThemedView>
       </Section>
 

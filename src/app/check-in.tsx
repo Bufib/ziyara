@@ -1,3 +1,4 @@
+import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,11 +9,25 @@ import { Card } from '@/components/ui/card';
 import { SymbolIcon } from '@/components/ui/symbol-icon';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useAuth } from '@/features/auth/auth-context';
+import { RequireAuth } from '@/features/auth/RequireAuth';
 import { useGroupCheck } from '@/features/group-check/group-check-context';
 import { useI18n } from '@/features/i18n/i18n';
+import { getProtectedReturnRoute } from '@/features/navigation/routes';
+import { supabaseReadFailureTranslationKey } from '@/features/network/supabase-read';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function CheckInScreen() {
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string | string[] }>();
+  const safeReturnTo = getProtectedReturnRoute(returnTo);
+
+  return (
+    <RequireAuth returnTo="/check-in">
+      <CheckInContent returnTo={safeReturnTo === '/check-in' ? '/' : safeReturnTo} />
+    </RequireAuth>
+  );
+}
+
+function CheckInContent({ returnTo }: { returnTo: ReturnType<typeof getProtectedReturnRoute> }) {
   const theme = useTheme();
   const { t } = useI18n();
   const { isAdmin } = useAuth();
@@ -20,8 +35,10 @@ export default function CheckInScreen() {
     activeCheck,
     currentResponse,
     hasSyncError,
+    isLoading,
     refresh,
     respond,
+    syncErrorKind,
   } = useGroupCheck();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(false);
@@ -45,13 +62,19 @@ export default function CheckInScreen() {
   };
 
   if (!activeCheck) {
+    if (!isLoading && !hasSyncError) {
+      return <Redirect href={returnTo} />;
+    }
+
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
         <View style={styles.centeredContent}>
           {hasSyncError ? (
             <Card style={styles.statusCard}>
               <ThemedText type="heading">{t('groupCheck.syncErrorTitle')}</ThemedText>
-              <ThemedText themeColor="textSecondary">{t('groupCheck.syncErrorBody')}</ThemedText>
+              <ThemedText themeColor="textSecondary">
+                {t(supabaseReadFailureTranslationKey(syncErrorKind ?? 'server'))}
+              </ThemedText>
               <Button
                 icon="refresh"
                 label={t('groupCheck.retry')}

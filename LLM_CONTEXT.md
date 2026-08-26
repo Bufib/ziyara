@@ -19,13 +19,14 @@ Wenn Dokumentation und Code voneinander abweichen, den Code prüfen, die richtig
 
 ## Produkt in einem Absatz
 
-Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-Reise in den Irak. Angemeldete Reisende können wichtige Städte und Orte offline aus einem gebündelten Katalog öffnen, Orte auf einer Karte sehen, Inhalte durchsuchen, Einträge merken und religiöse Texte in einem Reader anzeigen. Die App bietet Deutsch, Englisch und Arabisch, Light/Dark Mode sowie administrative Gruppenfunktionen: verpflichtende Statusabfragen, eine anonyme Fragerunde und eine Benutzerübersicht. Religiöse, historische und ortsbezogene Inhalte bleiben bis zu einer qualifizierten Prüfung sichtbar als `needs_review` markiert.
+Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-Reise in den Irak. Reisende können wichtige Städte und Orte ohne Anmeldung offline aus einem gebündelten Katalog öffnen, Orte auf einer Karte sehen, Inhalte durchsuchen, Einträge merken und religiöse Texte in einem Reader anzeigen. Eine Supabase-Anmeldung wird erst für Konto- und Gruppenfunktionen benötigt. Die App bietet Deutsch, Englisch und Arabisch, Light/Dark Mode sowie administrative Gruppenfunktionen: verpflichtende Statusabfragen, eine anonyme Fragerunde und eine Benutzerübersicht. Religiöse, historische und ortsbezogene Inhalte bleiben bis zu einer qualifizierten Prüfung sichtbar als `needs_review` markiert.
 
 ## Aktueller Funktionsumfang
 
 ### Konten und Reisegruppe
 
-- Die App ist grundsätzlich nur nach einer Supabase-E-Mail/Passwort-Anmeldung nutzbar.
+- Der lokale Guide einschließlich Home, Karte, Suche, Lesezeichen, Einstellungen, Städten, Orten, Reader, About, Disclaimer und Quellen ist ohne Anmeldung nutzbar.
+- Eine Supabase-E-Mail/Passwort-Anmeldung ist für Kontoverwaltung, verpflichtende Gruppenabfragen, anonyme Fragerunden und Administration erforderlich.
 - Die Registrierung erfasst Anzeigename, Zuordnung als `brother` oder `sister`, Kontoumfang, E-Mail und Passwort.
 - Beim Kontoumfang wird ausdrücklich zwischen „nur ich“ und „ich und Familie ohne eigenes Telefon“ gewählt.
 - `party_size` zählt den Kontoinhaber mit. Der Wert `1` bedeutet Einzelkonto; bei Familienauswahl beginnt der Wert bei `2`.
@@ -57,6 +58,7 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 - Jede angemeldete Rolle einschließlich Admin kann während einer offenen Runde bis zu fünf anonyme Fragen absenden. Die Fragentabelle speichert keine Profil- oder User-ID. Eine getrennte, für Clients nicht lesbare Zähltabelle hält während der offenen Runde nur Profil, Runde und Anzahl fest und wird beim Schließen geleert. Nutzer sollten trotzdem keine personenbezogenen Daten in den Freitext schreiben.
 - Die Personenübersicht im Adminbereich zeigt nur Name, vertretene Personenzahl und Rolle und kann nach Namen gefiltert werden. Die Vergabe aller Rollen einschließlich `admin` öffnet sich erst über einen Knopf am Personeneintrag; neue Konten besitzen standardmäßig die Rolle `user`.
 - Gruppenstatus wird primär über Supabase Realtime und beim App-Fokus aktualisiert. Als gestaffelter Ausfallschutz läuft die Pflichtabfrage etwa alle 60–90 Sekunden und die Fragerunde alle 120–150 Sekunden. Parallele Antworten dürfen ältere Ergebnisse nicht mehr über neuere schreiben.
+- Gruppencheck-Refreshes und -Mutationen teilen eine monotone State-Version. Jede Mutation invalidiert ältere Reads, hält nach erfolgreicher RPC-Antwort einen optimistischen Zustand sichtbar und startet anschließend einen autoritativen Refresh. Die Adminauswertung führt alle aktuellen Profile auf und trennt `true`, `false` und `null` ausdrücklich in Ja, Nein und Noch offen; Account-Anzahl und die über `party_size` repräsentierte Personenzahl werden separat ausgewiesen.
 
 ## Technischer Stack
 
@@ -118,6 +120,7 @@ src/features/group-check/   Pflichtabfrage für die Reisegruppe
 src/features/question-round/Anonyme Fragerunden
 src/features/i18n/          UI-Wörterbücher und lokalisierte Fachdaten
 src/features/map/           Native Karte und Web-Fallback
+src/features/network/       Abbruch und Fehlerklassifizierung für Supabase-Lesezugriffe
 src/features/places/        Ortsbilder, Stadtkarte, externe Navigation
 src/features/reader/        Darstellung religiöser Textsegmente
 src/features/storage/       AsyncStorage-Hooks
@@ -142,7 +145,7 @@ AppI18nProvider
                 └── RootNavigation
 ```
 
-Die Reihenfolge ist relevant: Gruppen- und Fragerunden benötigen den Auth-State; Navigation benötigt alle Zustände. Der Splash Screen wird erst ausgeblendet, wenn Sprache, Theme, Auth, Gruppenabfrage und Fragerunde initial geladen wurden. Kann das Profil samt Rolle nicht sicher geladen werden, erscheint ein eigener Fehlerzustand mit Wiederholen statt einer Navigation mit falschen Rechten.
+Die Reihenfolge ist relevant: Gruppen- und Fragerunden benötigen den Auth-State. Der Splash Screen wartet nur auf die lokal gespeicherten Sprach- und Themezustände; Auth-, Profil-, Gruppen- und Fragerundenabfragen dürfen den öffentlichen Guide nicht blockieren. Ohne Session überspringen die privaten Provider Tabellenabfragen und Realtime-Kanäle vollständig. Bei einer vorhandenen Session blockiert nur das initiale Profil-/Pflichtabfrage-Laden beziehungsweise ein echter Benutzerwechsel die geschützte Navigation. Ein Profilfehler bleibt als wiederholbarer, nicht blockierender Hinweis sichtbar; Rollen- und Gruppenrechte werden dadurch nicht erweitert.
 
 `AuthProvider` trennt das initiale Session-/Profil-Laden und echte Benutzerwechsel von Hintergrundaktualisierungen. Beim App-Resume, einem manuellen Refresh oder einer Realtime-Profiländerung bleiben das vorhandene Profil, die Navigation und der Screen-State erhalten; `isRefreshing` und `profileRefreshError` bilden den nicht-blockierenden Zustand ab. Ein fehlgeschlagener Hintergrundrefresh zeigt global einen wiederholbaren Hinweis. Logout, Wechsel der Auth-User-ID oder eine erfolgreiche Serverantwort ohne Profil entfernen alte Profildaten dagegen sofort. Rollen stammen weiterhin ausschließlich aus dem serverseitigen Profil; RLS und geschützte RPCs bleiben auch bei vorübergehend veraltetem Client-State die Berechtigungsinstanz.
 
@@ -150,23 +153,23 @@ Die Reihenfolge ist relevant: Gruppen- und Fragerunden benötigen den Auth-State
 
 | Route | Zugriff | Zweck |
 | --- | --- | --- |
-| `/login`, `/register` | ohne Session | Anmeldung und Registrierung |
-| `/(tabs)` | Session, keine blockierende Gruppenabfrage | Hauptnavigation |
+| `/login`, `/register` | öffentlich; vorhandene Session wird weitergeleitet | Anmeldung und Registrierung |
+| `/(tabs)` | öffentlich; für angemeldete Konten keine blockierende Gruppenabfrage | Hauptnavigation |
 | Tab `/` | wie Tabs | Home, Städte, hervorgehobene Orte, aktive Statusabfrage und Fragerunde |
 | Tab `/map` | wie Tabs | native Karte beziehungsweise Web-Fallback |
 | Tab `/search` | wie Tabs | Katalogsuche und Filter |
 | Tab `/bookmarks` | wie Tabs | lokal gespeicherte Orte und Reader-Inhalte |
-| Tab `/settings` | wie Tabs | Theme, Sprache, Reader, Konto, Adminlinks |
-| `/city/[city]` | Session, nicht blockiert | Orte einer Stadt |
-| `/place/[slug]` | Session, nicht blockiert | Ortsdetail |
-| `/reader/[slug]` | Session, nicht blockiert | religiöser Reader |
+| Tab `/settings` | wie Tabs | Theme, Sprache und Reader; Konto-/Adminaktionen fordern eine Anmeldung an |
+| `/city/[city]` | öffentlich | Orte einer Stadt |
+| `/place/[slug]` | öffentlich | Ortsdetail |
+| `/reader/[slug]` | öffentlich | religiöser Reader |
 | `/account` | Session, nicht blockiert | Kontodaten und Personenzahl |
-| `/about`, `/sources`, `/disclaimer` | Session, nicht blockiert | Produkt- und Quellenhinweise |
-| `/check-in` | jede Session bei aktiver Abfrage; Konten ohne Adminrolle sind blockiert | verpflichtende Ja-/Nein-Antwort |
+| `/about`, `/sources`, `/disclaimer` | öffentlich | Produkt- und Quellenhinweise |
+| `/check-in` | Session; Konten ohne Adminrolle sind bei aktiver oder unsicherer Abfrage blockiert | verpflichtende Ja-/Nein-Antwort |
 | `/question-round` | jede Session bei offener Runde | anonyme Frage absenden |
 | `/admin` | Admin-Session | Gruppenabfrage, Fragen, Benutzerübersicht |
 
-Neue Hauptscreens unter `src/app` anlegen. Zentrale dynamische URLs über `src/features/navigation/routes.ts` erzeugen und Routenparameter mit `singleRouteParam` normalisieren.
+Neue Hauptscreens unter `src/app` anlegen. Zentrale dynamische URLs über `src/features/navigation/routes.ts` erzeugen und Routenparameter mit `singleRouteParam` normalisieren. Geschützte Screens werden mit `RequireAuth` innerhalb des Screens abgesichert, damit ein Deep Link ohne Session gezielt `/login` samt geprüftem internem Rücksprungziel öffnet. Die Allowlist verhindert externe oder unbekannte Redirectziele. RLS und die serverseitigen RPC-Prüfungen bleiben unabhängig vom Client-Guard die eigentliche Sicherheitsinstanz.
 
 ## Lokale Daten und religiöse Inhalte
 
@@ -216,6 +219,8 @@ Verbindliche Inhaltsregeln:
 
 Der Reader speichert und restauriert Positionen beim erneuten Öffnen. Nichtkritische lokale Speicherfehler fallen auf den In-Memory-Zustand zurück; serverseitige Auth-, Profil- und Pflichtabfragefehler besitzen sichtbare beziehungsweise fail-closed Zustände.
 
+Alle Datenbank-/Read-RPC-Lesezugriffe laufen über `src/features/network/supabase-read.ts`. Der Wrapper setzt mit der vom installierten Supabase-SDK unterstützten `abortSignal`-Methode einen Timeout von 10 Sekunden und klassifiziert Fehlschläge als `offline`, `timeout` oder `server`. Die UI zeigt diese Zustände getrennt von laufendem Laden an. Schreib-RPCs bleiben davon getrennt, damit ein lokaler Timeout nicht fälschlich behauptet, eine möglicherweise serverseitig ausgeführte Mutation sei abgebrochen worden.
+
 ## Supabase-Datenmodell und Sicherheit
 
 `src/domain/database.ts` ist die manuell gepflegte TypeScript-Abbildung des Schemas. Jede Schemaänderung benötigt eine neue vorwärtsgerichtete Migration und die parallele Aktualisierung dieser Typen.
@@ -254,7 +259,9 @@ Die Migration `20260816050000_harden_multi_admin_and_questions.sql` serialisiert
 
 Die Migration `20260817000000_allow_admin_role_assignment.sql` erlaubt Admins, auch die Rolle `admin` zu vergeben und bestehende Admins umzustufen. Eine transaktionsweite Advisory-Sperre und eine erneute Berechtigungsprüfung schützen konkurrierende Änderungen; der letzte Admin kann nicht herabgestuft werden. Profiländerungen werden über Realtime veröffentlicht, damit Rollen in bereits geöffneten Sitzungen aktualisiert werden; beim App-Fokus wird das eigene Profil zusätzlich neu geladen.
 
-Am 17. August 2026 waren alle lokalen Migrationen bis `20260817000000` im verknüpften Remote-Projekt ausgerollt; `db lint --linked --level warning` meldete danach keine Schemafehler. Dieser Zustand kann sich ändern; vor späteren Annahmen erneut `npx supabase migration list --linked` prüfen. Migrationen nur innerhalb eines ausdrücklich beauftragten Implementierungs- oder Deployment-Schritts pushen.
+Die Migration `20260826000000_expand_group_check_results.sql` paart den Shared Row Lock einer Antwort mit einem expliziten exklusiven Row Lock beim Schließen. Dadurch wird eine parallele Antwort entweder vollständig vor dem Schließen gespeichert oder sieht anschließend den geschlossenen Check und schlägt fehl. `admin_group_check_results` liefert über einen `LEFT JOIN` jedes aktuelle Profil mit `display_name`, `party_size` und einer nullable Antwort; `null` bedeutet ausdrücklich noch nicht geantwortet.
+
+Am 17. August 2026 waren die damaligen Migrationen bis `20260817000000` im verknüpften Remote-Projekt ausgerollt; `db lint --linked --level warning` meldete danach keine Schemafehler. Die lokale Migration `20260826000000_expand_group_check_results.sql` ist ausdrücklich noch nicht remote ausgerollt. Dieser Zustand kann sich ändern; vor späteren Annahmen erneut `npx supabase migration list --linked` prüfen. Migrationen nur innerhalb eines ausdrücklich beauftragten Implementierungs- oder Deployment-Schritts pushen.
 
 ## Kapazität für die Reisegruppe
 
@@ -316,7 +323,7 @@ npx supabase db lint --linked --level warning
 npx supabase migration list --linked
 ```
 
-`npm test` führt derzeit zwölf Jest-Tests aus: sechs Katalogtests für eindeutige Schlüssel, auflösbare Relationen, Legacy-Links, Suchnormalisierung und nicht verlinkbare Handlungen sowie sechs Auth-Provider-Integrationstests für initialen Login, App-Resume, erfolgreichen und fehlgeschlagenen Profilrefresh, Realtime-Rollenänderungen, Logout und Benutzerwechsel. `.github/workflows/ci.yml` führt bei Pushes und Pull Requests Installation, Validierung, Expo Doctor, getrennte Web-/iOS-/Android-Exports und einen Critical-Audit-Gate aus. E2E- und native Gerätetests fehlen weiterhin; Registrierung, Auth-Guards, Adminrechte, Gruppenblockade, Fragerunde, Kartenberechtigung, Offlinekatalog, Persistenz, alle Sprachen und beide Themes müssen proportional zur Änderung manuell geprüft werden.
+`npm test` führt derzeit 28 Jest-Tests aus: sechs Katalogtests, sieben Auth-Provider-Integrationstests einschließlich des Starts ohne Session, drei Timeout-/Fehlerklassifizierungstests, drei Tests für geschützte Navigation und Redirect-Allowlist, einen Provider-Test ohne Supabase-Leseabfragen oder Realtime-Kanäle beim öffentlichen Offline-Start, einen Test für die lokale Bookmark-/Reader-Persistenz sowie sieben Gruppencheck-Tests für stale Reads, optimistische Anzeige, parallele Antwort/Schließung, Ergebnisaggregation, RPC-Schema-Validierung und den SQL-Lock-/LEFT-JOIN-Vertrag. `.github/workflows/ci.yml` führt bei Pushes und Pull Requests Installation, Validierung, Expo Doctor, getrennte Web-/iOS-/Android-Exports und einen Critical-Audit-Gate aus. E2E- und native Gerätetests fehlen weiterhin; Registrierung, Auth-Guards, Adminrechte, Gruppenblockade, Fragerunde, Kartenberechtigung, Offlinekatalog, Persistenz, alle Sprachen und beide Themes müssen proportional zur Änderung manuell geprüft werden.
 
 ## Bekannte Lücken und Risiken
 

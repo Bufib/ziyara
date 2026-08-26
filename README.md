@@ -2,6 +2,11 @@
 
 Produktionsorientierte Expo-SDK-57-App für schiitische Ziyarah im Irak.
 
+Der lokal gebündelte Guide mit Startseite, Karte, Suche, Lesezeichen, Einstellungen,
+Städten, Orten und Reader ist ohne Anmeldung und ohne Netzwerk nutzbar. Konto-,
+Gruppen-, Fragerunden- und Adminfunktionen bleiben durch Supabase-Session, RLS und
+serverseitig geprüfte RPCs geschützt.
+
 ## Dokumentation
 
 - [`LLM_CONTEXT.md`](./LLM_CONTEXT.md): verbindlicher Gesamtüberblick für LLMs und neue Mitwirkende

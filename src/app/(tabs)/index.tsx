@@ -7,10 +7,12 @@ import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
 import { allPlaces } from "@/data/places";
 import type { Place } from "@/domain/types";
+import { useAuth } from "@/features/auth/auth-context";
 import { useI18n } from "@/features/i18n/i18n";
 import { useGroupCheck } from "@/features/group-check/group-check-context";
 import { localizeCityName, localizePlace } from "@/features/i18n/localizedData";
 import { cityRoute } from "@/features/navigation/routes";
+import { supabaseReadFailureTranslationKey } from "@/features/network/supabase-read";
 import { PlaceImageCard } from "@/features/places/PlaceImageCard";
 import { useQuestionRound } from "@/features/question-round/question-round-context";
 import { useTheme } from "@/hooks/use-theme";
@@ -29,11 +31,13 @@ function isPlace(place: Place | undefined): place is Place {
 export default function HomeScreen() {
   const theme = useTheme();
   const { language, t } = useI18n();
+  const { session } = useAuth();
   const { activeCheck } = useGroupCheck();
   const {
     activeRound,
     hasSyncError: hasQuestionRoundSyncError,
     refresh: refreshQuestionRound,
+    syncErrorKind: questionRoundSyncErrorKind,
   } = useQuestionRound();
   const featuredPlaces = featuredSlugs
     .map((slug) => allPlaces.find((place) => place.slug === slug))
@@ -73,7 +77,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {activeCheck ? (
+      {session && activeCheck ? (
         <View
           style={[
             styles.notice,
@@ -92,7 +96,7 @@ export default function HomeScreen() {
         </View>
       ) : null}
 
-      {activeRound ? (
+      {session && activeRound ? (
         <View
           style={[
             styles.notice,
@@ -111,7 +115,7 @@ export default function HomeScreen() {
         </View>
       ) : null}
 
-      {hasQuestionRoundSyncError && !activeRound ? (
+      {session && hasQuestionRoundSyncError && !activeRound ? (
         <View
           style={[
             styles.notice,
@@ -119,7 +123,7 @@ export default function HomeScreen() {
           ]}>
           <ThemedText type="heading">{t("questionRound.syncErrorTitle")}</ThemedText>
           <ThemedText themeColor="textSecondary">
-            {t("questionRound.syncErrorBody")}
+            {t(supabaseReadFailureTranslationKey(questionRoundSyncErrorKind ?? "server"))}
           </ThemedText>
           <Button
             icon="refresh"

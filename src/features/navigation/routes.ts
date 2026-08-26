@@ -1,5 +1,14 @@
 import type { Href } from 'expo-router';
 
+export const protectedRoutePaths = [
+  '/account',
+  '/admin',
+  '/check-in',
+  '/question-round',
+] as const;
+
+export type ProtectedRoutePath = (typeof protectedRoutePaths)[number];
+
 function routeSegment(value: string) {
   return encodeURIComponent(value);
 }
@@ -18,4 +27,28 @@ export function placeRoute(slug: string): Href {
 
 export function readerRoute(slug: string): Href {
   return `/reader/${routeSegment(slug)}` as Href;
+}
+
+export function getProtectedReturnRoute(value?: string | string[]): ProtectedRoutePath | '/' {
+  const route = singleRouteParam(value);
+
+  return protectedRoutePaths.find((candidate) => candidate === route) ?? '/';
+}
+
+export function loginRoute(returnTo?: ProtectedRoutePath): Href {
+  return returnTo
+    ? ({ pathname: '/login', params: { returnTo } } as Href)
+    : ('/login' as Href);
+}
+
+export function registerRoute(returnTo?: ProtectedRoutePath): Href {
+  return returnTo
+    ? ({ pathname: '/register', params: { returnTo } } as Href)
+    : ('/register' as Href);
+}
+
+export function checkInRoute(returnTo: ProtectedRoutePath | '/' = '/'): Href {
+  return returnTo === '/'
+    ? ('/check-in' as Href)
+    : ({ pathname: '/check-in', params: { returnTo } } as Href);
 }

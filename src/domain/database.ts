@@ -37,8 +37,9 @@ export type GroupCheckResponse = {
 };
 
 export type AdminGroupCheckResult = {
-  answer: boolean;
+  answer: boolean | null;
   display_name: string;
+  party_size: number;
 };
 
 export type QuestionRound = {

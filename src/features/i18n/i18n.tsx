@@ -89,6 +89,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "Als Admin bleibt die App zugänglich. Nach deiner Antwort kannst du über Zurück in die App wechseln.",
     "groupCheck.adminTitle": "Gruppenabfrage",
     "groupCheck.answerSaved": "Deine Antwort wurde gespeichert.",
+    "groupCheck.accountCount": "Accounts: {count}",
+    "groupCheck.accountPartySize": "Vertretene Personen: {count}",
     "groupCheck.close": "Abfrage beenden und App freigeben",
     "groupCheck.confirmedCount": "Bestätigt: {count}",
     "groupCheck.declinedCount": "Abgelehnt: {count}",
@@ -101,6 +103,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "groupCheck.no": "Ablehnen",
     "groupCheck.noConfirmed": "Noch keine Bestätigung",
     "groupCheck.noDeclined": "Noch keine Ablehnung",
+    "groupCheck.noOpen": "Alle Accounts haben geantwortet",
     "groupCheck.openForm": "Statusabfrage beantworten",
     "groupCheck.questionLabel": "Frage",
     "groupCheck.questionPlaceholder":
@@ -109,6 +112,10 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "Die Frage muss mindestens 3 Zeichen enthalten.",
     "groupCheck.resultsError": "Die Antworten konnten nicht geladen werden.",
     "groupCheck.retry": "Erneut versuchen",
+    "groupCheck.representedPeopleCount": "Repräsentierte Personen: {count}",
+    "groupCheck.resultNo": "Nein",
+    "groupCheck.resultOpen": "Noch offen",
+    "groupCheck.resultYes": "Ja",
     "groupCheck.start": "Frage stellen",
     "groupCheck.submitError":
       "Deine Antwort konnte nicht gespeichert werden. Versuche es erneut.",
@@ -239,7 +246,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.accountCoverage.individualBody":
       "Dieses Konto vertritt ausschließlich mich.",
     "auth.accountCoverageTitle": "Für wen ist dieses Konto?",
-    "auth.loginBody": "Melde dich an, um die App zu verwenden.",
+    "auth.loginBody":
+      "Melde dich für Konto, Gruppenabfragen und geschützte Funktionen an. Der lokale Guide bleibt ohne Anmeldung verfügbar.",
     "auth.loginTitle": "Willkommen zurück",
     "auth.name": "Name oder Familienname",
     "auth.namePlaceholder": "Dein Name",
@@ -328,6 +336,12 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "common.sourcePrefix": "Quelle: {source}",
     "common.sources": "Quellen",
     "common.toMap": "Zur Karte",
+    "network.offline":
+      "Keine Internetverbindung. Lokale Guide-Inhalte bleiben verfügbar.",
+    "network.server":
+      "Serverdaten konnten nicht geladen werden. Versuche es erneut.",
+    "network.timeout":
+      "Der Server antwortet nicht rechtzeitig. Versuche es erneut.",
     "disclaimer.body1":
       "Diese App ist ein Software-Begleiter und Inhaltscontainer. Sie ist keine religiöse Autorität.",
     "disclaimer.body2":
@@ -436,6 +450,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "search.title": "Suche",
     "settings.activeMode": "Aktiver Modus: {mode}.",
     "settings.account": "Konto",
+    "settings.accountGuestBody":
+      "Der Guide und deine lokalen Einstellungen funktionieren ohne Konto. Für Konto- und Gruppenfunktionen ist eine Anmeldung erforderlich.",
     "settings.accountEmail": "Angemeldet als",
     "settings.manageAccount": "E-Mail oder Passwort ändern",
     "settings.appPrep": "App-Vorbereitung",
@@ -454,6 +470,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "settings.openAdmin": "Adminbereich öffnen",
     "settings.reader": "Lesemodus",
     "settings.signOut": "Abmelden",
+    "settings.signIn": "Anmelden",
     "settings.theme.dark": "Dunkel",
     "settings.theme.light": "Hell",
     "settings.theme.system": "System",
@@ -520,6 +537,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "As an administrator, the app remains accessible. After answering, use Back to return to the app.",
     "groupCheck.adminTitle": "Group check",
     "groupCheck.answerSaved": "Your answer has been saved.",
+    "groupCheck.accountCount": "Accounts: {count}",
+    "groupCheck.accountPartySize": "Represented people: {count}",
     "groupCheck.close": "End check and unlock app",
     "groupCheck.confirmedCount": "Confirmed: {count}",
     "groupCheck.declinedCount": "Declined: {count}",
@@ -532,6 +551,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "groupCheck.no": "Decline",
     "groupCheck.noConfirmed": "No confirmations yet",
     "groupCheck.noDeclined": "No declines yet",
+    "groupCheck.noOpen": "All accounts have responded",
     "groupCheck.openForm": "Answer status check",
     "groupCheck.questionLabel": "Question",
     "groupCheck.questionPlaceholder":
@@ -540,6 +560,10 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "The question must contain at least 3 characters.",
     "groupCheck.resultsError": "The responses could not be loaded.",
     "groupCheck.retry": "Try again",
+    "groupCheck.representedPeopleCount": "Represented people: {count}",
+    "groupCheck.resultNo": "No",
+    "groupCheck.resultOpen": "Still open",
+    "groupCheck.resultYes": "Yes",
     "groupCheck.start": "Ask question",
     "groupCheck.submitError": "Your answer could not be saved. Try again.",
     "groupCheck.syncErrorBody":
@@ -666,7 +690,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.accountCoverage.individual": "Only me",
     "auth.accountCoverage.individualBody": "This account represents only me.",
     "auth.accountCoverageTitle": "Who is this account for?",
-    "auth.loginBody": "Sign in to use the app.",
+    "auth.loginBody":
+      "Sign in for account, group, and protected features. The local guide remains available without signing in.",
     "auth.loginTitle": "Welcome back",
     "auth.name": "Name or family name",
     "auth.namePlaceholder": "Your name",
@@ -753,6 +778,10 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "common.sourcePrefix": "Source: {source}",
     "common.sources": "Sources",
     "common.toMap": "To Map",
+    "network.offline":
+      "No internet connection. Local guide content remains available.",
+    "network.server": "Server data could not be loaded. Try again.",
+    "network.timeout": "The server did not respond in time. Try again.",
     "disclaimer.body1":
       "This app is a software companion and content container. It is not a religious authority.",
     "disclaimer.body2":
@@ -860,6 +889,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "search.title": "Search",
     "settings.activeMode": "Active mode: {mode}.",
     "settings.account": "Account",
+    "settings.accountGuestBody":
+      "The guide and your local settings work without an account. Sign-in is required for account and group features.",
     "settings.accountEmail": "Signed in as",
     "settings.manageAccount": "Change email or password",
     "settings.appPrep": "App Preparation",
@@ -878,6 +909,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "settings.openAdmin": "Open admin area",
     "settings.reader": "Reader",
     "settings.signOut": "Sign out",
+    "settings.signIn": "Sign in",
     "settings.theme.dark": "Dark",
     "settings.theme.light": "Light",
     "settings.theme.system": "System",
@@ -943,6 +975,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "يبقى التطبيق متاحاً لك بصفتك مشرفاً. بعد الإجابة يمكنك العودة إلى التطبيق بزر الرجوع.",
     "groupCheck.adminTitle": "استطلاع المجموعة",
     "groupCheck.answerSaved": "تم حفظ إجابتك.",
+    "groupCheck.accountCount": "الحسابات: {count}",
+    "groupCheck.accountPartySize": "الأشخاص المُمثَّلون: {count}",
     "groupCheck.close": "إنهاء الاستطلاع وفتح التطبيق",
     "groupCheck.confirmedCount": "أكدوا: {count}",
     "groupCheck.declinedCount": "رفضوا: {count}",
@@ -955,6 +989,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "groupCheck.no": "رفض",
     "groupCheck.noConfirmed": "لا توجد تأكيدات بعد",
     "groupCheck.noDeclined": "لا توجد حالات رفض بعد",
+    "groupCheck.noOpen": "أجابت جميع الحسابات",
     "groupCheck.openForm": "الإجابة عن استطلاع الحالة",
     "groupCheck.questionLabel": "السؤال",
     "groupCheck.questionPlaceholder": "مثلاً: هل أصبح الجميع في الحافلة؟",
@@ -962,6 +997,10 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "يجب أن يحتوي السؤال على 3 أحرف على الأقل.",
     "groupCheck.resultsError": "تعذر تحميل الإجابات.",
     "groupCheck.retry": "المحاولة مرة أخرى",
+    "groupCheck.representedPeopleCount": "الأشخاص المُمثَّلون: {count}",
+    "groupCheck.resultNo": "لا",
+    "groupCheck.resultOpen": "لم يُجب بعد",
+    "groupCheck.resultYes": "نعم",
     "groupCheck.start": "طرح السؤال",
     "groupCheck.submitError": "تعذر حفظ إجابتك. حاول مرة أخرى.",
     "groupCheck.syncErrorBody":
@@ -1082,7 +1121,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.accountCoverage.individual": "أنا فقط",
     "auth.accountCoverage.individualBody": "هذا الحساب يمثلني أنا فقط.",
     "auth.accountCoverageTitle": "من يمثل هذا الحساب؟",
-    "auth.loginBody": "سجل الدخول لاستخدام التطبيق.",
+    "auth.loginBody":
+      "سجل الدخول لاستخدام الحساب والميزات الجماعية والمحمية. يبقى الدليل المحلي متاحاً دون تسجيل الدخول.",
     "auth.loginTitle": "مرحبا بعودتك",
     "auth.name": "الاسم أو اسم العائلة",
     "auth.namePlaceholder": "اسمك",
@@ -1165,6 +1205,10 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "common.sourcePrefix": "المصدر: {source}",
     "common.sources": "المصادر",
     "common.toMap": "إلى الخريطة",
+    "network.offline":
+      "لا يوجد اتصال بالإنترنت. يبقى محتوى الدليل المحلي متاحاً.",
+    "network.server": "تعذر تحميل بيانات الخادم. حاول مرة أخرى.",
+    "network.timeout": "لم يستجب الخادم في الوقت المحدد. حاول مرة أخرى.",
     "disclaimer.body1":
       "هذا التطبيق رفيق برمجي وحاوية محتوى، وليس مرجعية دينية.",
     "disclaimer.body2":
@@ -1272,6 +1316,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "search.title": "بحث",
     "settings.activeMode": "الوضع النشط: {mode}.",
     "settings.account": "الحساب",
+    "settings.accountGuestBody":
+      "يعمل الدليل وإعداداتك المحلية دون حساب. يلزم تسجيل الدخول لميزات الحساب والمجموعة.",
     "settings.accountEmail": "تم تسجيل الدخول باسم",
     "settings.manageAccount": "تغيير البريد الإلكتروني أو كلمة المرور",
     "settings.appPrep": "إعداد التطبيق",
@@ -1288,6 +1334,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "settings.openAdmin": "فتح قسم المشرف",
     "settings.reader": "وضع القراءة",
     "settings.signOut": "تسجيل الخروج",
+    "settings.signIn": "تسجيل الدخول",
     "settings.theme.dark": "داكن",
     "settings.theme.light": "فاتح",
     "settings.theme.system": "النظام",
