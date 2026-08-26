@@ -3,13 +3,6 @@ import { Text } from 'react-native';
 import { act, create } from 'react-test-renderer';
 
 import { AppErrorBoundary } from '@/features/errors/AppErrorBoundary';
-import { reportCrash } from '@/features/monitoring/crash-reporting';
-
-jest.mock('@/features/monitoring/crash-reporting', () => ({
-  reportCrash: jest.fn(),
-}));
-
-const reportCrashMock = reportCrash as jest.MockedFunction<typeof reportCrash>;
 const actEnvironmentGlobal = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
@@ -32,7 +25,7 @@ describe('AppErrorBoundary', () => {
     actEnvironmentGlobal.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment;
   });
 
-  it('zeigt einen verständlichen Fallback, meldet den Fehler und kann neu rendern', async () => {
+  it('zeigt einen verständlichen Fallback und kann neu rendern', async () => {
     const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     const warningSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const renderer = create(
@@ -46,8 +39,6 @@ describe('AppErrorBoundary', () => {
     expect(renderer.root.findAllByType(Text).map((node) => node.props.children)).toContain(
       'Etwas ist schiefgelaufen',
     );
-    expect(reportCrashMock).toHaveBeenCalledWith(expect.any(Error));
-
     await act(async () => {
       renderer.update(
         <AppErrorBoundary>

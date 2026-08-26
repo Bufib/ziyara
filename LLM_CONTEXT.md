@@ -64,11 +64,11 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 
 ## Technischer Stack
 
-- Expo SDK `57` (`expo ~57.0.16`)
-- React Native `0.86.2`
+- Expo SDK `57` (`expo ~57.0.17`)
+- React Native `0.86.3`
 - React `19.2.3`
 - TypeScript `~6.0.3`, Strict Mode
-- Expo Router `~57.0.16` mit typed routes
+- Expo Router `~57.0.17` mit typed routes
 - Native Tabs aus `expo-router/unstable-native-tabs`
 - Supabase JS `^2.112.3` für Auth, Postgres, RPC und Realtime
 - AsyncStorage `2.2.0` für lokale Einstellungen
@@ -151,7 +151,7 @@ AppErrorBoundary
 
 Die Reihenfolge ist relevant: Gruppen- und Fragerunden benötigen den Auth-State. Der Splash Screen wartet nur auf die lokal gespeicherten Sprach- und Themezustände; Auth-, Profil-, Gruppen- und Fragerundenabfragen dürfen den öffentlichen Guide nicht blockieren. Ohne Session überspringen die privaten Provider Tabellenabfragen und Realtime-Kanäle vollständig. Bei einer vorhandenen Session blockiert nur das initiale Profil-/Pflichtabfrage-Laden beziehungsweise ein echter Benutzerwechsel die geschützte Navigation. Ein Profilfehler bleibt als wiederholbarer, nicht blockierender Hinweis sichtbar; Rollen- und Gruppenrechte werden dadurch nicht erweitert.
 
-`AppErrorBoundary` verwendet absichtlich keine Theme-, I18n-, Auth- oder Netzwerkabhängigkeit, damit der Fallback auch bei einem Providerfehler rendern kann. `src/features/monitoring/crash-reporting.ts` initialisiert Sentry nur bei einer validen HTTPS-DSN aus `EXPO_PUBLIC_SENTRY_DSN`; ohne DSN wird weder `Sentry.init` noch ein Capture-Aufruf ausgeführt. Sessions, Tracing, Breadcrumbs, Default-PII und zusätzliche Geräte-Frame-Erfassung sind deaktiviert. `beforeSend` erzeugt eine neue Allowlist-Nutzlast mit generischer Fehlermeldung und bereinigten Stackpositionen; Originalmeldungen, Nutzer, Requests, Kontexte, Tags und Extras werden nicht übertragen. Keine DSN und keine Monitoring-Zusatzdaten mit E-Mail, Anzeigename, Fragetext oder Auth-Token einchecken.
+`AppErrorBoundary` verwendet absichtlich keine Theme-, I18n-, Auth- oder Netzwerkabhängigkeit, damit der Fallback auch bei einem Providerfehler rendern kann. Die Fehlergrenze arbeitet vollständig lokal; externes Crash-Reporting ist nicht Bestandteil der App.
 
 `AuthProvider` trennt das initiale Session-/Profil-Laden und echte Benutzerwechsel von Hintergrundaktualisierungen. Beim App-Resume, einem manuellen Refresh oder einer Realtime-Profiländerung bleiben das vorhandene Profil, die Navigation und der Screen-State erhalten; `isRefreshing` und `profileRefreshError` bilden den nicht-blockierenden Zustand ab. Ein fehlgeschlagener Hintergrundrefresh zeigt global einen wiederholbaren Hinweis. Logout, Wechsel der Auth-User-ID oder eine erfolgreiche Serverantwort ohne Profil entfernen alte Profildaten dagegen sofort. Rollen stammen weiterhin ausschließlich aus dem serverseitigen Profil; RLS und geschützte RPCs bleiben auch bei vorübergehend veraltetem Client-State die Berechtigungsinstanz.
 
@@ -342,7 +342,7 @@ npx supabase db lint --local --level warning
 npx supabase test db --local
 ```
 
-`npm test` führt derzeit 83 Jest-Tests in 16 Suites aus. Abgedeckt sind unter anderem AuthContext, GroupCheckContext, QuestionRoundContext, Persistenz-Races und Speicherfehler, der gerenderte `RequireAuth`-Guard, der öffentliche Providerstart ohne Supabase-Zugriff, Recovery-/Account-Löschverträge, die globale Error Boundary sowie die Monitoring-Allowlist. `npm run test:coverage` beziehungsweise `npm run validate` erzwingt mindestens 50 % globale Line Coverage und jeweils 80 % für die drei Kernkontexte. Der lokale Stand vom 26. August 2026 liegt bei 85,96 % global, 90,82 % AuthContext, 94,53 % GroupCheckContext und 95,65 % QuestionRoundContext.
+`npm test` führt derzeit 80 Jest-Tests in 15 Suites aus. Abgedeckt sind unter anderem AuthContext, GroupCheckContext, QuestionRoundContext, Persistenz-Races und Speicherfehler, der gerenderte `RequireAuth`-Guard, der öffentliche Providerstart ohne Supabase-Zugriff, Recovery-/Account-Löschverträge sowie die globale Error Boundary. `npm run test:coverage` beziehungsweise `npm run validate` erzwingt mindestens 50 % globale Line Coverage und jeweils 80 % für die drei Kernkontexte. Der lokale Stand vom 26. August 2026 liegt bei 85,69 % global, 90,82 % AuthContext, 94,53 % GroupCheckContext und 95,65 % QuestionRoundContext.
 
 Unter `supabase/tests/database` prüfen zusätzlich 60 pgTAP-Assertions die RLS-/RPC-/Parallelitätsregeln sowie Cascades, Audit-Anonymisierung, Function-Grants und konkurrierende Account-Löschungen. `npm run test:e2e` führt sechs serielle Playwright-Smokes mit synthetischen Konten gegen die lokale Expo-/Supabase-/Mailpit-Umgebung aus: Registrierung/Login, Recovery-Link, öffentlicher Guide bei abgebrochenen Supabase-Requests, Gruppencheck, anonyme Fragerunde und Rollenänderung. `.github/workflows/ci.yml` führt bei Pushes und Pull Requests App-Validierung samt Coverage, Expo Doctor, getrennte Web-/iOS-/Android-Exports und einen Critical-Audit-Gate aus; der Datenbank-Job startet das lokale Schema aus Migrationen, prüft den 401-Auth-Gate der Edge Function, führt DB-Lint und SQL-Tests sowie danach die Playwright-Smokes aus. Native Gerätetests fehlen weiterhin; Kartenberechtigung, reale Deep Links in signierten Builds, alle Sprachen, beide Themes und dynamische Schrift müssen proportional zur Änderung manuell geprüft werden.
 
@@ -351,12 +351,12 @@ Unter `supabase/tests/database` prüfen zusätzlich 60 pgTAP-Assertions die RLS-
 - Sämtliche kuratierten Orts- und religiösen Inhalte benötigen weiterhin qualifizierte Prüfung.
 - Ziyarat Ashura enthält bereits Volltext, steht aber noch auf `needs_review` und `pending_rights_review`.
 - Native Kartenkacheln sind offline nicht garantiert.
-- Finale Store-Metadaten und veröffentlichungsfertige Datenschutz-/Supportseiten fehlen. Das technische Crash-Reporting ist vorbereitet, bleibt aber bis zur ausdrücklich konfigurierten DSN deaktiviert; Projektanlage, DSN-Konfiguration und ein kontrollierter Testevent sind externe Release-Schritte.
+- Finale Store-Metadaten und veröffentlichungsfertige Datenschutz-/Supportseiten fehlen. Externes Crash-Reporting ist nicht integriert.
 - App-Icon und Splash-Grafik sind noch Expo-Startergrafiken und müssen vor einem Store-Release durch freigegebene Markenassets ersetzt werden.
 - Bundle-Identifier und finale Store-/Build-Konfiguration sind in `app.json` noch nicht vollständig.
 - Die Recovery- und Account-Löschpfade sind lokal vollständig implementiert und getestet, benötigen vor einem Release aber noch die ausdrücklich freizugebende Remote-Migration, Function-Bereitstellung und Auth-Redirect-Allowlist sowie einen Test auf einem signierten nativen Build.
 - Arabisch richtet Texte aus, schaltet aber die gesamte native Layoutreihenfolge noch nicht über `I18nManager` auf RTL um.
-- Der vollständige npm-Audit meldete am 26. August 2026 keine Critical-, aber 8 High- und 12 Moderate-Einträge. Die High-Einträge hängen an der von Expo SDK 57 erwarteten React-Native-`0.86.2`-/Metro-Kette und deren `image-size`-Parsern; der angebotene Wechsel auf React Native `0.86.3` darf nicht isoliert gegen Expo Doctors Erwartung erfolgen. Die Moderate-Einträge hängen an Expo-Konfigurationswerkzeugen sowie `xcode`/`uuid`; `@sentry/react-native` wird nur deshalb zusätzlich als betroffen geführt, weil es Expo als Peer-/Runtime-Abhängigkeit nutzt. npm bietet dafür ausschließlich inkompatible Expo-/Splash-Screen-Downgrades beziehungsweise ein nicht SDK-57-ausgerichtetes Sentry-Downgrade an. Auf kompatible Expo-SDK-57-Patches warten und keinen `npm audit fix --force` ausführen.
+- Der vollständige npm-Audit meldete am 26. August 2026 keine Critical-, aber 4 High- und 11 Moderate-Einträge. Die High-Einträge hängen an der Expo-/Metro-Buildkette und deren `image-size`-Parsern; der vollständige Moderate-Fix würde Expo beziehungsweise `expo-splash-screen` inkompatibel herabstufen. Auf kompatible Expo-/Metro-Patches warten und keinen `npm audit fix --force` ausführen.
 - Es fehlen weiterhin native Store-Builds und der reale Last-/Netzwerktest mit etwa 100 Geräten; die vorhandenen Playwright-Smokes ersetzen keine signierten iOS-/Android-Gerätetests.
 
 ## Definition of Done

@@ -293,7 +293,6 @@ Files to create or modify:
 - `e2e/phase7-smoke.spec.ts`
 - `playwright.config.ts`
 - `src/features/errors/AppErrorBoundary.tsx`
-- `src/features/monitoring/crash-reporting.ts`
 - `.github/workflows/ci.yml`
 - Existing app/data files as test coverage grows
 
@@ -306,10 +305,10 @@ Risks:
 Acceptance criteria:
 
 - TypeScript and lint pass.
-- Jest covers catalog logic, AuthContext, GroupCheckContext, QuestionRoundContext, persistent state, rendered route guards, offline provider startup, the global Error Boundary and monitoring sanitization.
+- Jest covers catalog logic, AuthContext, GroupCheckContext, QuestionRoundContext, persistent state, rendered route guards, offline provider startup and the global Error Boundary.
 - Coverage gates require at least 50% global line coverage and 80% per auth/group-check/question-round context.
 - Six local Playwright full-stack smokes cover registration/login, password recovery, the public offline guide, group check, question round and role changes.
-- Crash reporting is disabled without a DSN and strips user, request, message, breadcrumb, context, tag and extra fields before sending.
+- Unhandled React render errors show a local fallback without an external monitoring dependency.
 - Manual QA checklist covers navigation, map, permissions, reader, search, bookmarks, offline behavior, dark mode, and accessibility.
 - CI runs required checks before merging.
 

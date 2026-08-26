@@ -1,7 +1,5 @@
-import { Component, type ErrorInfo, type PropsWithChildren } from 'react';
+import { Component, type PropsWithChildren } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-
-import { reportCrash } from '@/features/monitoring/crash-reporting';
 
 type AppErrorBoundaryState = {
   hasError: boolean;
@@ -12,10 +10,6 @@ export class AppErrorBoundary extends Component<PropsWithChildren, AppErrorBound
 
   static getDerivedStateFromError(): AppErrorBoundaryState {
     return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, _info: ErrorInfo) {
-    reportCrash(error);
   }
 
   private retry = () => {

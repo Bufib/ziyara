@@ -54,11 +54,9 @@ npm run test:e2e
 
 Die Smokes verwenden nur synthetische `example.invalid`-Konten, prüfen Registrierung/Login, Recovery, öffentlichen Offline-Start, Gruppencheck, Fragerunde und Rollenwechsel und entfernen ihre Konten anschließend wieder. Sie dürfen nicht gegen ein Remote-Projekt ausgeführt werden.
 
-## Fehlerbehandlung und Monitoring
+## Fehlerbehandlung
 
-`src/features/errors/AppErrorBoundary.tsx` umschließt die gesamte App und zeigt bei unbehandelten React-Renderfehlern einen eigenständigen Fallback mit Retry. Crash-Reporting über `@sentry/react-native` ist ein reines Opt-in und bleibt ohne `EXPO_PUBLIC_SENTRY_DSN` vollständig deaktiviert. Keine DSN in `.env`, Quellcode oder Versionskontrolle eintragen; lokal gehört sie ausschließlich in eine ignorierte `.env.local`, in CI in den Secret Store.
-
-Selbst mit DSN sind Default-PII, Sessions, Tracing, native Frame-Tracking und Breadcrumbs deaktiviert. `beforeSend` verwirft Nutzer-, Request-, Kontext-, Tag-, Extra- und Originalnachricht-Felder und behält nur generische Exception-Daten sowie bereinigte Stackpositionen. E-Mails, Anzeigenamen, Fragetexte, Auth-Tokens und sonstige personenbezogene Inhalte dürfen auch künftig weder über `reportCrash`-Zusatzdaten noch über Sentry-Kontext-APIs ergänzt werden.
+`src/features/errors/AppErrorBoundary.tsx` umschließt die gesamte App und zeigt bei unbehandelten React-Renderfehlern einen eigenständigen Fallback mit Retry. Die Fehlergrenze arbeitet vollständig lokal und besitzt keine externe Crash-Reporting- oder Monitoring-Anbindung.
 
 Die lokale Konfiguration stellt `delete-account` über die Edge Runtime bereit. Die
 Function akzeptiert keine Ziel-User-ID, validiert den übergebenen Nutzer-Token

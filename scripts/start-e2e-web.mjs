@@ -49,7 +49,6 @@ const child = spawn('npx', ['expo', 'start', '--web', '--port', '8097'], {
   env: {
     ...process.env,
     CI: '1',
-    EXPO_PUBLIC_SENTRY_DSN: '',
     EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
       localSupabase.SUPABASE_INTERNAL_PUBLISHABLE_KEY ?? localSupabase.SUPABASE_ANON_KEY,
     EXPO_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321',
