@@ -34,4 +34,15 @@ npx expo start
 ```
 
 Lokale Projektbefehle und CI verwenden die in `.nvmrc` festgelegte Node-Version `22.13.0`. `npm run validate` führt Typprüfung, Lint, Tests und den Expo-Abhängigkeitscheck aus. Die CI ergänzt Expo Doctor, getrennte Web-/iOS-/Android-Exports und einen Critical-Audit-Gate.
+
+Die Datenbankabnahme benötigt Docker und bleibt vollständig lokal:
+
+```bash
+npx supabase start
+npx supabase db reset --local
+npx supabase db lint --local --level warning
+npx supabase test db --local
+```
+
+`db reset --local` löscht ausschließlich die lokale Supabase-Datenbank und baut sie aus allen Migrationen neu auf. Die CI führt Neuaufbau, DB-Lint und die SQL-Sicherheits-/Parallelitätstests in einem getrennten Datenbank-Job aus.
 # ziyara

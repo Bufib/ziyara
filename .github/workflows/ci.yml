@@ -32,3 +32,17 @@ jobs:
       - run: npx expo export --platform ios --output-dir dist/ios
       - run: npx expo export --platform android --output-dir dist/android
       - run: npm audit --omit=dev --audit-level=critical
+
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          cache: npm
+          node-version-file: .nvmrc
+      - run: npm ci
+      - run: npx supabase start
+      - run: npx supabase db lint --local --level warning
+      - run: npx supabase test db --local

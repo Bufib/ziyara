@@ -261,7 +261,9 @@ Die Migration `20260817000000_allow_admin_role_assignment.sql` erlaubt Admins, a
 
 Die Migration `20260826000000_expand_group_check_results.sql` paart den Shared Row Lock einer Antwort mit einem expliziten exklusiven Row Lock beim Schließen. Dadurch wird eine parallele Antwort entweder vollständig vor dem Schließen gespeichert oder sieht anschließend den geschlossenen Check und schlägt fehl. `admin_group_check_results` liefert über einen `LEFT JOIN` jedes aktuelle Profil mit `display_name`, `party_size` und einer nullable Antwort; `null` bedeutet ausdrücklich noch nicht geantwortet.
 
-Am 17. August 2026 waren die damaligen Migrationen bis `20260817000000` im verknüpften Remote-Projekt ausgerollt; `db lint --linked --level warning` meldete danach keine Schemafehler. Die lokale Migration `20260826000000_expand_group_check_results.sql` ist ausdrücklich noch nicht remote ausgerollt. Dieser Zustand kann sich ändern; vor späteren Annahmen erneut `npx supabase migration list --linked` prüfen. Migrationen nur innerhalb eines ausdrücklich beauftragten Implementierungs- oder Deployment-Schritts pushen.
+Die Migration `20260826010000_drop_unused_group_check_answer_index.sql` entfernt ausschließlich `group_check_responses_check_answer_idx`. Keine produktive Abfrage filtert oder aggregiert nach `answer`: Eigene Antworten werden über `check_id` und `profile_id` gelesen, die Admin-RPC verbindet dieselben Spalten und die Ja-/Nein-/Offen-Gruppierung erfolgt anschließend im Client. Der Unique-Constraint auf `(check_id, profile_id)` stellt den dafür passenden Index bereits bereit. Alle sieben Tabellen sowie `profiles.id`, `profiles.user_id`, `group_check_responses.id` und `member_type` bleiben unverändert erhalten.
+
+Am 17. August 2026 waren die damaligen Migrationen bis `20260817000000` im verknüpften Remote-Projekt ausgerollt; `db lint --linked --level warning` meldete danach keine Schemafehler. Die lokalen Migrationen `20260826000000_expand_group_check_results.sql` und `20260826010000_drop_unused_group_check_answer_index.sql` wurden in diesem Arbeitsschritt nicht remote ausgerollt. Am 26. August 2026 war die Projektverknüpfung lokal vorhanden, aber kein autorisierter Supabase-CLI-Zugriffstoken; deshalb wurde der Remote-Migrationsstand nicht erneut abgefragt. Dieser Zustand kann sich ändern; vor späteren Annahmen mit autorisiertem Zugriff `npx supabase migration list --linked` prüfen. Migrationen nur innerhalb eines ausdrücklich beauftragten Implementierungs- oder Deployment-Schritts pushen.
 
 ## Kapazität für die Reisegruppe
 
@@ -319,11 +321,13 @@ npm audit
 Für Datenbankänderungen zusätzlich:
 
 ```bash
-npx supabase db lint --linked --level warning
-npx supabase migration list --linked
+npx supabase start
+npx supabase db reset --local
+npx supabase db lint --local --level warning
+npx supabase test db --local
 ```
 
-`npm test` führt derzeit 28 Jest-Tests aus: sechs Katalogtests, sieben Auth-Provider-Integrationstests einschließlich des Starts ohne Session, drei Timeout-/Fehlerklassifizierungstests, drei Tests für geschützte Navigation und Redirect-Allowlist, einen Provider-Test ohne Supabase-Leseabfragen oder Realtime-Kanäle beim öffentlichen Offline-Start, einen Test für die lokale Bookmark-/Reader-Persistenz sowie sieben Gruppencheck-Tests für stale Reads, optimistische Anzeige, parallele Antwort/Schließung, Ergebnisaggregation, RPC-Schema-Validierung und den SQL-Lock-/LEFT-JOIN-Vertrag. `.github/workflows/ci.yml` führt bei Pushes und Pull Requests Installation, Validierung, Expo Doctor, getrennte Web-/iOS-/Android-Exports und einen Critical-Audit-Gate aus. E2E- und native Gerätetests fehlen weiterhin; Registrierung, Auth-Guards, Adminrechte, Gruppenblockade, Fragerunde, Kartenberechtigung, Offlinekatalog, Persistenz, alle Sprachen und beide Themes müssen proportional zur Änderung manuell geprüft werden.
+`npm test` führt derzeit 28 Jest-Tests aus: sechs Katalogtests, sieben Auth-Provider-Integrationstests einschließlich des Starts ohne Session, drei Timeout-/Fehlerklassifizierungstests, drei Tests für geschützte Navigation und Redirect-Allowlist, einen Provider-Test ohne Supabase-Leseabfragen oder Realtime-Kanäle beim öffentlichen Offline-Start, einen Test für die lokale Bookmark-/Reader-Persistenz sowie sieben Gruppencheck-Tests für stale Reads, optimistische Anzeige, parallele Antwort/Schließung, Ergebnisaggregation, RPC-Schema-Validierung und den SQL-Lock-/LEFT-JOIN-Vertrag. Unter `supabase/tests/database` prüfen zusätzlich 39 pgTAP-Assertions die sieben Tabellen und beizubehaltenden Spalten, anonyme Privilegien, Antwort-RLS, Admin-RPCs, den letzten Admin, das Fünferlimit, Zähler-Cleanup und echte Parallelität über getrennte `dblink`-Verbindungen. Dabei werden konkurrierende Adminänderungen, sechs gleichzeitige Fragen sowie Antwort/Schließen eines Gruppenchecks in beiden Sperrreihenfolgen ausgeführt. `.github/workflows/ci.yml` führt bei Pushes und Pull Requests Installation, App-Validierung, Expo Doctor, getrennte Web-/iOS-/Android-Exports und einen Critical-Audit-Gate aus; ein separater Datenbank-Job startet das lokale Schema aus den Migrationen und führt DB-Lint sowie alle SQL-Tests aus. E2E- und native Gerätetests fehlen weiterhin; Registrierung, Auth-Guards, Adminrechte, Gruppenblockade, Fragerunde, Kartenberechtigung, Offlinekatalog, Persistenz, alle Sprachen und beide Themes müssen proportional zur Änderung manuell geprüft werden.
 
 ## Bekannte Lücken und Risiken
 
