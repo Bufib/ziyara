@@ -69,7 +69,7 @@ export type RoleAssignmentAudit = {
   id: number;
   new_role: AppRole;
   previous_role: AppRole;
-  target_user_id: string;
+  target_user_id: string | null;
 };
 
 export type Database = {
@@ -173,7 +173,7 @@ export type Database = {
           id?: never;
           new_role: AppRole;
           previous_role: AppRole;
-          target_user_id: string;
+          target_user_id?: string | null;
         };
         Relationships: [];
         Row: RoleAssignmentAudit;
@@ -193,6 +193,10 @@ export type Database = {
       admin_set_user_role: {
         Args: { p_role: AppRole; p_user_id: string };
         Returns: UserProfile;
+      };
+      can_delete_account: {
+        Args: { p_user_id: string };
+        Returns: boolean;
       };
       is_admin: {
         Args: never;

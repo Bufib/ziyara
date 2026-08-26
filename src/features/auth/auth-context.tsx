@@ -1,4 +1,11 @@
-import type { AuthError, PostgrestError, Session, User } from '@supabase/supabase-js';
+import {
+  FunctionsHttpError,
+  type AuthError,
+  type PostgrestError,
+  type Session,
+  type User,
+} from '@supabase/supabase-js';
+import * as Linking from 'expo-linking';
 import {
   createContext,
   type PropsWithChildren,
@@ -12,6 +19,10 @@ import {
 import { AppState, Platform } from 'react-native';
 
 import type { MemberType, UserProfile } from '@/domain/database';
+import {
+  parsePasswordRecoveryLink,
+  passwordRecoveryRedirectUrl,
+} from '@/features/auth/password-recovery-link';
 import { supabase } from '@/features/auth/supabase';
 import {
   getSupabaseReadFailureKind,
@@ -31,9 +42,25 @@ type ProfileUpdateResult = {
   error: PostgrestError | null;
 };
 
+export type DeleteAccountErrorCode =
+  | 'deletion_failed'
+  | 'last_admin'
+  | 'unauthorized';
+
+type DeleteAccountResult = {
+  code: DeleteAccountErrorCode | null;
+  error: Error | null;
+};
+
+type PasswordRecoveryStatus = 'error' | 'idle' | 'processing' | 'ready';
+
 type AuthContextValue = {
   changeEmail: (currentPassword: string, newEmail: string) => Promise<AuthResult>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<AuthResult>;
+  completePasswordRecovery: (newPassword: string) => Promise<AuthResult>;
+  deleteAccount: () => Promise<DeleteAccountResult>;
+  handlePasswordRecoveryUrl: (url: string) => Promise<boolean>;
+  hasCheckedPasswordRecoveryLink: boolean;
   isAdmin: boolean;
   isLoading: boolean;
   isRefreshing: boolean;
@@ -41,7 +68,10 @@ type AuthContextValue = {
   profile: UserProfile | null;
   profileRefreshError: Error | null;
   profileSyncErrorKind: SupabaseReadFailureKind | null;
+  passwordRecoveryError: Error | null;
+  passwordRecoveryStatus: PasswordRecoveryStatus;
   refreshProfile: () => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<AuthResult>;
   session: Session | null;
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signOut: () => Promise<AuthResult>;
@@ -63,11 +93,23 @@ type ProfileSyncState = {
   userId: string | null;
 };
 
+type PasswordRecoveryState = {
+  error: Error | null;
+  hasCheckedLink: boolean;
+  status: PasswordRecoveryStatus;
+};
+
 const initialProfileSyncState: ProfileSyncState = {
   error: null,
   profile: null,
   status: 'idle',
   userId: null,
+};
+
+const initialPasswordRecoveryState: PasswordRecoveryState = {
+  error: null,
+  hasCheckedLink: false,
+  status: 'idle',
 };
 
 function getProfileRefreshError(error: unknown) {
@@ -87,10 +129,29 @@ function getProfileRefreshError(error: unknown) {
   return new Error('Das Profil konnte nicht geladen werden.');
 }
 
+async function getDeleteAccountErrorCode(error: unknown) {
+  if (error instanceof FunctionsHttpError) {
+    try {
+      const body = (await error.context.json()) as { code?: unknown };
+
+      if (body.code === 'last_admin' || body.code === 'unauthorized') {
+        return body.code;
+      }
+    } catch {
+      // Fall through to the non-specific error shown by the account screen.
+    }
+  }
+
+  return 'deletion_failed' as const;
+}
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [passwordRecoveryState, setPasswordRecoveryState] = useState(
+    initialPasswordRecoveryState,
+  );
   const [profileSyncState, setProfileSyncState] = useState(initialProfileSyncState);
   const [session, setSession] = useState<Session | null>(null);
   const profileSyncStateRef = useRef(initialProfileSyncState);
@@ -126,16 +187,89 @@ export function AuthProvider({ children }: PropsWithChildren) {
     [updateProfileSyncState],
   );
 
+  const handlePasswordRecoveryUrl = useCallback(
+    async (url: string) => {
+      const recoveryLink = parsePasswordRecoveryLink(url);
+
+      if (!recoveryLink) {
+        return false;
+      }
+
+      setPasswordRecoveryState({
+        error: null,
+        hasCheckedLink: true,
+        status: 'processing',
+      });
+
+      if (recoveryLink.kind === 'error') {
+        setPasswordRecoveryState({
+          error: new Error(recoveryLink.errorDescription),
+          hasCheckedLink: true,
+          status: 'error',
+        });
+        return true;
+      }
+
+      const result =
+        recoveryLink.kind === 'implicit'
+          ? await supabase.auth.setSession({
+              access_token: recoveryLink.accessToken,
+              refresh_token: recoveryLink.refreshToken,
+            })
+          : recoveryLink.kind === 'pkce'
+            ? await supabase.auth.exchangeCodeForSession(
+                recoveryLink.code,
+                recoveryLink.flowId ? { flowId: recoveryLink.flowId } : undefined,
+              )
+            : await supabase.auth.verifyOtp({
+                token_hash: recoveryLink.tokenHash,
+                type: 'recovery',
+              });
+
+      if (result.error || !result.data.session) {
+        setPasswordRecoveryState({
+          error: result.error ?? new Error('Die Recovery-Session fehlt.'),
+          hasCheckedLink: true,
+          status: 'error',
+        });
+        return true;
+      }
+
+      applySession(result.data.session);
+      setPasswordRecoveryState({
+        error: null,
+        hasCheckedLink: true,
+        status: 'ready',
+      });
+      return true;
+    },
+    [applySession],
+  );
+
   useEffect(() => {
     let isMounted = true;
     let hasReceivedAuthEvent = false;
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (isMounted) {
         hasReceivedAuthEvent = true;
         applySession(nextSession);
+
+        if (event === 'PASSWORD_RECOVERY') {
+          setPasswordRecoveryState({
+            error: nextSession ? null : new Error('Die Recovery-Session fehlt.'),
+            hasCheckedLink: true,
+            status: nextSession ? 'ready' : 'error',
+          });
+        } else if (event === 'SIGNED_OUT') {
+          setPasswordRecoveryState({
+            ...initialPasswordRecoveryState,
+            hasCheckedLink: true,
+          });
+        }
+
         setIsSessionLoading(false);
       }
     });
@@ -182,6 +316,43 @@ export function AuthProvider({ children }: PropsWithChildren) {
       }
     };
   }, [applySession]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      void handlePasswordRecoveryUrl(url);
+    });
+
+    Linking.getInitialURL()
+      .then(async (url) => {
+        if (!isMounted) {
+          return;
+        }
+
+        const handled = url ? await handlePasswordRecoveryUrl(url) : false;
+
+        if (isMounted && !handled) {
+          setPasswordRecoveryState((current) => ({
+            ...current,
+            hasCheckedLink: true,
+          }));
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setPasswordRecoveryState({
+            error: new Error('Der Recovery-Link konnte nicht gelesen werden.'),
+            hasCheckedLink: true,
+            status: 'error',
+          });
+        }
+      });
+
+    return () => {
+      isMounted = false;
+      subscription.remove();
+    };
+  }, [handlePasswordRecoveryUrl]);
 
   const refreshProfile = useCallback(async () => {
     const userId = sessionUserIdRef.current;
@@ -404,6 +575,78 @@ export function AuthProvider({ children }: PropsWithChildren) {
     [verifyCurrentPassword],
   );
 
+  const requestPasswordReset = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: passwordRecoveryRedirectUrl(),
+    });
+    return { error };
+  }, []);
+
+  const completePasswordRecovery = useCallback(
+    async (newPassword: string) => {
+      if (passwordRecoveryState.status !== 'ready' || !session) {
+        throw new Error('Es ist keine gültige Recovery-Session aktiv.');
+      }
+
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+      if (error) {
+        return { error };
+      }
+
+      // Global logout revokes remaining refresh tokens after a password reset.
+      // The installed SDK removes the current local session even when Auth
+      // reports that the already-invalidated server session no longer exists.
+      await supabase.auth.signOut({ scope: 'global' });
+      applySession(null);
+      setPasswordRecoveryState({
+        ...initialPasswordRecoveryState,
+        hasCheckedLink: true,
+      });
+      return { error: null };
+    },
+    [applySession, passwordRecoveryState.status, session],
+  );
+
+  const deleteAccount = useCallback(async (): Promise<DeleteAccountResult> => {
+    if (!session) {
+      return {
+        code: 'unauthorized',
+        error: new Error('Für die Kontolöschung ist eine Anmeldung erforderlich.'),
+      };
+    }
+
+    const { data, error } = await supabase.functions.invoke<{
+      code?: string;
+      message?: string;
+    }>('delete-account', {
+      body: {},
+      method: 'POST',
+    });
+
+    if (error) {
+      return {
+        code: await getDeleteAccountErrorCode(error),
+        error,
+      };
+    }
+
+    if (data?.code !== 'account_deleted') {
+      return {
+        code: 'deletion_failed',
+        error: new Error('Die Löschfunktion hat den Erfolg nicht bestätigt.'),
+      };
+    }
+
+    await supabase.auth.signOut({ scope: 'local' });
+    applySession(null);
+    setPasswordRecoveryState({
+      ...initialPasswordRecoveryState,
+      hasCheckedLink: true,
+    });
+    return { code: null, error: null };
+  }, [applySession, session]);
+
   const updatePartySize = useCallback(
     async (partySize: number) => {
       const userId = session?.user.id;
@@ -456,14 +699,21 @@ export function AuthProvider({ children }: PropsWithChildren) {
     () => ({
       changeEmail,
       changePassword,
+      completePasswordRecovery,
+      deleteAccount,
+      handlePasswordRecoveryUrl,
       hasProfileError,
+      hasCheckedPasswordRecoveryLink: passwordRecoveryState.hasCheckedLink,
       isAdmin: currentProfile?.role === 'admin',
       isLoading,
       isRefreshing,
       profile: currentProfile,
       profileRefreshError,
       profileSyncErrorKind,
+      passwordRecoveryError: passwordRecoveryState.error,
+      passwordRecoveryStatus: passwordRecoveryState.status,
       refreshProfile,
+      requestPasswordReset,
       session,
       signIn,
       signOut,
@@ -474,13 +724,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
     [
       changeEmail,
       changePassword,
+      completePasswordRecovery,
       currentProfile,
+      deleteAccount,
+      handlePasswordRecoveryUrl,
       hasProfileError,
       isLoading,
       isRefreshing,
       profileRefreshError,
       profileSyncErrorKind,
+      passwordRecoveryState,
       refreshProfile,
+      requestPasswordReset,
       session,
       signIn,
       signOut,

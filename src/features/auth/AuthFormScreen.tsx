@@ -22,6 +22,7 @@ import { getAuthErrorTranslationKey, useAuth } from '@/features/auth/auth-contex
 import { getPartySize, PartySizeField } from '@/features/auth/PartySizeField';
 import { useI18n } from '@/features/i18n/i18n';
 import {
+  forgotPasswordRoute,
   loginRoute,
   registerRoute,
   type ProtectedRoutePath,
@@ -313,6 +314,21 @@ export function AuthFormScreen({ mode, returnTo }: AuthFormScreenProps) {
                 ) : null}
               </View>
 
+              {!isRegister ? (
+                <Pressable
+                  accessibilityRole="link"
+                  disabled={isSubmitting}
+                  onPress={() => router.push(forgotPasswordRoute())}
+                  style={({ pressed }) => [
+                    styles.forgotPasswordLink,
+                    pressed && styles.pressed,
+                  ]}>
+                  <ThemedText type="smallBold" themeColor="accent">
+                    {t('auth.forgotPassword')}
+                  </ThemedText>
+                </Pressable>
+              ) : null}
+
               {isRegister ? (
                 <View style={styles.field}>
                   <ThemedText type="smallBold">{t('auth.passwordConfirm')}</ThemedText>
@@ -533,6 +549,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
     padding: Spacing.three,
+  },
+  forgotPasswordLink: {
+    alignSelf: 'flex-start',
+    justifyContent: 'center',
+    minHeight: 44,
   },
   submitButton: {
     alignItems: 'center',

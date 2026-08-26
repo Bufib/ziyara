@@ -33,6 +33,8 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 - In ein Familienkonto gehören ausschließlich mitreisende Kinder oder Angehörige ohne eigenes Telefon. Erwachsene mit eigenem Telefon, einschließlich Ehepartner, erstellen ein eigenes Konto.
 - Bestehende Konten aus der Zeit vor Einführung von `member_type` können dort `null` haben. Die aktuelle Registrierung verlangt die Auswahl.
 - Nutzer können später E-Mail, Passwort und `party_size` auf der Kontoseite ändern.
+- „Passwort vergessen“ sendet einen neutral formulierten Recovery-Hinweis und verwendet ausschließlich die dedizierte Route `/reset-password`. Der AuthProvider verarbeitet implizite Recovery-Tokens, PKCE-Codes und `token_hash`-Links; normale Login- oder Signup-Links werden nicht als Passwort-Recovery akzeptiert. Nach erfolgreicher Passwortänderung werden die lokalen Anmeldedaten entfernt und eine erneute Anmeldung verlangt.
+- Angemeldete Nutzer können nach einem ausdrücklichen, plattformübergreifenden Bestätigungsdialog nur das eigene Konto unwiderruflich löschen. Der Client übergibt keine Ziel-User-ID. Die lokale Edge Function verifiziert den Bearer-Token serverseitig, leitet daraus die Auth-ID ab und hält den Service-Role-Key vollständig aus dem App-Bundle heraus.
 - Profile besitzen die Rollen `user`, `medical_staff`, `organization_team` und `admin`.
 - Neue Konten starten immer als `user`. Nur ein Admin kann über die abgesicherte RPC die Rollen `user`, `medical_staff`, `organization_team` und `admin` vergeben.
 - Bestehende Adminprofile können umgestuft werden, solange mindestens ein Admin erhalten bleibt. Rollenwechsel sind datenbankseitig serialisiert und werden protokolliert, damit auch bei mehreren gleichzeitig arbeitenden Admins nie versehentlich alle Adminrechte entfernt werden.
@@ -126,6 +128,7 @@ src/features/reader/        Darstellung religiöser Textsegmente
 src/features/storage/       AsyncStorage-Hooks
 src/features/theme/         Gespeicherter Theme-Modus
 supabase/migrations/        Versioniertes Postgres-Schema, RLS und RPCs
+supabase/functions/         Lokal implementierte, nicht automatisch deployte Edge Functions
 assets/images/places/       Lokal gebündelte Ortsbilder
 docs/IMPLEMENTATION_PLAN.md Ursprüngliche Roadmap, nicht alleinige Ist-Quelle
 ```
@@ -134,26 +137,33 @@ Der Alias `@/*` zeigt laut `tsconfig.json` auf `src/*`; `@/assets/*` zeigt auf `
 
 ### Provider-Baum und globaler Zustand
 
-`src/app/_layout.tsx` verschachtelt die Provider in dieser Reihenfolge:
+`src/app/_layout.tsx` verschachtelt Fehlergrenze und Provider in dieser Reihenfolge:
 
 ```text
-AppI18nProvider
-└── AppThemeProvider
-    └── AuthProvider
-        └── GroupCheckProvider
-            └── QuestionRoundProvider
-                └── RootNavigation
+AppErrorBoundary
+└── AppI18nProvider
+    └── AppThemeProvider
+        └── AuthProvider
+            └── GroupCheckProvider
+                └── QuestionRoundProvider
+                    └── RootNavigation
 ```
 
 Die Reihenfolge ist relevant: Gruppen- und Fragerunden benötigen den Auth-State. Der Splash Screen wartet nur auf die lokal gespeicherten Sprach- und Themezustände; Auth-, Profil-, Gruppen- und Fragerundenabfragen dürfen den öffentlichen Guide nicht blockieren. Ohne Session überspringen die privaten Provider Tabellenabfragen und Realtime-Kanäle vollständig. Bei einer vorhandenen Session blockiert nur das initiale Profil-/Pflichtabfrage-Laden beziehungsweise ein echter Benutzerwechsel die geschützte Navigation. Ein Profilfehler bleibt als wiederholbarer, nicht blockierender Hinweis sichtbar; Rollen- und Gruppenrechte werden dadurch nicht erweitert.
 
+`AppErrorBoundary` verwendet absichtlich keine Theme-, I18n-, Auth- oder Netzwerkabhängigkeit, damit der Fallback auch bei einem Providerfehler rendern kann. `src/features/monitoring/crash-reporting.ts` initialisiert Sentry nur bei einer validen HTTPS-DSN aus `EXPO_PUBLIC_SENTRY_DSN`; ohne DSN wird weder `Sentry.init` noch ein Capture-Aufruf ausgeführt. Sessions, Tracing, Breadcrumbs, Default-PII und zusätzliche Geräte-Frame-Erfassung sind deaktiviert. `beforeSend` erzeugt eine neue Allowlist-Nutzlast mit generischer Fehlermeldung und bereinigten Stackpositionen; Originalmeldungen, Nutzer, Requests, Kontexte, Tags und Extras werden nicht übertragen. Keine DSN und keine Monitoring-Zusatzdaten mit E-Mail, Anzeigename, Fragetext oder Auth-Token einchecken.
+
 `AuthProvider` trennt das initiale Session-/Profil-Laden und echte Benutzerwechsel von Hintergrundaktualisierungen. Beim App-Resume, einem manuellen Refresh oder einer Realtime-Profiländerung bleiben das vorhandene Profil, die Navigation und der Screen-State erhalten; `isRefreshing` und `profileRefreshError` bilden den nicht-blockierenden Zustand ab. Ein fehlgeschlagener Hintergrundrefresh zeigt global einen wiederholbaren Hinweis. Logout, Wechsel der Auth-User-ID oder eine erfolgreiche Serverantwort ohne Profil entfernen alte Profildaten dagegen sofort. Rollen stammen weiterhin ausschließlich aus dem serverseitigen Profil; RLS und geschützte RPCs bleiben auch bei vorübergehend veraltetem Client-State die Berechtigungsinstanz.
+
+Der gleiche Provider registriert den nativen Linking-Listener für Passwort-Recovery. `detectSessionInUrl` bleibt am Supabase-Client deaktiviert, damit Links nicht pauschal als Login verarbeitet werden. `src/features/auth/password-recovery-link.ts` akzeptiert Recovery-Zugangsdaten nur auf `/reset-password`; der neue Passwort-Screen bleibt außerhalb der normalen Login-Weiterleitung erreichbar, obwohl die Recovery-Session technisch bereits authentifiziert ist.
 
 ## Navigation und Zugriffsschutz
 
 | Route | Zugriff | Zweck |
 | --- | --- | --- |
 | `/login`, `/register` | öffentlich; vorhandene Session wird weitergeleitet | Anmeldung und Registrierung |
+| `/forgot-password` | öffentlich | neutral formulierter Versand eines Recovery-Links |
+| `/reset-password` | öffentlich; nur mit gültiger Recovery-Session änderbar | neues Passwort setzen und danach lokale Session entfernen |
 | `/(tabs)` | öffentlich; für angemeldete Konten keine blockierende Gruppenabfrage | Hauptnavigation |
 | Tab `/` | wie Tabs | Home, Städte, hervorgehobene Orte, aktive Statusabfrage und Fragerunde |
 | Tab `/map` | wie Tabs | native Karte beziehungsweise Web-Fallback |
@@ -240,6 +250,7 @@ Wichtige RPCs:
 - `is_admin`
 - `admin_list_users`
 - `admin_set_user_role`
+- `can_delete_account` (nur `service_role`; enger Vorabcheck für die Edge Function)
 - `start_group_check`, `close_group_check`, `respond_to_group_check`
 - `admin_group_check_results`
 - `open_question_round`, `close_question_round`
@@ -263,7 +274,11 @@ Die Migration `20260826000000_expand_group_check_results.sql` paart den Shared R
 
 Die Migration `20260826010000_drop_unused_group_check_answer_index.sql` entfernt ausschließlich `group_check_responses_check_answer_idx`. Keine produktive Abfrage filtert oder aggregiert nach `answer`: Eigene Antworten werden über `check_id` und `profile_id` gelesen, die Admin-RPC verbindet dieselben Spalten und die Ja-/Nein-/Offen-Gruppierung erfolgt anschließend im Client. Der Unique-Constraint auf `(check_id, profile_id)` stellt den dafür passenden Index bereits bereit. Alle sieben Tabellen sowie `profiles.id`, `profiles.user_id`, `group_check_responses.id` und `member_type` bleiben unverändert erhalten.
 
-Am 17. August 2026 waren die damaligen Migrationen bis `20260817000000` im verknüpften Remote-Projekt ausgerollt; `db lint --linked --level warning` meldete danach keine Schemafehler. Die lokalen Migrationen `20260826000000_expand_group_check_results.sql` und `20260826010000_drop_unused_group_check_answer_index.sql` wurden in diesem Arbeitsschritt nicht remote ausgerollt. Am 26. August 2026 war die Projektverknüpfung lokal vorhanden, aber kein autorisierter Supabase-CLI-Zugriffstoken; deshalb wurde der Remote-Migrationsstand nicht erneut abgefragt. Dieser Zustand kann sich ändern; vor späteren Annahmen mit autorisiertem Zugriff `npx supabase migration list --linked` prüfen. Migrationen nur innerhalb eines ausdrücklich beauftragten Implementierungs- oder Deployment-Schritts pushen.
+Die Migration `20260826020000_protect_account_deletion.sql` schützt Löschungen auf `auth.users` mit derselben transaktionsweiten Advisory-Sperre wie Rollenänderungen. Der letzte Administrator kann deshalb auch bei paralleler Löschung oder gleichzeitiger Umstufung nicht entfernt werden. Das Profil, Gruppenantworten und temporäre Fragenlimits werden über bestehende Cascades gelöscht; erhaltene Gruppenchecks verlieren den Erstellerbezug. Rollen-Auditereignisse bleiben als nicht identifizierende Historie erhalten: `target_user_id` wird vor dem Löschen auf `null` gesetzt und `changed_by_profile_id` wird über den bestehenden Fremdschlüssel ebenfalls anonymisiert.
+
+Die Migration `20260826021000_add_account_deletion_precheck.sql` ergänzt den ausschließlich für `service_role` ausführbaren Vorabcheck `can_delete_account`. Er liefert der Edge Function eine verständliche Last-Admin-Ablehnung; der Trigger auf `auth.users` bleibt wegen möglicher Parallelität die endgültige transaktionale Sicherheitsinstanz. `supabase/functions/delete-account` akzeptiert nur `POST` mit leerem Body, prüft den Access Token über `auth.getUser(accessToken)` und ruft `auth.admin.deleteUser` ausschließlich mit der verifizierten ID auf. Privilegierte Schlüssel werden nur aus der Edge-Function-Umgebung gelesen.
+
+Am 17. August 2026 waren die damaligen Migrationen bis `20260817000000` im verknüpften Remote-Projekt ausgerollt; `db lint --linked --level warning` meldete danach keine Schemafehler. Die lokalen Migrationen `20260826000000_expand_group_check_results.sql`, `20260826010000_drop_unused_group_check_answer_index.sql`, `20260826020000_protect_account_deletion.sql` und `20260826021000_add_account_deletion_precheck.sql` wurden nicht remote ausgerollt; auch `delete-account` wurde nicht deployt und die Remote-Redirect-Allowlist wurde nicht verändert. Am 26. August 2026 war die Projektverknüpfung lokal vorhanden, aber kein autorisierter Supabase-CLI-Zugriffstoken; deshalb wurde der Remote-Migrationsstand nicht erneut abgefragt. Dieser Zustand kann sich ändern; vor späteren Annahmen mit autorisiertem Zugriff `npx supabase migration list --linked` prüfen. Migrationen, Functions und Auth-Redirects nur innerhalb eines ausdrücklich beauftragten Implementierungs- oder Deployment-Schritts remote ändern.
 
 ## Kapazität für die Reisegruppe
 
@@ -327,20 +342,22 @@ npx supabase db lint --local --level warning
 npx supabase test db --local
 ```
 
-`npm test` führt derzeit 28 Jest-Tests aus: sechs Katalogtests, sieben Auth-Provider-Integrationstests einschließlich des Starts ohne Session, drei Timeout-/Fehlerklassifizierungstests, drei Tests für geschützte Navigation und Redirect-Allowlist, einen Provider-Test ohne Supabase-Leseabfragen oder Realtime-Kanäle beim öffentlichen Offline-Start, einen Test für die lokale Bookmark-/Reader-Persistenz sowie sieben Gruppencheck-Tests für stale Reads, optimistische Anzeige, parallele Antwort/Schließung, Ergebnisaggregation, RPC-Schema-Validierung und den SQL-Lock-/LEFT-JOIN-Vertrag. Unter `supabase/tests/database` prüfen zusätzlich 39 pgTAP-Assertions die sieben Tabellen und beizubehaltenden Spalten, anonyme Privilegien, Antwort-RLS, Admin-RPCs, den letzten Admin, das Fünferlimit, Zähler-Cleanup und echte Parallelität über getrennte `dblink`-Verbindungen. Dabei werden konkurrierende Adminänderungen, sechs gleichzeitige Fragen sowie Antwort/Schließen eines Gruppenchecks in beiden Sperrreihenfolgen ausgeführt. `.github/workflows/ci.yml` führt bei Pushes und Pull Requests Installation, App-Validierung, Expo Doctor, getrennte Web-/iOS-/Android-Exports und einen Critical-Audit-Gate aus; ein separater Datenbank-Job startet das lokale Schema aus den Migrationen und führt DB-Lint sowie alle SQL-Tests aus. E2E- und native Gerätetests fehlen weiterhin; Registrierung, Auth-Guards, Adminrechte, Gruppenblockade, Fragerunde, Kartenberechtigung, Offlinekatalog, Persistenz, alle Sprachen und beide Themes müssen proportional zur Änderung manuell geprüft werden.
+`npm test` führt derzeit 83 Jest-Tests in 16 Suites aus. Abgedeckt sind unter anderem AuthContext, GroupCheckContext, QuestionRoundContext, Persistenz-Races und Speicherfehler, der gerenderte `RequireAuth`-Guard, der öffentliche Providerstart ohne Supabase-Zugriff, Recovery-/Account-Löschverträge, die globale Error Boundary sowie die Monitoring-Allowlist. `npm run test:coverage` beziehungsweise `npm run validate` erzwingt mindestens 50 % globale Line Coverage und jeweils 80 % für die drei Kernkontexte. Der lokale Stand vom 26. August 2026 liegt bei 85,96 % global, 90,82 % AuthContext, 94,53 % GroupCheckContext und 95,65 % QuestionRoundContext.
+
+Unter `supabase/tests/database` prüfen zusätzlich 60 pgTAP-Assertions die RLS-/RPC-/Parallelitätsregeln sowie Cascades, Audit-Anonymisierung, Function-Grants und konkurrierende Account-Löschungen. `npm run test:e2e` führt sechs serielle Playwright-Smokes mit synthetischen Konten gegen die lokale Expo-/Supabase-/Mailpit-Umgebung aus: Registrierung/Login, Recovery-Link, öffentlicher Guide bei abgebrochenen Supabase-Requests, Gruppencheck, anonyme Fragerunde und Rollenänderung. `.github/workflows/ci.yml` führt bei Pushes und Pull Requests App-Validierung samt Coverage, Expo Doctor, getrennte Web-/iOS-/Android-Exports und einen Critical-Audit-Gate aus; der Datenbank-Job startet das lokale Schema aus Migrationen, prüft den 401-Auth-Gate der Edge Function, führt DB-Lint und SQL-Tests sowie danach die Playwright-Smokes aus. Native Gerätetests fehlen weiterhin; Kartenberechtigung, reale Deep Links in signierten Builds, alle Sprachen, beide Themes und dynamische Schrift müssen proportional zur Änderung manuell geprüft werden.
 
 ## Bekannte Lücken und Risiken
 
 - Sämtliche kuratierten Orts- und religiösen Inhalte benötigen weiterhin qualifizierte Prüfung.
 - Ziyarat Ashura enthält bereits Volltext, steht aber noch auf `needs_review` und `pending_rights_review`.
 - Native Kartenkacheln sind offline nicht garantiert.
-- Finale Store-Metadaten, veröffentlichungsfertige Datenschutz-/Supportseiten und ein echter Fehler-Monitoringdienst fehlen.
+- Finale Store-Metadaten und veröffentlichungsfertige Datenschutz-/Supportseiten fehlen. Das technische Crash-Reporting ist vorbereitet, bleibt aber bis zur ausdrücklich konfigurierten DSN deaktiviert; Projektanlage, DSN-Konfiguration und ein kontrollierter Testevent sind externe Release-Schritte.
 - App-Icon und Splash-Grafik sind noch Expo-Startergrafiken und müssen vor einem Store-Release durch freigegebene Markenassets ersetzt werden.
 - Bundle-Identifier und finale Store-/Build-Konfiguration sind in `app.json` noch nicht vollständig.
-- Passwort-Zurücksetzen und vollständige native Deep-Link-Verarbeitung sind noch nicht implementiert.
+- Die Recovery- und Account-Löschpfade sind lokal vollständig implementiert und getestet, benötigen vor einem Release aber noch die ausdrücklich freizugebende Remote-Migration, Function-Bereitstellung und Auth-Redirect-Allowlist sowie einen Test auf einem signierten nativen Build.
 - Arabisch richtet Texte aus, schaltet aber die gesamte native Layoutreihenfolge noch nicht über `I18nManager` auf RTL um.
-- Der vollständige npm-Audit meldete am 26. August 2026 keine Critical-, aber 8 High- und 11 Moderate-Einträge. Die High-Einträge hängen an der von Expo SDK 57 erwarteten React-Native-`0.86.2`-/Metro-Kette und deren `image-size`-Parsern; der angebotene Wechsel auf React Native `0.86.3` darf nicht isoliert gegen Expo Doctors Erwartung erfolgen. Die Moderate-Einträge hängen an Expo-Konfigurationswerkzeugen sowie `xcode`/`uuid`; npm bietet dafür nur inkompatible Expo-/Splash-Screen-Downgrades an. Auf kompatible Expo-SDK-57-Patches warten und keinen `npm audit fix --force` ausführen.
-- Es fehlen weiterhin E2E-Tests, native Store-Builds und der reale Last-/Netzwerktest mit etwa 100 Geräten.
+- Der vollständige npm-Audit meldete am 26. August 2026 keine Critical-, aber 8 High- und 12 Moderate-Einträge. Die High-Einträge hängen an der von Expo SDK 57 erwarteten React-Native-`0.86.2`-/Metro-Kette und deren `image-size`-Parsern; der angebotene Wechsel auf React Native `0.86.3` darf nicht isoliert gegen Expo Doctors Erwartung erfolgen. Die Moderate-Einträge hängen an Expo-Konfigurationswerkzeugen sowie `xcode`/`uuid`; `@sentry/react-native` wird nur deshalb zusätzlich als betroffen geführt, weil es Expo als Peer-/Runtime-Abhängigkeit nutzt. npm bietet dafür ausschließlich inkompatible Expo-/Splash-Screen-Downgrades beziehungsweise ein nicht SDK-57-ausgerichtetes Sentry-Downgrade an. Auf kompatible Expo-SDK-57-Patches warten und keinen `npm audit fix --force` ausführen.
+- Es fehlen weiterhin native Store-Builds und der reale Last-/Netzwerktest mit etwa 100 Geräten; die vorhandenen Playwright-Smokes ersetzen keine signierten iOS-/Android-Gerätetests.
 
 ## Definition of Done
 

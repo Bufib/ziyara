@@ -9,6 +9,7 @@
     "@expo/ui": "~57.0.13",
     "@likashefqet/react-native-image-zoom": "^4.3.0",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@sentry/react-native": "~7.11.0",
     "@supabase/supabase-js": "^2.112.3",
     "expo": "~57.0.16",
     "expo-clipboard": "~57.0.1",
@@ -36,6 +37,7 @@
     "react-native-worklets": "0.10.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/jest": "29.5.14",
     "@types/react": "~19.2.2",
     "eslint": "^9.0.0",
@@ -53,19 +55,60 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "jest --runInBand",
+    "test:coverage": "jest --runInBand --coverage",
+    "test:e2e": "playwright test",
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
-    "validate": "npm run typecheck && npm run lint && npm test && npx expo install --check"
+    "validate": "npm run typecheck && npm run lint && npm run test:coverage && npx expo install --check"
   },
   "jest": {
     "preset": "jest-expo",
     "setupFiles": [
       "<rootDir>/jest.setup.js"
     ],
+    "testPathIgnorePatterns": [
+      "<rootDir>/e2e/"
+    ],
     "watchman": false,
     "moduleNameMapper": {
       "^@/assets/(.*)$": "<rootDir>/assets/$1",
       "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "collectCoverageFrom": [
+      "src/data/**/*.{ts,tsx}",
+      "src/features/auth/{RequireAuth,auth-context,password-recovery-link,protected-route-policy}.{ts,tsx}",
+      "src/features/errors/AppErrorBoundary.tsx",
+      "src/features/group-check/{group-check-context,group-check-results}.{ts,tsx}",
+      "src/features/i18n/**/*.{ts,tsx}",
+      "src/features/navigation/**/*.{ts,tsx}",
+      "src/features/network/**/*.{ts,tsx}",
+      "src/features/monitoring/crash-reporting.ts",
+      "src/features/places/openNavigation.ts",
+      "src/features/question-round/question-round-context.tsx",
+      "src/features/storage/**/*.{ts,tsx}",
+      "src/features/theme/**/*.{ts,tsx}",
+      "src/hooks/**/*.{ts,tsx}",
+      "supabase/functions/delete-account/handler.ts",
+      "!**/*.test.{ts,tsx}"
+    ],
+    "coverageReporters": [
+      "text",
+      "text-summary",
+      "lcov"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "lines": 50
+      },
+      "./src/features/auth/auth-context.tsx": {
+        "lines": 80
+      },
+      "./src/features/group-check/group-check-context.tsx": {
+        "lines": 80
+      },
+      "./src/features/question-round/question-round-context.tsx": {
+        "lines": 80
+      }
     }
   },
   "private": true

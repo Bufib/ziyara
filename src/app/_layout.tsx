@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/features/auth/auth-context';
+import { AppErrorBoundary } from '@/features/errors/AppErrorBoundary';
 import { GroupCheckProvider, useGroupCheck } from '@/features/group-check/group-check-context';
 import { AppI18nProvider, useI18n } from '@/features/i18n/i18n';
 import { supabaseReadFailureTranslationKey } from '@/features/network/supabase-read';
@@ -18,17 +19,19 @@ SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
   return (
-    <AppI18nProvider>
-      <AppThemeProvider>
-        <AuthProvider>
-          <GroupCheckProvider>
-            <QuestionRoundProvider>
-              <RootNavigation />
-            </QuestionRoundProvider>
-          </GroupCheckProvider>
-        </AuthProvider>
-      </AppThemeProvider>
-    </AppI18nProvider>
+    <AppErrorBoundary>
+      <AppI18nProvider>
+        <AppThemeProvider>
+          <AuthProvider>
+            <GroupCheckProvider>
+              <QuestionRoundProvider>
+                <RootNavigation />
+              </QuestionRoundProvider>
+            </GroupCheckProvider>
+          </AuthProvider>
+        </AppThemeProvider>
+      </AppI18nProvider>
+    </AppErrorBoundary>
   );
 }
 
@@ -67,6 +70,14 @@ function RootNavigation() {
           <Stack.Screen
             name="register"
             options={{ headerShown: false, title: t('auth.registerTitle') }}
+          />
+          <Stack.Screen
+            name="forgot-password"
+            options={{ title: t('nav.forgotPassword') }}
+          />
+          <Stack.Screen
+            name="reset-password"
+            options={{ title: t('nav.resetPassword') }}
           />
 
           <Stack.Protected guard={!isBlocking}>

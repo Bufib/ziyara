@@ -8,7 +8,7 @@ import {
   it,
   jest,
 } from '@jest/globals';
-import type { PostgrestError, Session } from '@supabase/supabase-js';
+import { PostgrestError, type Session } from '@supabase/supabase-js';
 import { useEffect } from 'react';
 import { AppState, type NativeEventSubscription } from 'react-native';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
@@ -31,14 +31,20 @@ const mockProfile: UserProfile = {
 const mockSession = {
   user: { id: mockProfile.user_id },
 } as Session;
+const mockAuthState: {
+  isAdmin: boolean;
+  isLoading: boolean;
+  profile: UserProfile | null;
+  session: Session | null;
+} = {
+  isAdmin: false,
+  isLoading: false,
+  profile: mockProfile,
+  session: mockSession,
+};
 
 jest.mock('@/features/auth/auth-context', () => ({
-  useAuth: () => ({
-    isAdmin: false,
-    isLoading: false,
-    profile: mockProfile,
-    session: mockSession,
-  }),
+  useAuth: () => mockAuthState,
 }));
 
 jest.mock('@/features/auth/supabase', () => ({
@@ -164,6 +170,10 @@ describe('GroupCheckProvider request versioning', () => {
     renderer = null;
     responseResponses = [];
     jest.clearAllMocks();
+    mockAuthState.isAdmin = false;
+    mockAuthState.isLoading = false;
+    mockAuthState.profile = mockProfile;
+    mockAuthState.session = mockSession;
 
     jest.spyOn(AppState, 'addEventListener').mockImplementation(
       () => ({ remove: jest.fn() }) as NativeEventSubscription,
@@ -212,6 +222,10 @@ describe('GroupCheckProvider request versioning', () => {
           data: { ...activeCheck, closed_at: '2026-08-26T10:02:00.000Z' },
           error: null,
         });
+      }
+
+      if (name === 'start_group_check') {
+        return Promise.resolve({ data: activeCheck, error: null });
       }
 
       throw new Error(`Unerwartete RPC im Gruppencheck-Test: ${name}`);
@@ -311,5 +325,90 @@ describe('GroupCheckProvider request versioning', () => {
       currentResponse: null,
       hasSyncError: false,
     });
+  });
+
+  it('behält den letzten Stand bei einem fehlgeschlagenen Hintergrundrefresh', async () => {
+    await renderProvider();
+    const syncError = new PostgrestError({
+      code: 'PGRST001',
+      details: '',
+      hint: '',
+      message: 'backend unavailable',
+    });
+    checkResponses.push(Promise.resolve({ data: null, error: syncError }));
+
+    await act(async () => getContext().refresh());
+
+    expect(getContext()).toMatchObject({
+      activeCheck,
+      currentResponse: false,
+      hasSyncError: true,
+      isBlocking: true,
+      isLoading: false,
+      syncErrorKind: 'server',
+    });
+  });
+
+  it('erfasst auch Fehler beim Laden der eigenen Antwort, ohne den Check zu verlieren', async () => {
+    await renderProvider();
+    const responseError = new PostgrestError({
+      code: 'PGRST001',
+      details: '',
+      hint: '',
+      message: 'response unavailable',
+    });
+    checkResponses.push(Promise.resolve({ data: activeCheck, error: null }));
+    responseResponses.push(Promise.resolve({ data: null, error: responseError }));
+
+    await act(async () => getContext().refresh());
+
+    expect(getContext()).toMatchObject({
+      activeCheck,
+      currentResponse: false,
+      hasSyncError: true,
+      syncErrorKind: 'server',
+    });
+  });
+
+  it('zeigt einen gestarteten Check sofort und gleicht ihn anschließend autoritativ ab', async () => {
+    await renderProvider();
+    checkResponses.push(Promise.resolve({ data: activeCheck, error: null }));
+    responseResponses.push(Promise.resolve({ data: null, error: null }));
+
+    await act(async () => {
+      const result = await getContext().startCheck(activeCheck.question);
+      expect(result.error).toBeNull();
+    });
+
+    expect(mockSupabase.rpc).toHaveBeenCalledWith('start_group_check', {
+      p_question: activeCheck.question,
+    });
+    expect(getContext()).toMatchObject({
+      activeCheck,
+      currentResponse: null,
+      hasSyncError: false,
+    });
+  });
+
+  it('bleibt ohne Sitzung offline-bereit und startet keine Supabase-Abfrage', async () => {
+    mockAuthState.profile = null;
+    mockAuthState.session = null;
+
+    await act(async () => {
+      renderer = create(
+        <GroupCheckProvider>
+          <GroupCheckProbe />
+        </GroupCheckProvider>,
+      );
+    });
+    await waitForCondition(() => !getContext().isLoading);
+
+    expect(getContext()).toMatchObject({
+      activeCheck: null,
+      currentResponse: null,
+      hasSyncError: false,
+      isBlocking: false,
+    });
+    expect(mockSupabase.from).not.toHaveBeenCalled();
   });
 });

@@ -35,7 +35,7 @@ jobs:
 
   database:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -44,5 +44,21 @@ jobs:
           node-version-file: .nvmrc
       - run: npm ci
       - run: npx supabase start
+      - name: Verify account-deletion function auth gate
+        run: |
+          status="$(curl --silent --output /tmp/delete-account-response.json --write-out '%{http_code}' --request POST --header 'Content-Type: application/json' --data '{}' http://127.0.0.1:54321/functions/v1/delete-account)"
+          test "$status" = "401"
+          node -e "const body = JSON.parse(require('node:fs').readFileSync('/tmp/delete-account-response.json', 'utf8')); if (body.code !== 'unauthorized') process.exit(1)"
       - run: npx supabase db lint --local --level warning
       - run: npx supabase test db --local
+      - name: Run local full-stack E2E smoke flows
+        run: npm run test:e2e
+      - name: Upload Playwright diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics
+          path: |
+            playwright-report/
+            test-results/playwright/
+          retention-days: 7

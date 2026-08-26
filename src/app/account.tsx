@@ -1,8 +1,10 @@
 import type { AuthError } from "@supabase/supabase-js";
+import { router } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
   Keyboard,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -55,8 +57,14 @@ export default function AccountScreen() {
 function AccountContent() {
   const theme = useTheme();
   const { t } = useI18n();
-  const { changeEmail, changePassword, profile, updatePartySize, user } =
-    useAuth();
+  const {
+    changeEmail,
+    changePassword,
+    deleteAccount,
+    profile,
+    updatePartySize,
+    user,
+  } = useAuth();
   const [partySize, setPartySize] = useState(
     String(profile?.party_size ?? 1),
   );
@@ -71,6 +79,9 @@ function AccountContent() {
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [passwordFeedback, setPasswordFeedback] = useState<FeedbackState>(null);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [deleteFeedback, setDeleteFeedback] = useState<FeedbackState>(null);
+  const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const inputStyle = [
     styles.input,
@@ -239,6 +250,36 @@ function AccountContent() {
       setPasswordFeedback({ isError: true, message: t("auth.error.generic") });
     } finally {
       setIsChangingPassword(false);
+    }
+  };
+
+  const submitAccountDeletion = async () => {
+    setDeleteFeedback(null);
+    setIsDeleting(true);
+
+    try {
+      const result = await deleteAccount();
+
+      if (result.error) {
+        setDeleteFeedback({
+          isError: true,
+          message: t(
+            result.code === "last_admin"
+              ? "account.deleteLastAdmin"
+              : "account.deleteError",
+          ),
+        });
+        setIsDeleteDialogVisible(false);
+        return;
+      }
+
+      setIsDeleteDialogVisible(false);
+      router.replace("/");
+    } catch {
+      setDeleteFeedback({ isError: true, message: t("account.deleteError") });
+      setIsDeleteDialogVisible(false);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -413,7 +454,112 @@ function AccountContent() {
             />
           </ThemedView>
         </Section>
+
+        <Section title={t("account.deleteTitle")}>
+          <ThemedView
+            type="surface"
+            style={[
+              styles.panel,
+              styles.dangerPanel,
+              {
+                backgroundColor: theme.dangerSoft,
+                borderColor: theme.danger,
+              },
+            ]}
+          >
+            <ThemedText>{t("account.deleteBody")}</ThemedText>
+            <ThemedText type="smallBold" themeColor="danger">
+              {t("account.deleteWarning")}
+            </ThemedText>
+            <Feedback feedback={deleteFeedback} />
+            <Pressable
+              accessibilityRole="button"
+              disabled={isDeleting}
+              onPress={() => {
+                setDeleteFeedback(null);
+                setIsDeleteDialogVisible(true);
+              }}
+              style={({ pressed }) => [
+                styles.submitButton,
+                { backgroundColor: theme.danger },
+                pressed && styles.pressed,
+                isDeleting && styles.disabled,
+              ]}
+            >
+              <ThemedText type="smallBold" style={{ color: theme.background }}>
+                {t("account.deleteAction")}
+              </ThemedText>
+            </Pressable>
+          </ThemedView>
+        </Section>
       </View>
+
+      <Modal
+        animationType="fade"
+        onRequestClose={() => {
+          if (!isDeleting) {
+            setIsDeleteDialogVisible(false);
+          }
+        }}
+        transparent
+        visible={isDeleteDialogVisible}
+      >
+        <View style={styles.modalBackdrop}>
+          <ThemedView
+            accessibilityViewIsModal
+            type="surface"
+            style={[styles.modalCard, { borderColor: theme.danger }]}
+          >
+            <ThemedText type="subtitle" themeColor="danger">
+              {t("account.deleteConfirmTitle")}
+            </ThemedText>
+            <ThemedText>{t("account.deleteConfirmBody")}</ThemedText>
+            <ThemedText type="smallBold" themeColor="danger">
+              {t("account.deleteWarning")}
+            </ThemedText>
+            <View style={styles.modalActions}>
+              <Pressable
+                accessibilityRole="button"
+                disabled={isDeleting}
+                onPress={() => setIsDeleteDialogVisible(false)}
+                style={({ pressed }) => [
+                  styles.modalButton,
+                  {
+                    backgroundColor: theme.background,
+                    borderColor: theme.border,
+                  },
+                  pressed && styles.pressed,
+                  isDeleting && styles.disabled,
+                ]}
+              >
+                <ThemedText type="smallBold">
+                  {t("account.deleteCancel")}
+                </ThemedText>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ busy: isDeleting, disabled: isDeleting }}
+                disabled={isDeleting}
+                onPress={() => void submitAccountDeletion()}
+                style={({ pressed }) => [
+                  styles.modalButton,
+                  { backgroundColor: theme.danger, borderColor: theme.danger },
+                  pressed && styles.pressed,
+                  isDeleting && styles.disabled,
+                ]}
+              >
+                {isDeleting ? (
+                  <ActivityIndicator color={theme.background} />
+                ) : (
+                  <ThemedText type="smallBold" style={{ color: theme.background }}>
+                    {t("account.deleteConfirm")}
+                  </ThemedText>
+                )}
+              </Pressable>
+            </View>
+          </ThemedView>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -493,6 +639,9 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     padding: Spacing.three,
   },
+  dangerPanel: {
+    marginBottom: Spacing.five,
+  },
   field: {
     gap: Spacing.two,
     minWidth: 0,
@@ -518,6 +667,37 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: "center",
     minHeight: 50,
+    paddingHorizontal: Spacing.three,
+  },
+  modalBackdrop: {
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.56)",
+    flex: 1,
+    justifyContent: "center",
+    padding: Spacing.three,
+  },
+  modalCard: {
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: Spacing.three,
+    maxWidth: 520,
+    padding: Spacing.four,
+    width: "100%",
+  },
+  modalActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.two,
+    justifyContent: "flex-end",
+  },
+  modalButton: {
+    alignItems: "center",
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexGrow: 1,
+    justifyContent: "center",
+    minHeight: 50,
+    minWidth: 160,
     paddingHorizontal: Spacing.three,
   },
   pressed: {

@@ -47,6 +47,14 @@ export function registerRoute(returnTo?: ProtectedRoutePath): Href {
     : ('/register' as Href);
 }
 
+export function forgotPasswordRoute(): Href {
+  return '/forgot-password' as Href;
+}
+
+export function resetPasswordRoute(): Href {
+  return '/reset-password' as Href;
+}
+
 export function checkInRoute(returnTo: ProtectedRoutePath | '/' = '/'): Href {
   return returnTo === '/'
     ? ('/check-in' as Href)

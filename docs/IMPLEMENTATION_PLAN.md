@@ -290,7 +290,10 @@ Files to create or modify:
 
 - `package.json` with the Expo-supported Jest preset
 - `src/data/catalog.test.ts`
-- Future: `e2e/`
+- `e2e/phase7-smoke.spec.ts`
+- `playwright.config.ts`
+- `src/features/errors/AppErrorBoundary.tsx`
+- `src/features/monitoring/crash-reporting.ts`
 - `.github/workflows/ci.yml`
 - Existing app/data files as test coverage grows
 
@@ -303,7 +306,10 @@ Risks:
 Acceptance criteria:
 
 - TypeScript and lint pass.
-- Unit tests cover catalog relationships, legacy lookups, search normalization, and invalid act routing; persistence and UI coverage still needs expansion.
+- Jest covers catalog logic, AuthContext, GroupCheckContext, QuestionRoundContext, persistent state, rendered route guards, offline provider startup, the global Error Boundary and monitoring sanitization.
+- Coverage gates require at least 50% global line coverage and 80% per auth/group-check/question-round context.
+- Six local Playwright full-stack smokes cover registration/login, password recovery, the public offline guide, group check, question round and role changes.
+- Crash reporting is disabled without a DSN and strips user, request, message, breadcrumb, context, tag and extra fields before sending.
 - Manual QA checklist covers navigation, map, permissions, reader, search, bookmarks, offline behavior, dark mode, and accessibility.
 - CI runs required checks before merging.
 
@@ -312,7 +318,8 @@ Tests/checks:
 - `npx tsc --noEmit`
 - `npm run lint`
 - `npm test`
-- Future: E2E smoke tests for route navigation.
+- `npm run test:coverage`
+- `npm run test:e2e` with local Supabase and Chrome.
 - Manual device QA on iOS and Android.
 
 ## Phase 10: App-store readiness

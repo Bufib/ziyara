@@ -105,6 +105,16 @@ where target_user_id in (
   '20000000-0000-0000-0000-000000000003',
   '20000000-0000-0000-0000-000000000004'
 );
+-- Phase 6 protects the final administrator at auth.users. Reset any fixtures
+-- left by an interrupted earlier test run before deleting the synthetic users.
+update public.profiles
+set role = 'user'
+where user_id in (
+  '20000000-0000-0000-0000-000000000001',
+  '20000000-0000-0000-0000-000000000002',
+  '20000000-0000-0000-0000-000000000003',
+  '20000000-0000-0000-0000-000000000004'
+);
 delete from auth.users
 where id in (
   '20000000-0000-0000-0000-000000000001',
@@ -501,6 +511,14 @@ delete from public.question_rounds
 where id = 960000000000000001;
 delete from public.role_assignment_audit
 where target_user_id in (
+  '20000000-0000-0000-0000-000000000001',
+  '20000000-0000-0000-0000-000000000002',
+  '20000000-0000-0000-0000-000000000003',
+  '20000000-0000-0000-0000-000000000004'
+);
+update public.profiles
+set role = 'user'
+where user_id in (
   '20000000-0000-0000-0000-000000000001',
   '20000000-0000-0000-0000-000000000002',
   '20000000-0000-0000-0000-000000000003',

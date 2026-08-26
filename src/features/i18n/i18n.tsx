@@ -40,6 +40,20 @@ const dictionaries: Record<Language, Record<string, string>> = {
   de: {
     "account.changeEmail": "E-Mail-Adresse ändern",
     "account.changePassword": "Passwort ändern",
+    "account.deleteAction": "Konto endgültig löschen",
+    "account.deleteBody":
+      "Dabei werden dein Konto, dein Profil und abhängige Serverdaten dauerhaft gelöscht. Lokal gespeicherte Guide-Inhalte bleiben auf diesem Gerät erhalten.",
+    "account.deleteCancel": "Abbrechen",
+    "account.deleteConfirm": "Ja, Konto löschen",
+    "account.deleteConfirmBody":
+      "Diese Aktion kann nicht rückgängig gemacht werden. Du wirst danach auf diesem Gerät vollständig abgemeldet.",
+    "account.deleteConfirmTitle": "Konto unwiderruflich löschen?",
+    "account.deleteError":
+      "Das Konto konnte nicht gelöscht werden. Prüfe die Verbindung und versuche es erneut.",
+    "account.deleteLastAdmin":
+      "Der letzte Administrator kann sein Konto nicht löschen. Weise zuerst einer weiteren Person die Adminrolle zu.",
+    "account.deleteTitle": "Gefahrenbereich",
+    "account.deleteWarning": "Unwiderruflich: Gelöschte Kontodaten können nicht wiederhergestellt werden.",
     "account.currentPassword": "Aktuelles Passwort",
     "account.description":
       "Ändere deine Anmeldedaten. Zur Sicherheit wird dein aktuelles Passwort geprüft.",
@@ -239,6 +253,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "Das Passwort erfüllt die Sicherheitsanforderungen nicht.",
     "auth.errorTitle": "Anmeldung fehlgeschlagen",
     "auth.haveAccount": "Du hast bereits ein Konto?",
+    "auth.forgotPassword": "Passwort vergessen?",
     "auth.accountCoverage.family": "Ich und Familie ohne eigenes Telefon",
     "auth.accountCoverage.familyBody":
       "Nur Kinder oder Angehörige ohne eigenes Telefon mitzählen. Erwachsene mit eigenem Telefon erstellen bitte ein eigenes Konto.",
@@ -285,6 +300,26 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.validation.passwordPattern":
       "Das Passwort muss mindestens einen Buchstaben und eine Zahl enthalten.",
     "auth.validation.passwordRequired": "Gib dein Passwort ein.",
+    "recovery.backToLogin": "Zurück zur Anmeldung",
+    "recovery.checkingLink": "Recovery-Link wird geprüft …",
+    "recovery.forgotBody":
+      "Gib deine E-Mail-Adresse ein. Wenn dafür ein Konto existiert, erhältst du einen Link zum Festlegen eines neuen Passworts.",
+    "recovery.forgotTitle": "Passwort zurücksetzen",
+    "recovery.goToLogin": "Mit neuem Passwort anmelden",
+    "recovery.invalidBody":
+      "Der Recovery-Link ist ungültig, abgelaufen oder wurde bereits verwendet. Fordere einen neuen Link an.",
+    "recovery.invalidTitle": "Recovery-Link nicht gültig",
+    "recovery.requestNew": "Neuen Link anfordern",
+    "recovery.requestSuccess":
+      "Wenn ein Konto für diese Adresse existiert, wurde ein Recovery-Link versendet. Prüfe auch deinen Spam-Ordner.",
+    "recovery.resetBody":
+      "Lege jetzt ein neues Passwort fest. Nach dem Speichern meldest du dich aus Sicherheitsgründen erneut an.",
+    "recovery.resetSuccess":
+      "Das Passwort wurde geändert und alle lokalen Anmeldedaten wurden entfernt.",
+    "recovery.resetSuccessTitle": "Passwort geändert",
+    "recovery.resetTitle": "Neues Passwort festlegen",
+    "recovery.savePassword": "Neues Passwort speichern",
+    "recovery.sendLink": "Recovery-Link senden",
     "about.build":
       "Der aktuelle Build nutzt Expo SDK 57, Expo Router, TypeScript, React Native Maps, Expo Location und lokal gespeicherte Einstellungen.",
     "about.editorialBody":
@@ -403,6 +438,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "nav.admin": "Adminbereich",
     "nav.city": "Stadt",
     "nav.disclaimer": "Inhaltlicher Hinweis",
+    "nav.forgotPassword": "Passwort vergessen",
     "nav.home": "Home",
     "nav.map": "Karte",
     "nav.bookmarks": "Merkliste",
@@ -410,6 +446,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "nav.settings": "Einstellungen",
     "nav.placeDetails": "Ortsdetails",
     "nav.reader": "Lesemodus",
+    "nav.resetPassword": "Neues Passwort",
     "nav.sources": "Quellen",
     "place.about": "Über diesen Ort",
     "place.accessibilityPrefix": "Barrierefreiheit: {value}",
@@ -490,6 +527,20 @@ const dictionaries: Record<Language, Record<string, string>> = {
   en: {
     "account.changeEmail": "Change email address",
     "account.changePassword": "Change password",
+    "account.deleteAction": "Delete account permanently",
+    "account.deleteBody":
+      "This permanently deletes your account, profile, and dependent server data. Locally stored guide content remains on this device.",
+    "account.deleteCancel": "Cancel",
+    "account.deleteConfirm": "Yes, delete account",
+    "account.deleteConfirmBody":
+      "This action cannot be undone. You will be signed out completely on this device afterward.",
+    "account.deleteConfirmTitle": "Permanently delete account?",
+    "account.deleteError":
+      "The account could not be deleted. Check your connection and try again.",
+    "account.deleteLastAdmin":
+      "The final administrator cannot delete their account. Assign the administrator role to another person first.",
+    "account.deleteTitle": "Danger zone",
+    "account.deleteWarning": "Irreversible: deleted account data cannot be restored.",
     "account.currentPassword": "Current password",
     "account.description":
       "Update your sign-in details. Your current password is verified for security.",
@@ -684,6 +735,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "The password does not meet the security requirements.",
     "auth.errorTitle": "Sign-in failed",
     "auth.haveAccount": "Already have an account?",
+    "auth.forgotPassword": "Forgot password?",
     "auth.accountCoverage.family": "Me and family without their own phone",
     "auth.accountCoverage.familyBody":
       "Only include children or relatives without their own phone. Adults with their own phone should create a separate account.",
@@ -728,6 +780,26 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.validation.passwordPattern":
       "The password must contain at least one letter and one number.",
     "auth.validation.passwordRequired": "Enter your password.",
+    "recovery.backToLogin": "Back to sign in",
+    "recovery.checkingLink": "Checking recovery link…",
+    "recovery.forgotBody":
+      "Enter your email address. If an account exists for it, you will receive a link to set a new password.",
+    "recovery.forgotTitle": "Reset password",
+    "recovery.goToLogin": "Sign in with the new password",
+    "recovery.invalidBody":
+      "The recovery link is invalid, expired, or has already been used. Request a new link.",
+    "recovery.invalidTitle": "Recovery link is not valid",
+    "recovery.requestNew": "Request a new link",
+    "recovery.requestSuccess":
+      "If an account exists for this address, a recovery link has been sent. Check your spam folder too.",
+    "recovery.resetBody":
+      "Set a new password now. For security, you will sign in again after saving it.",
+    "recovery.resetSuccess":
+      "The password was changed and all local sign-in data was removed.",
+    "recovery.resetSuccessTitle": "Password changed",
+    "recovery.resetTitle": "Set a new password",
+    "recovery.savePassword": "Save new password",
+    "recovery.sendLink": "Send recovery link",
     "about.build":
       "This build uses Expo SDK 57, Expo Router, TypeScript, React Native Maps, Expo Location, and locally stored settings.",
     "about.editorialBody":
@@ -842,6 +914,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "nav.admin": "Admin area",
     "nav.city": "City",
     "nav.disclaimer": "Content Notice",
+    "nav.forgotPassword": "Forgot password",
     "nav.home": "Home",
     "nav.map": "Map",
     "nav.bookmarks": "Bookmarks",
@@ -849,6 +922,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "nav.settings": "Settings",
     "nav.placeDetails": "Place Details",
     "nav.reader": "Reader",
+    "nav.resetPassword": "New password",
     "nav.sources": "Sources",
     "place.about": "About This Place",
     "place.accessibilityPrefix": "Accessibility: {value}",
@@ -929,6 +1003,20 @@ const dictionaries: Record<Language, Record<string, string>> = {
   ar: {
     "account.changeEmail": "تغيير البريد الإلكتروني",
     "account.changePassword": "تغيير كلمة المرور",
+    "account.deleteAction": "حذف الحساب نهائيًا",
+    "account.deleteBody":
+      "سيؤدي ذلك إلى حذف حسابك وملفك الشخصي والبيانات التابعة على الخادم نهائيًا. يبقى محتوى الدليل المحفوظ محليًا على هذا الجهاز.",
+    "account.deleteCancel": "إلغاء",
+    "account.deleteConfirm": "نعم، احذف الحساب",
+    "account.deleteConfirmBody":
+      "لا يمكن التراجع عن هذا الإجراء. سيتم تسجيل خروجك بالكامل من هذا الجهاز بعد ذلك.",
+    "account.deleteConfirmTitle": "هل تريد حذف الحساب نهائيًا؟",
+    "account.deleteError":
+      "تعذر حذف الحساب. تحقق من الاتصال وحاول مرة أخرى.",
+    "account.deleteLastAdmin":
+      "لا يمكن للمشرف الأخير حذف حسابه. امنح دور المشرف لشخص آخر أولًا.",
+    "account.deleteTitle": "منطقة الخطر",
+    "account.deleteWarning": "إجراء نهائي: لا يمكن استعادة بيانات الحساب المحذوفة.",
     "account.currentPassword": "كلمة المرور الحالية",
     "account.description":
       "غيّر بيانات تسجيل الدخول. سيتم التحقق من كلمة المرور الحالية للحماية.",
@@ -1115,6 +1203,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.error.weakPassword": "كلمة المرور لا تستوفي متطلبات الأمان.",
     "auth.errorTitle": "فشل تسجيل الدخول",
     "auth.haveAccount": "لديك حساب بالفعل؟",
+    "auth.forgotPassword": "هل نسيت كلمة المرور؟",
     "auth.accountCoverage.family": "أنا وعائلتي ممن ليس لديهم هاتف خاص",
     "auth.accountCoverage.familyBody":
       "يُرجى إضافة الأطفال أو أفراد العائلة الذين لا يملكون هواتف خاصة بهم فقط؛ أما البالغون الذين لديهم هواتفهم الخاصة، فيُرجى منهم إنشاء حساب منفصل.",
@@ -1156,6 +1245,26 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.validation.passwordPattern":
       "يجب أن تحتوي كلمة المرور على حرف واحد ورقم واحد على الأقل.",
     "auth.validation.passwordRequired": "أدخل كلمة المرور.",
+    "recovery.backToLogin": "العودة إلى تسجيل الدخول",
+    "recovery.checkingLink": "جارٍ التحقق من رابط الاسترداد…",
+    "recovery.forgotBody":
+      "أدخل عنوان بريدك الإلكتروني. إذا كان هناك حساب مرتبط به فسيصلك رابط لتعيين كلمة مرور جديدة.",
+    "recovery.forgotTitle": "إعادة تعيين كلمة المرور",
+    "recovery.goToLogin": "تسجيل الدخول بكلمة المرور الجديدة",
+    "recovery.invalidBody":
+      "رابط الاسترداد غير صالح أو منتهي الصلاحية أو تم استخدامه من قبل. اطلب رابطًا جديدًا.",
+    "recovery.invalidTitle": "رابط الاسترداد غير صالح",
+    "recovery.requestNew": "طلب رابط جديد",
+    "recovery.requestSuccess":
+      "إذا كان هناك حساب لهذا العنوان فقد تم إرسال رابط استرداد. تحقق أيضًا من مجلد الرسائل غير المرغوب فيها.",
+    "recovery.resetBody":
+      "عيّن كلمة مرور جديدة الآن. لأسباب أمنية ستسجل الدخول مرة أخرى بعد حفظها.",
+    "recovery.resetSuccess":
+      "تم تغيير كلمة المرور وإزالة جميع بيانات تسجيل الدخول المحلية.",
+    "recovery.resetSuccessTitle": "تم تغيير كلمة المرور",
+    "recovery.resetTitle": "تعيين كلمة مرور جديدة",
+    "recovery.savePassword": "حفظ كلمة المرور الجديدة",
+    "recovery.sendLink": "إرسال رابط الاسترداد",
     "about.build":
       "يعتمد هذا الإصدار على Expo SDK 57 و Expo Router و TypeScript و React Native Maps و Expo Location مع حفظ الإعدادات محليا.",
     "about.editorialBody":
@@ -1268,6 +1377,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "nav.admin": "قسم المشرف",
     "nav.city": "المدينة",
     "nav.disclaimer": "تنبيه المحتوى",
+    "nav.forgotPassword": "نسيت كلمة المرور",
     "nav.home": "الرئيسية",
     "nav.map": "الخريطة",
     "nav.bookmarks": "المحفوظات",
@@ -1275,6 +1385,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "nav.settings": "الإعدادات",
     "nav.placeDetails": "تفاصيل المكان",
     "nav.reader": "وضع القراءة",
+    "nav.resetPassword": "كلمة مرور جديدة",
     "nav.sources": "المصادر",
     "place.about": "عن هذا المكان",
     "place.accessibilityPrefix": "إتاحة الوصول: {value}",

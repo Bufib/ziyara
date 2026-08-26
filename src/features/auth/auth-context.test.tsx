@@ -8,30 +8,55 @@ import {
   it,
   jest,
 } from '@jest/globals';
-import { PostgrestError, type AuthChangeEvent, type Session, type User } from '@supabase/supabase-js';
+import * as Linking from 'expo-linking';
+import {
+  type AuthError,
+  FunctionsHttpError,
+  PostgrestError,
+  type AuthChangeEvent,
+  type Session,
+  type User,
+} from '@supabase/supabase-js';
 import { useEffect } from 'react';
 import { AppState, type AppStateStatus, type NativeEventSubscription } from 'react-native';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import type { Mock } from 'jest-mock';
 
 import type { UserProfile } from '@/domain/database';
-import { AuthProvider, useAuth } from '@/features/auth/auth-context';
+import {
+  AuthProvider,
+  getAuthErrorTranslationKey,
+  useAuth,
+} from '@/features/auth/auth-context';
 import { supabase } from '@/features/auth/supabase';
+
+jest.mock('expo-linking', () => ({
+  addEventListener: jest.fn(),
+  createURL: jest.fn(),
+  getInitialURL: jest.fn(),
+}));
 
 jest.mock('@/features/auth/supabase', () => ({
   supabase: {
     auth: {
+      exchangeCodeForSession: jest.fn(),
       getSession: jest.fn(),
       onAuthStateChange: jest.fn(),
+      resetPasswordForEmail: jest.fn(),
+      setSession: jest.fn(),
       signInWithPassword: jest.fn(),
       signOut: jest.fn(),
       signUp: jest.fn(),
       startAutoRefresh: jest.fn(),
       stopAutoRefresh: jest.fn(),
       updateUser: jest.fn(),
+      verifyOtp: jest.fn(),
     },
     channel: jest.fn(),
     from: jest.fn(),
+    functions: {
+      invoke: jest.fn(),
+    },
     removeChannel: jest.fn(),
   },
 }));
@@ -49,17 +74,24 @@ type MockChannel = {
 };
 type MockSupabase = {
   auth: {
+    exchangeCodeForSession: MockFunction;
     getSession: MockFunction;
     onAuthStateChange: MockFunction;
+    resetPasswordForEmail: MockFunction;
+    setSession: MockFunction;
     signInWithPassword: MockFunction;
     signOut: MockFunction;
     signUp: MockFunction;
     startAutoRefresh: MockFunction;
     stopAutoRefresh: MockFunction;
     updateUser: MockFunction;
+    verifyOtp: MockFunction;
   };
   channel: MockFunction;
   from: MockFunction;
+  functions: {
+    invoke: MockFunction;
+  };
   removeChannel: MockFunction;
 };
 
@@ -69,6 +101,11 @@ type Deferred<T> = {
 };
 
 const mockSupabase = supabase as unknown as MockSupabase;
+const mockLinking = Linking as unknown as {
+  addEventListener: MockFunction;
+  createURL: MockFunction;
+  getInitialURL: MockFunction;
+};
 const actEnvironmentGlobal = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
@@ -232,6 +269,9 @@ describe('AuthProvider profile synchronization', () => {
     renderer = null;
 
     jest.clearAllMocks();
+    mockLinking.addEventListener.mockImplementation(() => ({ remove: jest.fn() }));
+    mockLinking.createURL.mockImplementation(() => 'ziyara:///reset-password');
+    mockLinking.getInitialURL.mockImplementation(() => Promise.resolve(null));
     jest
       .spyOn(AppState, 'addEventListener')
       .mockImplementation((_type, listener) => {
@@ -259,6 +299,18 @@ describe('AuthProvider profile synchronization', () => {
     );
     mockSupabase.auth.signInWithPassword.mockImplementation(() => Promise.resolve({ error: null }));
     mockSupabase.auth.signOut.mockImplementation(() => Promise.resolve({ error: null }));
+    mockSupabase.auth.signUp.mockImplementation(() =>
+      Promise.resolve({ data: { session: null, user: null }, error: null }),
+    );
+    mockSupabase.auth.resetPasswordForEmail.mockImplementation(() =>
+      Promise.resolve({ data: {}, error: null }),
+    );
+    mockSupabase.auth.updateUser.mockImplementation(() =>
+      Promise.resolve({ data: { user: null }, error: null }),
+    );
+    mockSupabase.functions.invoke.mockImplementation(() =>
+      Promise.resolve({ data: { code: 'account_deleted' }, error: null }),
+    );
     mockSupabase.removeChannel.mockImplementation(() => Promise.resolve('ok'));
 
     mockSupabase.from.mockImplementation((table: string) => {
@@ -271,10 +323,20 @@ describe('AuthProvider profile synchronization', () => {
         eq: jest.fn(),
         maybeSingle: jest.fn(),
         select: jest.fn(),
+        single: jest.fn(),
+        update: jest.fn(),
       };
       query.select.mockReturnValue(query);
       query.eq.mockReturnValue(query);
       query.abortSignal.mockReturnValue(query);
+      query.update.mockImplementation((value: unknown) => {
+        const { party_size } = value as { party_size: number };
+        query.single.mockResolvedValue({
+          data: createProfile('user-a', { party_size }),
+          error: null,
+        } as never);
+        return query;
+      });
       query.maybeSingle.mockImplementation(() => {
         const nextResponse = profileResponses.shift();
 
@@ -549,5 +611,265 @@ describe('AuthProvider profile synchronization', () => {
       profileRefreshError: null,
       session: null,
     });
+  });
+
+  it('fordert einen Recovery-Link mit der dedizierten Deep-Link-Route an', async () => {
+    await renderAuthProvider();
+
+    await act(async () => {
+      await getAuthValue().requestPasswordReset('user-a@example.com');
+    });
+
+    expect(mockLinking.createURL).toHaveBeenCalledWith('/reset-password');
+    expect(mockSupabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
+      'user-a@example.com',
+      { redirectTo: 'ziyara:///reset-password' },
+    );
+  });
+
+  it('ignoriert normale Login-Links und aktiviert nur eine Recovery-Session', async () => {
+    const recoverySession = createSession('user-a');
+    const profile = createProfile('user-a');
+    mockSupabase.auth.setSession.mockImplementation(() =>
+      Promise.resolve({
+        data: { session: recoverySession, user: recoverySession.user },
+        error: null,
+      }),
+    );
+
+    await renderAuthProvider();
+
+    await act(async () => {
+      expect(
+        await getAuthValue().handlePasswordRecoveryUrl(
+          'ziyara:///login#access_token=login&refresh_token=refresh&type=recovery',
+        ),
+      ).toBe(false);
+    });
+    expect(mockSupabase.auth.setSession).not.toHaveBeenCalled();
+
+    profileResponses.push(Promise.resolve({ data: profile, error: null }));
+    await act(async () => {
+      expect(
+        await getAuthValue().handlePasswordRecoveryUrl(
+          'ziyara:///reset-password#access_token=recovery-access&refresh_token=recovery-refresh&type=recovery',
+        ),
+      ).toBe(true);
+      await flushAsyncWork();
+    });
+    await waitForCondition(() => getAuthValue().profile?.user_id === 'user-a');
+
+    expect(mockSupabase.auth.setSession).toHaveBeenCalledWith({
+      access_token: 'recovery-access',
+      refresh_token: 'recovery-refresh',
+    });
+    expect(getAuthValue()).toMatchObject({
+      passwordRecoveryError: null,
+      passwordRecoveryStatus: 'ready',
+      session: recoverySession,
+    });
+  });
+
+  it('setzt das Recovery-Passwort und entfernt anschließend die lokale Session', async () => {
+    const recoverySession = createSession('user-a');
+    mockSupabase.auth.setSession.mockImplementation(() =>
+      Promise.resolve({
+        data: { session: recoverySession, user: recoverySession.user },
+        error: null,
+      }),
+    );
+
+    await renderAuthProvider();
+    profileResponses.push(
+      Promise.resolve({ data: createProfile('user-a'), error: null }),
+    );
+    await act(async () => {
+      await getAuthValue().handlePasswordRecoveryUrl(
+        'ziyara:///reset-password#access_token=access&refresh_token=refresh&type=recovery',
+      );
+      await flushAsyncWork();
+    });
+    await waitForCondition(() => getAuthValue().passwordRecoveryStatus === 'ready');
+
+    await act(async () => {
+      expect(await getAuthValue().completePasswordRecovery('NeuesPasswort123')).toEqual({
+        error: null,
+      });
+      await flushAsyncWork();
+    });
+
+    expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({
+      password: 'NeuesPasswort123',
+    });
+    expect(mockSupabase.auth.signOut).toHaveBeenCalledWith({ scope: 'global' });
+    expect(getAuthValue()).toMatchObject({
+      passwordRecoveryStatus: 'idle',
+      profile: null,
+      session: null,
+    });
+  });
+
+  it('löscht nur über die serverseitig authentifizierte Funktion und räumt lokal auf', async () => {
+    await renderAuthProvider();
+    await loadInitialProfile(createProfile('user-a'));
+
+    await act(async () => {
+      expect(await getAuthValue().deleteAccount()).toEqual({
+        code: null,
+        error: null,
+      });
+      await flushAsyncWork();
+    });
+
+    expect(mockSupabase.functions.invoke).toHaveBeenCalledWith('delete-account', {
+      body: {},
+      method: 'POST',
+    });
+    expect(mockSupabase.auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
+    expect(getAuthValue()).toMatchObject({ profile: null, session: null });
+  });
+
+  it('behält die Session bei und meldet die Last-Admin-Ablehnung gezielt', async () => {
+    const session = createSession('user-a');
+    mockSupabase.functions.invoke.mockImplementation(() =>
+      Promise.resolve({
+        data: null,
+        error: new FunctionsHttpError({
+          json: async () => ({ code: 'last_admin' }),
+        }),
+      }),
+    );
+
+    await renderAuthProvider();
+    await loadInitialProfile(createProfile('user-a', { role: 'admin' }));
+
+    await act(async () => {
+      const result = await getAuthValue().deleteAccount();
+      expect(result.code).toBe('last_admin');
+      expect(result.error).toBeInstanceOf(FunctionsHttpError);
+    });
+
+    expect(mockSupabase.auth.signOut).not.toHaveBeenCalled();
+    expect(getAuthValue()).toMatchObject({
+      isAdmin: true,
+      session,
+    });
+  });
+
+  it('führt Registrierung sowie verifizierte Kontoänderungen über Supabase Auth aus', async () => {
+    await renderAuthProvider();
+
+    await act(async () => {
+      await expect(
+        getAuthValue().signUp('Testprofil', 'new@example.com', 'Passwort123', 'sister', 3),
+      ).resolves.toEqual({ error: null, requiresEmailConfirmation: true });
+    });
+    expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({
+      email: 'new@example.com',
+      options: {
+        data: { display_name: 'Testprofil', member_type: 'sister', party_size: 3 },
+      },
+      password: 'Passwort123',
+    });
+
+    await loadInitialProfile(createProfile('user-a'));
+    await act(async () => {
+      await expect(getAuthValue().changeEmail('Alt12345', 'neu@example.com')).resolves.toEqual({
+        error: null,
+      });
+      await expect(getAuthValue().changePassword('Alt12345', 'Neu12345')).resolves.toEqual({
+        error: null,
+      });
+      await expect(getAuthValue().updatePartySize(4)).resolves.toEqual({ error: null });
+    });
+
+    expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
+      email: 'user-a@example.com',
+      password: 'Alt12345',
+    });
+    expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({ email: 'neu@example.com' });
+    expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({ password: 'Neu12345' });
+    expect(getAuthValue().profile?.party_size).toBe(4);
+  });
+
+  it('lehnt kontoabhängige Aktionen ohne Session lokal ab', async () => {
+    await renderAuthProvider();
+
+    await expect(getAuthValue().changeEmail('Alt12345', 'neu@example.com')).rejects.toThrow(
+      'Das Konto hat keine E-Mail-Adresse.',
+    );
+    await expect(getAuthValue().changePassword('Alt12345', 'Neu12345')).rejects.toThrow(
+      'Das Konto hat keine E-Mail-Adresse.',
+    );
+    await expect(getAuthValue().completePasswordRecovery('Neu12345')).rejects.toThrow(
+      'Es ist keine gültige Recovery-Session aktiv.',
+    );
+    await expect(getAuthValue().updatePartySize(2)).rejects.toThrow(
+      'Für die Änderung ist eine Anmeldung erforderlich.',
+    );
+    await expect(getAuthValue().deleteAccount()).resolves.toMatchObject({
+      code: 'unauthorized',
+      error: expect.any(Error),
+    });
+    expect(mockSupabase.functions.invoke).not.toHaveBeenCalled();
+  });
+
+  it('meldet abgelaufene und unvollständige Recovery-Links als nicht blockierenden Fehler', async () => {
+    await renderAuthProvider();
+
+    await act(async () => {
+      await expect(
+        getAuthValue().handlePasswordRecoveryUrl(
+          'ziyara:///reset-password#error_code=otp_expired&error_description=Abgelaufen',
+        ),
+      ).resolves.toBe(true);
+    });
+    expect(getAuthValue()).toMatchObject({
+      passwordRecoveryStatus: 'error',
+    });
+    expect(getAuthValue().passwordRecoveryError?.message).toBe('Abgelaufen');
+
+    mockSupabase.auth.setSession.mockResolvedValueOnce({
+      data: { session: null, user: null },
+      error: null,
+    } as never);
+    await act(async () => {
+      await getAuthValue().handlePasswordRecoveryUrl(
+        'ziyara:///reset-password#access_token=access&refresh_token=refresh&type=recovery',
+      );
+    });
+    expect(getAuthValue().passwordRecoveryError?.message).toBe('Die Recovery-Session fehlt.');
+  });
+
+  it('behandelt nicht bestätigte Löschantworten als Fehler und behält die Session', async () => {
+    mockSupabase.functions.invoke.mockResolvedValueOnce({
+      data: { code: 'unexpected' },
+      error: null,
+    } as never);
+    await renderAuthProvider();
+    await loadInitialProfile(createProfile('user-a'));
+
+    await expect(getAuthValue().deleteAccount()).resolves.toMatchObject({
+      code: 'deletion_failed',
+      error: expect.any(Error),
+    });
+    expect(getAuthValue().session?.user.id).toBe('user-a');
+    expect(mockSupabase.auth.signOut).not.toHaveBeenCalled();
+  });
+});
+
+describe('getAuthErrorTranslationKey', () => {
+  it.each([
+    ['email_not_confirmed', 'auth.error.emailNotConfirmed'],
+    ['invalid_credentials', 'auth.error.invalidCredentials'],
+    ['over_email_send_rate_limit', 'auth.error.rateLimit'],
+    ['over_request_rate_limit', 'auth.error.rateLimit'],
+    ['signup_disabled', 'auth.error.signupDisabled'],
+    ['user_already_exists', 'auth.error.userExists'],
+    ['email_exists', 'auth.error.userExists'],
+    ['weak_password', 'auth.error.weakPassword'],
+    ['unknown_error', 'auth.error.generic'],
+  ])('ordnet %s dem erwarteten UI-Text zu', (code, expectedKey) => {
+    expect(getAuthErrorTranslationKey({ code } as AuthError)).toBe(expectedKey);
   });
 });
