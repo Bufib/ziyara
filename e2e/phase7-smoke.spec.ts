@@ -148,6 +148,44 @@ test.describe.serial('Phase 7 E2E smoke flows', () => {
     await member.context.close();
   });
 
+  test('Busmanagement von Zuordnung bis Boarding-Bestätigung', async ({ browser }) => {
+    const admin = await openAuthenticatedPage(browser, adminEmail, adminPassword);
+    const member = await openAuthenticatedPage(browser, memberEmail, memberResetPassword);
+
+    await admin.page.goto('/admin');
+    await admin.page.getByRole('button', { name: /Busmanagement/u }).click();
+    await admin.page.getByLabel('Reisename').fill('E2E Ziyara Reise');
+    await admin.page.getByRole('button', { name: 'Reise anlegen' }).click();
+    await expect(admin.page.getByText('E2E Ziyara Reise')).toBeVisible();
+
+    await admin.page.getByLabel('Busname').fill('Bus 1');
+    await admin.page.getByRole('button', { name: 'Bus hinzufügen' }).click();
+    await admin.page.getByLabel('Teilnehmer-ID').fill('E2E01');
+    await admin.page.getByRole('radio', { name: 'Bus 1' }).click();
+    await admin.page
+      .getByLabel('App-Konto verknüpfen (optional)')
+      .fill(memberName);
+    await admin.page.getByText(memberName, { exact: true }).last().click();
+    await admin.page.getByRole('button', { name: 'Teilnehmer speichern' }).click();
+    await expect(admin.page.getByText('E2E01')).toBeVisible();
+
+    await admin.page.getByLabel('Bezeichnung der Abfahrt').fill('Abfahrt vom E2E Hotel');
+    await admin.page.getByRole('button', { name: 'Boarding starten' }).click();
+    await expect(admin.page.getByText('Abfahrt vom E2E Hotel')).toBeVisible();
+
+    await member.page.getByRole('button', { name: 'Busstatus öffnen' }).click();
+    await expect(member.page.getByText('Abfahrt vom E2E Hotel')).toBeVisible();
+    await expect(member.page.getByText('E2E01')).toBeVisible();
+    await member.page.getByRole('radio', { name: 'Im Bus' }).click();
+    await expect(member.page.getByText('Dein Busstatus wurde gespeichert.')).toBeVisible();
+    await expect(admin.page.getByText('Im Bus').first()).toBeVisible();
+
+    await admin.page.getByRole('button', { name: 'Boarding schließen' }).click();
+    await expect(admin.page.getByRole('button', { name: 'Boarding starten' })).toBeVisible();
+    await admin.context.close();
+    await member.context.close();
+  });
+
   test('Rollenänderung über die Admin-Oberfläche', async ({ page }) => {
     await login(page, adminEmail, adminPassword);
     await page.goto('/admin');

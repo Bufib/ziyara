@@ -1,4 +1,4 @@
-import { Redirect, useLocalSearchParams } from 'expo-router';
+import { Redirect, type Href, useLocalSearchParams } from 'expo-router';
 
 import { AuthFormScreen } from '@/features/auth/AuthFormScreen';
 import { useAuth } from '@/features/auth/auth-context';
@@ -20,7 +20,7 @@ export default function RegisterScreen() {
       );
     }
 
-    return <Redirect href={safeReturnTo} />;
+    return <Redirect href={safeReturnTo as Href} />;
   }
 
   return (

@@ -77,6 +77,7 @@
     "collectCoverageFrom": [
       "src/data/**/*.{ts,tsx}",
       "src/features/auth/{RequireAuth,auth-context,password-recovery-link,protected-route-policy}.{ts,tsx}",
+      "src/features/bus-management/{bus-management-context,bus-management-state}.{ts,tsx}",
       "src/features/errors/AppErrorBoundary.tsx",
       "src/features/group-check/{group-check-context,group-check-results}.{ts,tsx}",
       "src/features/i18n/**/*.{ts,tsx}",
@@ -100,6 +101,9 @@
         "lines": 50
       },
       "./src/features/auth/auth-context.tsx": {
+        "lines": 80
+      },
+      "./src/features/bus-management/bus-management-context.tsx": {
         "lines": 80
       },
       "./src/features/group-check/group-check-context.tsx": {

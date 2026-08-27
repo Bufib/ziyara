@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/features/auth/auth-context';
+import { BusManagementProvider } from '@/features/bus-management/bus-management-context';
 import { AppErrorBoundary } from '@/features/errors/AppErrorBoundary';
 import { GroupCheckProvider, useGroupCheck } from '@/features/group-check/group-check-context';
 import { AppI18nProvider, useI18n } from '@/features/i18n/i18n';
@@ -23,11 +24,13 @@ export default function RootLayout() {
       <AppI18nProvider>
         <AppThemeProvider>
           <AuthProvider>
-            <GroupCheckProvider>
-              <QuestionRoundProvider>
-                <RootNavigation />
-              </QuestionRoundProvider>
-            </GroupCheckProvider>
+            <BusManagementProvider>
+              <GroupCheckProvider>
+                <QuestionRoundProvider>
+                  <RootNavigation />
+                </QuestionRoundProvider>
+              </GroupCheckProvider>
+            </BusManagementProvider>
           </AuthProvider>
         </AppThemeProvider>
       </AppI18nProvider>
@@ -87,6 +90,7 @@ function RootNavigation() {
             <Stack.Screen name="reader/[slug]" options={{ title: t('nav.reader') }} />
             <Stack.Screen name="about" options={{ title: t('nav.about') }} />
             <Stack.Screen name="account" options={{ title: t('nav.account') }} />
+            <Stack.Screen name="bus" options={{ title: t('bus.navTitle') }} />
             <Stack.Screen name="sources" options={{ title: t('nav.sources') }} />
             <Stack.Screen name="disclaimer" options={{ title: t('nav.disclaimer') }} />
             <Stack.Screen

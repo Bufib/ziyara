@@ -8,10 +8,11 @@ import { Spacing } from "@/constants/theme";
 import { allPlaces } from "@/data/places";
 import type { Place } from "@/domain/types";
 import { useAuth } from "@/features/auth/auth-context";
+import { useBusManagement } from "@/features/bus-management/bus-management-context";
 import { useI18n } from "@/features/i18n/i18n";
 import { useGroupCheck } from "@/features/group-check/group-check-context";
 import { localizeCityName, localizePlace } from "@/features/i18n/localizedData";
-import { cityRoute } from "@/features/navigation/routes";
+import { busRoute, cityRoute } from "@/features/navigation/routes";
 import { supabaseReadFailureTranslationKey } from "@/features/network/supabase-read";
 import { PlaceImageCard } from "@/features/places/PlaceImageCard";
 import { useQuestionRound } from "@/features/question-round/question-round-context";
@@ -32,6 +33,7 @@ export default function HomeScreen() {
   const theme = useTheme();
   const { language, t } = useI18n();
   const { session } = useAuth();
+  const { activeBoarding, participants: busParticipants } = useBusManagement();
   const { activeCheck } = useGroupCheck();
   const {
     activeRound,
@@ -92,6 +94,24 @@ export default function HomeScreen() {
             icon="confirm"
             label={t("groupCheck.openForm")}
             onPress={() => router.push("/check-in")}
+          />
+        </View>
+      ) : null}
+
+      {session && activeBoarding && busParticipants.length > 0 ? (
+        <View
+          style={[
+            styles.notice,
+            { backgroundColor: theme.accentSoft, borderColor: theme.accent },
+          ]}>
+          <ThemedText type="heading">{t("bus.homeTitle")}</ThemedText>
+          <ThemedText themeColor="textSecondary">
+            {t("bus.homeBody", { count: busParticipants.length })}
+          </ThemedText>
+          <Button
+            icon="bus"
+            label={t("bus.open")}
+            onPress={() => router.push(busRoute())}
           />
         </View>
       ) : null}

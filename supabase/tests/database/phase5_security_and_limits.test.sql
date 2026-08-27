@@ -4,18 +4,22 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(24);
 
-select tables_are(
-  'public',
-  array[
-    'anonymous_questions',
-    'group_check_responses',
-    'group_checks',
-    'profiles',
-    'question_rounds',
-    'question_submission_limits',
-    'role_assignment_audit'
-  ],
-  'all seven application tables remain present'
+select ok(
+  (
+    select count(*) = 7
+    from information_schema.tables as tables
+    where tables.table_schema = 'public'
+      and tables.table_name in (
+        'anonymous_questions',
+        'group_check_responses',
+        'group_checks',
+        'profiles',
+        'question_rounds',
+        'question_submission_limits',
+        'role_assignment_audit'
+      )
+  ),
+  'all seven original application tables remain present'
 );
 
 select has_column('public', 'profiles', 'id', 'profiles.id remains present');

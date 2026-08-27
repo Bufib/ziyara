@@ -20,6 +20,7 @@ import { AdminSectionHeader } from '@/features/admin/AdminSectionHeader';
 import { useAuth } from '@/features/auth/auth-context';
 import { RequireAuth } from '@/features/auth/RequireAuth';
 import { supabase } from '@/features/auth/supabase';
+import { AdminBusManagementPanel } from '@/features/bus-management/AdminBusManagementPanel';
 import { AdminGroupCheckPanel } from '@/features/group-check/AdminGroupCheckPanel';
 import { useGroupCheck } from '@/features/group-check/group-check-context';
 import { AdminQuestionRoundPanel } from '@/features/question-round/AdminQuestionRoundPanel';
@@ -36,7 +37,7 @@ import { useTheme } from '@/hooks/use-theme';
 const adminPageSize = 200;
 const assignableRoles: AppRole[] = ['user', 'medical_staff', 'organization_team', 'admin'];
 
-type AdminSection = 'questions' | 'status' | 'users';
+type AdminSection = 'bus' | 'questions' | 'status' | 'users';
 type RoleFeedback = {
   type: 'error' | 'last-admin' | 'success';
   userId: string;
@@ -91,6 +92,7 @@ function AdminContent() {
   const usersRequestSequence = useRef(0);
   const hasError = readErrorKind !== null;
   const [expandedSections, setExpandedSections] = useState<Record<AdminSection, boolean>>({
+    bus: false,
     questions: false,
     status: false,
     users: false,
@@ -214,6 +216,19 @@ function AdminContent() {
             </View>
 
             <View style={styles.sections}>
+              <View style={styles.section}>
+                <AdminSectionHeader
+                  description={t('admin.section.bus.description')}
+                  expanded={expandedSections.bus}
+                  icon="bus"
+                  onToggle={() => toggleSection('bus')}
+                  status={t('admin.section.bus.status')}
+                  statusColor="accent"
+                  title={t('admin.section.bus.title')}
+                />
+                {expandedSections.bus ? <AdminBusManagementPanel users={users} /> : null}
+              </View>
+
               <View style={styles.section}>
                 <AdminSectionHeader
                   description={t('admin.section.status.description')}

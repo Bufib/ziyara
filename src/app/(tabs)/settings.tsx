@@ -9,7 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { getAuthErrorTranslationKey, useAuth } from '@/features/auth/auth-context';
 import { languageOptions, useI18n } from '@/features/i18n/i18n';
-import { loginRoute } from '@/features/navigation/routes';
+import { busRoute, loginRoute } from '@/features/navigation/routes';
 import { useReaderPreferences } from '@/features/storage/useReaderPreferences';
 import { useThemeMode, type ThemeMode } from '@/features/theme/theme-mode';
 import { useTheme } from '@/hooks/use-theme';
@@ -171,6 +171,12 @@ export default function SettingsScreen() {
                 label={t('settings.manageAccount')}
                 variant="secondary"
                 onPress={() => router.push('/account')}
+              />
+              <Button
+                icon="bus"
+                label={t('settings.openBusManagement')}
+                variant="secondary"
+                onPress={() => router.push(busRoute())}
               />
               <Button
                 icon="logout"

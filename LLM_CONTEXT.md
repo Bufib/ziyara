@@ -1,6 +1,6 @@
 # Ziyarah – verbindlicher Projektkontext für LLMs
 
-Stand: 26. August 2026
+Stand: 27. August 2026
 
 ## Zweck und Pflege
 
@@ -19,14 +19,14 @@ Wenn Dokumentation und Code voneinander abweichen, den Code prüfen, die richtig
 
 ## Produkt in einem Absatz
 
-Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-Reise in den Irak. Reisende können wichtige Städte und Orte ohne Anmeldung offline aus einem gebündelten Katalog öffnen, Orte auf einer Karte sehen, Inhalte durchsuchen, Einträge merken und religiöse Texte in einem Reader anzeigen. Eine Supabase-Anmeldung wird erst für Konto- und Gruppenfunktionen benötigt. Die App bietet Deutsch, Englisch und Arabisch, Light/Dark Mode sowie administrative Gruppenfunktionen: verpflichtende Statusabfragen, eine anonyme Fragerunde und eine Benutzerübersicht. Religiöse, historische und ortsbezogene Inhalte bleiben bis zu einer qualifizierten Prüfung sichtbar als `needs_review` markiert.
+Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-Reise in den Irak. Reisende können wichtige Städte und Orte ohne Anmeldung offline aus einem gebündelten Katalog öffnen, Orte auf einer Karte sehen, Inhalte durchsuchen, Einträge merken und religiöse Texte in einem Reader anzeigen. Eine Supabase-Anmeldung wird erst für Konto-, Bus-, Gruppencheck-, Fragerunden- und Adminfunktionen benötigt. Die App bietet Deutsch, Englisch und Arabisch, Light/Dark Mode sowie administrative Gruppenfunktionen: Buszuordnung und Boarding, verpflichtende Statusabfragen, eine anonyme Fragerunde und eine Benutzerübersicht. Passwort-Recovery und sichere Eigenkonto-Löschung sind implementiert. Religiöse, historische und ortsbezogene Inhalte bleiben bis zu einer qualifizierten Prüfung sichtbar als `needs_review` markiert.
 
 ## Aktueller Funktionsumfang
 
 ### Konten und Reisegruppe
 
 - Der lokale Guide einschließlich Home, Karte, Suche, Lesezeichen, Einstellungen, Städten, Orten, Reader, About, Disclaimer und Quellen ist ohne Anmeldung nutzbar.
-- Eine Supabase-E-Mail/Passwort-Anmeldung ist für Kontoverwaltung, verpflichtende Gruppenabfragen, anonyme Fragerunden und Administration erforderlich.
+- Eine Supabase-E-Mail/Passwort-Anmeldung ist für Kontoverwaltung, Buszuordnung und Boarding, verpflichtende Gruppenabfragen, anonyme Fragerunden und Administration erforderlich.
 - Die Registrierung erfasst Anzeigename, Zuordnung als `brother` oder `sister`, Kontoumfang, E-Mail und Passwort.
 - Beim Kontoumfang wird ausdrücklich zwischen „nur ich“ und „ich und Familie ohne eigenes Telefon“ gewählt.
 - `party_size` zählt den Kontoinhaber mit. Der Wert `1` bedeutet Einzelkonto; bei Familienauswahl beginnt der Wert bei `2`.
@@ -34,7 +34,7 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 - Bestehende Konten aus der Zeit vor Einführung von `member_type` können dort `null` haben. Die aktuelle Registrierung verlangt die Auswahl.
 - Nutzer können später E-Mail, Passwort und `party_size` auf der Kontoseite ändern.
 - „Passwort vergessen“ sendet einen neutral formulierten Recovery-Hinweis und verwendet ausschließlich die dedizierte Route `/reset-password`. Der AuthProvider verarbeitet implizite Recovery-Tokens, PKCE-Codes und `token_hash`-Links; normale Login- oder Signup-Links werden nicht als Passwort-Recovery akzeptiert. Nach erfolgreicher Passwortänderung werden die lokalen Anmeldedaten entfernt und eine erneute Anmeldung verlangt.
-- Angemeldete Nutzer können nach einem ausdrücklichen, plattformübergreifenden Bestätigungsdialog nur das eigene Konto unwiderruflich löschen. Der Client übergibt keine Ziel-User-ID. Die lokale Edge Function verifiziert den Bearer-Token serverseitig, leitet daraus die Auth-ID ab und hält den Service-Role-Key vollständig aus dem App-Bundle heraus.
+- Angemeldete Nutzer können nach einem ausdrücklichen, plattformübergreifenden Bestätigungsdialog nur das eigene Konto unwiderruflich löschen. Der Client übergibt keine Ziel-User-ID. Der lokale Function-Quellcode und die ausdrücklich remote bereitgestellte Edge Function verifizieren den Bearer-Token serverseitig, leiten daraus die Auth-ID ab und halten den Service-Role-Key vollständig aus dem App-Bundle heraus.
 - Profile besitzen die Rollen `user`, `medical_staff`, `organization_team` und `admin`.
 - Neue Konten starten immer als `user`. Nur ein Admin kann über die abgesicherte RPC die Rollen `user`, `medical_staff`, `organization_team` und `admin` vergeben.
 - Bestehende Adminprofile können umgestuft werden, solange mindestens ein Admin erhalten bleibt. Rollenwechsel sind datenbankseitig serialisiert und werden protokolliert, damit auch bei mehreren gleichzeitig arbeitenden Admins nie versehentlich alle Adminrechte entfernt werden.
@@ -53,6 +53,9 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 
 ### Gruppenfunktionen
 
+- Ein Admin kann eine aktive Reise mit benannten Bussen anlegen und einzelne physische Teilnehmer-IDs wie `BER01` einem Bus zuordnen. Eine ID kann optional mit einem App-Profil verknüpft werden; mehrere IDs dürfen demselben Konto gehören. Nicht verknüpfte Teilnehmer bleiben in der Leiterübersicht sichtbar.
+- Für jede Abfahrt kann genau ein Boarding pro Reise geöffnet werden. Verknüpfte Konten melden pro eigener Teilnehmer-ID `on_way`, `boarded` oder `problem`; Admins sehen zusätzlich nicht bestätigte IDs und dürfen jeden Status manuell korrigieren. Die Übersicht zählt physische Teilnehmer-IDs und nicht `party_size`, damit Account- und reale Busbelegung nicht vermischt werden.
+- Boarding-Reads und -Mutationen verwenden monotone Request-Versionen, optimistische Zustände und einen autoritativen Folge-Refresh. Antwort und Schließen sperren dieselbe Boarding-Zeile, sodass ein paralleler Status entweder vollständig vor dem Schließen gespeichert oder danach abgewiesen wird.
 - Ein Admin kann genau eine verpflichtende Gruppenabfrage mit freiem Fragetext öffnen.
 - Während sie aktiv ist, sehen Konten ohne Adminrolle ausschließlich den Check-in und antworten mit Ja oder Nein. Admins bleiben in der App, sehen auf Home einen Hinweis und können die Abfrage ebenfalls beantworten.
 - Bei einem Synchronisationsfehler bleibt die App für Konten ohne Adminrolle vorsorglich gesperrt.
@@ -61,6 +64,19 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 - Die Personenübersicht im Adminbereich zeigt nur Name, vertretene Personenzahl und Rolle und kann nach Namen gefiltert werden. Die Vergabe aller Rollen einschließlich `admin` öffnet sich erst über einen Knopf am Personeneintrag; neue Konten besitzen standardmäßig die Rolle `user`.
 - Gruppenstatus wird primär über Supabase Realtime und beim App-Fokus aktualisiert. Als gestaffelter Ausfallschutz läuft die Pflichtabfrage etwa alle 60–90 Sekunden und die Fragerunde alle 120–150 Sekunden. Parallele Antworten dürfen ältere Ergebnisse nicht mehr über neuere schreiben.
 - Gruppencheck-Refreshes und -Mutationen teilen eine monotone State-Version. Jede Mutation invalidiert ältere Reads, hält nach erfolgreicher RPC-Antwort einen optimistischen Zustand sichtbar und startet anschließend einen autoritativen Refresh. Die Adminauswertung führt alle aktuellen Profile auf und trennt `true`, `false` und `null` ausdrücklich in Ja, Nein und Noch offen; Account-Anzahl und die über `party_size` repräsentierte Personenzahl werden separat ausgewiesen.
+
+## Umgesetzte technische Härtung
+
+Die ursprünglich getrennt beauftragten Produktionsphasen sind im aktuellen Worktree wie folgt umgesetzt:
+
+1. **Build-Basis:** Node `22.13.0`, Expo-SDK-57-kompatible Abhängigkeiten, unverändert Expo-gesteuertes React Native sowie CI-Schritte für Expo Doctor und getrennte Web-/iOS-/Android-Exports.
+2. **Auth- und Navigation:** initiales Profil-Laden ist von Hintergrundrefreshes getrennt; App-Resume erhält Profil, Navigation und Screen-State. Logout und echte Benutzerwechsel räumen alte Profildaten sofort, Realtime-Rollenänderungen bleiben aktiv.
+3. **Öffentlicher Offline-Guide:** der globale Login-Zwang ist entfernt. Nur geschützte Screens und Aktionen verlangen eine Session. Supabase-Reads besitzen definierte Abbruch-Timeouts und unterscheidbare Offline-/Timeout-/Serverzustände.
+4. **Race-sicherer Gruppencheck:** Mutation und Refresh teilen eine State-Version; veraltete Ergebnisse werden verworfen, erfolgreiche Antworten optimistisch gehalten und autoritativ bestätigt. Adminergebnisse umfassen auch nicht antwortende Profile sowie getrennte Account- und Personenzahlen.
+5. **Datenbankhärtung:** RLS-, RPC-, Limit-, Last-Admin-, Cascade-, Audit- und Parallelitätstests sind als pgTAP/SQL automatisiert. Die sieben zuvor bestehenden Anwendungstabellen und die ausdrücklich zu erhaltenden Legacyfelder bleiben bestehen; der ungenutzte Antwortindex wurde ausschließlich über eine neue Migration entfernt.
+6. **Recovery und Eigenkonto-Löschung:** vollständiger Recovery-Deep-Link, neuer Passwortscreen, serverseitig authentifizierte Löschfunktion ohne frei wählbare Ziel-ID, Last-Admin-Schutz, sichere Cascades und anonymisierte Auditbezüge.
+7. **Tests und Fehlerbehandlung:** Coverage-Gates, sieben Playwright-Vollstack-Smokes und eine globale Error Boundary sind aktiv. Sentry beziehungsweise externes Crash-Reporting wurden entfernt; es existieren weder Clientabhängigkeit noch DSN-Konfiguration oder Monitoring-Datenübertragung.
+8. **Busmanagement:** Reise-, Bus-, Teilnehmer-ID- und Boardingmodell, Adminoberfläche, Teilnehmerstatus, RLS/RPCs, Realtime, monotone Request-Versionen, Parallelitätstests und E2E-Smoke sind implementiert. Der spätere Speicherfix erneuert bei Auth-/Function-Grant-Fehlern die Session und wiederholt den Status-RPC genau einmal für dieselbe User-ID.
 
 ## Technischer Stack
 
@@ -74,7 +90,7 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 - AsyncStorage `2.2.0` für lokale Einstellungen
 - React Native Maps `1.27.2` und Expo Location
 - Expo Image, Clipboard und Linking
-- Jest/Jest Expo für Katalog- und Integritätstests
+- Jest/Jest Expo für Unit-/Kontexttests, pgTAP für Datenbankregeln und Playwright für lokale Vollstack-Smokes
 
 Für lokale Projektbefehle und CI die in `.nvmrc` festgelegte Node-Version `22.13.0` verwenden; `package.json` bildet zusätzlich die von React Native 0.86 unterstützten Engine-Bereiche ab. Node 23 ist nicht unterstützt. Expo-/React-Native-Pakete mit `npx expo install <paket>` installieren, damit SDK-Versionen ausgerichtet bleiben.
 
@@ -118,6 +134,7 @@ src/constants/              Theme-Tokens und Layout-Konstanten
 src/data/                   Gebündelte Offline-Daten und Katalogsuche
 src/domain/                 App- und Datenbanktypen
 src/features/auth/          Supabase-Client, Auth-State, Formulare
+src/features/bus-management/Buszuordnung, Boarding-State und Adminoberfläche
 src/features/group-check/   Pflichtabfrage für die Reisegruppe
 src/features/question-round/Anonyme Fragerunden
 src/features/i18n/          UI-Wörterbücher und lokalisierte Fachdaten
@@ -128,7 +145,7 @@ src/features/reader/        Darstellung religiöser Textsegmente
 src/features/storage/       AsyncStorage-Hooks
 src/features/theme/         Gespeicherter Theme-Modus
 supabase/migrations/        Versioniertes Postgres-Schema, RLS und RPCs
-supabase/functions/         Lokal implementierte, nicht automatisch deployte Edge Functions
+supabase/functions/         Lokaler Function-Quellcode; Remote-Deployments nur nach ausdrücklicher Freigabe
 assets/images/places/       Lokal gebündelte Ortsbilder
 docs/IMPLEMENTATION_PLAN.md Ursprüngliche Roadmap, nicht alleinige Ist-Quelle
 ```
@@ -144,12 +161,13 @@ AppErrorBoundary
 └── AppI18nProvider
     └── AppThemeProvider
         └── AuthProvider
-            └── GroupCheckProvider
-                └── QuestionRoundProvider
-                    └── RootNavigation
+            └── BusManagementProvider
+                └── GroupCheckProvider
+                    └── QuestionRoundProvider
+                        └── RootNavigation
 ```
 
-Die Reihenfolge ist relevant: Gruppen- und Fragerunden benötigen den Auth-State. Der Splash Screen wartet nur auf die lokal gespeicherten Sprach- und Themezustände; Auth-, Profil-, Gruppen- und Fragerundenabfragen dürfen den öffentlichen Guide nicht blockieren. Ohne Session überspringen die privaten Provider Tabellenabfragen und Realtime-Kanäle vollständig. Bei einer vorhandenen Session blockiert nur das initiale Profil-/Pflichtabfrage-Laden beziehungsweise ein echter Benutzerwechsel die geschützte Navigation. Ein Profilfehler bleibt als wiederholbarer, nicht blockierender Hinweis sichtbar; Rollen- und Gruppenrechte werden dadurch nicht erweitert.
+Die Reihenfolge ist relevant: Bus-, Gruppen- und Fragerundenfunktionen benötigen den Auth-State. Der Splash Screen wartet nur auf die lokal gespeicherten Sprach- und Themezustände; Auth-, Profil-, Bus-, Gruppen- und Fragerundenabfragen dürfen den öffentlichen Guide nicht blockieren. Ohne Session überspringen die privaten Provider Tabellenabfragen und Realtime-Kanäle vollständig. Bei einer vorhandenen Session blockiert nur das initiale Profil-/Pflichtabfrage-Laden beziehungsweise ein echter Benutzerwechsel die geschützte Navigation. Bus-Hintergrundrefreshes behalten die letzte Zuordnung sichtbar und melden Offline-, Timeout- oder Serverfehler ohne die Navigation auszuhängen. Ein Profilfehler bleibt als wiederholbarer, nicht blockierender Hinweis sichtbar; Rollen- und Gruppenrechte werden dadurch nicht erweitert.
 
 `AppErrorBoundary` verwendet absichtlich keine Theme-, I18n-, Auth- oder Netzwerkabhängigkeit, damit der Fallback auch bei einem Providerfehler rendern kann. Die Fehlergrenze arbeitet vollständig lokal; externes Crash-Reporting ist nicht Bestandteil der App.
 
@@ -165,7 +183,7 @@ Der gleiche Provider registriert den nativen Linking-Listener für Passwort-Reco
 | `/forgot-password` | öffentlich | neutral formulierter Versand eines Recovery-Links |
 | `/reset-password` | öffentlich; nur mit gültiger Recovery-Session änderbar | neues Passwort setzen und danach lokale Session entfernen |
 | `/(tabs)` | öffentlich; für angemeldete Konten keine blockierende Gruppenabfrage | Hauptnavigation |
-| Tab `/` | wie Tabs | Home, Städte, hervorgehobene Orte, aktive Statusabfrage und Fragerunde |
+| Tab `/` | wie Tabs | Home, Städte, hervorgehobene Orte sowie aktive Bus-, Status- und Fragerundenhinweise |
 | Tab `/map` | wie Tabs | native Karte beziehungsweise Web-Fallback |
 | Tab `/search` | wie Tabs | Katalogsuche und Filter |
 | Tab `/bookmarks` | wie Tabs | lokal gespeicherte Orte und Reader-Inhalte |
@@ -174,10 +192,11 @@ Der gleiche Provider registriert den nativen Linking-Listener für Passwort-Reco
 | `/place/[slug]` | öffentlich | Ortsdetail |
 | `/reader/[slug]` | öffentlich | religiöser Reader |
 | `/account` | Session, nicht blockiert | Kontodaten und Personenzahl |
+| `/bus` | Session; nur eigene verknüpfte Teilnehmer-IDs | Buszuordnung und Status für ein aktives Boarding |
 | `/about`, `/sources`, `/disclaimer` | öffentlich | Produkt- und Quellenhinweise |
 | `/check-in` | Session; Konten ohne Adminrolle sind bei aktiver oder unsicherer Abfrage blockiert | verpflichtende Ja-/Nein-Antwort |
 | `/question-round` | jede Session bei offener Runde | anonyme Frage absenden |
-| `/admin` | Admin-Session | Gruppenabfrage, Fragen, Benutzerübersicht |
+| `/admin` | Admin-Session | Busmanagement, Gruppenabfrage, Fragen, Benutzerübersicht |
 
 Neue Hauptscreens unter `src/app` anlegen. Zentrale dynamische URLs über `src/features/navigation/routes.ts` erzeugen und Routenparameter mit `singleRouteParam` normalisieren. Geschützte Screens werden mit `RequireAuth` innerhalb des Screens abgesichert, damit ein Deep Link ohne Session gezielt `/login` samt geprüftem internem Rücksprungziel öffnet. Die Allowlist verhindert externe oder unbekannte Redirectziele. RLS und die serverseitigen RPC-Prüfungen bleiben unabhängig vom Client-Guard die eigentliche Sicherheitsinstanz.
 
@@ -244,6 +263,13 @@ Aktuelle Tabellen:
 - `anonymous_questions`: Fragetext und Bearbeitungsstatus ohne Profil-/User-Fremdschlüssel.
 - `question_submission_limits`: temporäre, clientseitig nicht lesbare Anzahl je Profil und offener Runde; ohne Fragetext, Frage-ID oder Zeitstempel.
 - `role_assignment_audit`: clientseitig nicht lesbare Nachvollziehbarkeit tatsächlicher Rollenänderungen durch mehrere Admins.
+- `trips`: aktive oder archivierte Reise; durch einen Partial-Unique-Index höchstens eine aktive Reise.
+- `trip_buses`: benannte Busse und deren Sortierung innerhalb einer Reise.
+- `trip_participants`: physische Teilnehmer-ID, Anzeigename, Bus und optionale Profilverknüpfung.
+- `bus_boardings`: Abfahrt mit geplantem Zeitpunkt und Öffnungs-/Schließzeit; höchstens ein offenes Boarding je Reise.
+- `bus_boarding_responses`: letzter Status je Boarding und physischer Teilnehmer-ID.
+
+Damit existieren aktuell zwölf Anwendungstabellen im `public`-Schema. Die sieben Tabellen vor Einführung des Busmanagements wurden vollständig beibehalten; ebenso `profiles.id`, `profiles.user_id`, `group_check_responses.id` und `member_type`.
 
 Wichtige RPCs:
 
@@ -255,6 +281,9 @@ Wichtige RPCs:
 - `admin_group_check_results`
 - `open_question_round`, `close_question_round`
 - `submit_anonymous_question`, `set_anonymous_question_checked`
+- `admin_create_trip`, `admin_archive_trip`, `admin_create_trip_bus`
+- `admin_upsert_trip_participant`, `admin_start_bus_boarding`, `admin_close_bus_boarding`
+- `respond_to_bus_boarding`, `admin_set_bus_boarding_status`
 
 RLS ist aktiviert. Privilegierte Aktionen laufen über `security definer`-Funktionen, die Admin- beziehungsweise Session-Berechtigungen selbst prüfen. Neue Funktionen müssen einen festen `search_path`, minimale Grants und explizite Auth-Prüfungen besitzen.
 
@@ -276,15 +305,19 @@ Die Migration `20260826010000_drop_unused_group_check_answer_index.sql` entfernt
 
 Die Migration `20260826020000_protect_account_deletion.sql` schützt Löschungen auf `auth.users` mit derselben transaktionsweiten Advisory-Sperre wie Rollenänderungen. Der letzte Administrator kann deshalb auch bei paralleler Löschung oder gleichzeitiger Umstufung nicht entfernt werden. Das Profil, Gruppenantworten und temporäre Fragenlimits werden über bestehende Cascades gelöscht; erhaltene Gruppenchecks verlieren den Erstellerbezug. Rollen-Auditereignisse bleiben als nicht identifizierende Historie erhalten: `target_user_id` wird vor dem Löschen auf `null` gesetzt und `changed_by_profile_id` wird über den bestehenden Fremdschlüssel ebenfalls anonymisiert.
 
-Die Migration `20260826021000_add_account_deletion_precheck.sql` ergänzt den ausschließlich für `service_role` ausführbaren Vorabcheck `can_delete_account`. Er liefert der Edge Function eine verständliche Last-Admin-Ablehnung; der Trigger auf `auth.users` bleibt wegen möglicher Parallelität die endgültige transaktionale Sicherheitsinstanz. `supabase/functions/delete-account` akzeptiert nur `POST` mit leerem Body, prüft den Access Token über `auth.getUser(accessToken)` und ruft `auth.admin.deleteUser` ausschließlich mit der verifizierten ID auf. Privilegierte Schlüssel werden nur aus der Edge-Function-Umgebung gelesen.
+Die Migration `20260826021000_add_account_deletion_precheck.sql` ergänzt den ausschließlich für `service_role` ausführbaren Vorabcheck `can_delete_account`. Er liefert der Edge Function eine verständliche Last-Admin-Ablehnung; der Trigger auf `auth.users` bleibt wegen möglicher Parallelität die endgültige transaktionale Sicherheitsinstanz. `supabase/functions/delete-account` akzeptiert nur `POST` mit leerem Body, prüft den Access Token über `auth.getUser(accessToken)` und ruft `auth.admin.deleteUser` ausschließlich mit der verifizierten ID auf. Privilegierte Schlüssel werden nur aus der Edge-Function-Umgebung gelesen. `verify_jwt = false` betrifft nur den vorgeschalteten Legacy-Gateway-Check; die Function-eigene Bearer-Token-Prüfung bleibt zwingend.
 
-Am 17. August 2026 waren die damaligen Migrationen bis `20260817000000` im verknüpften Remote-Projekt ausgerollt; `db lint --linked --level warning` meldete danach keine Schemafehler. Die lokalen Migrationen `20260826000000_expand_group_check_results.sql`, `20260826010000_drop_unused_group_check_answer_index.sql`, `20260826020000_protect_account_deletion.sql` und `20260826021000_add_account_deletion_precheck.sql` wurden nicht remote ausgerollt; auch `delete-account` wurde nicht deployt und die Remote-Redirect-Allowlist wurde nicht verändert. Am 26. August 2026 war die Projektverknüpfung lokal vorhanden, aber kein autorisierter Supabase-CLI-Zugriffstoken; deshalb wurde der Remote-Migrationsstand nicht erneut abgefragt. Dieser Zustand kann sich ändern; vor späteren Annahmen mit autorisiertem Zugriff `npx supabase migration list --linked` prüfen. Migrationen, Functions und Auth-Redirects nur innerhalb eines ausdrücklich beauftragten Implementierungs- oder Deployment-Schritts remote ändern.
+Die additive Migration `20260827000000_add_bus_management.sql` ergänzt Reise, Busse, physische Teilnehmer-IDs, Boardings und Statusantworten. Direkte Client-Schreibrechte sind entzogen; Admin- und Teilnehmermutationen laufen ausschließlich über serverseitig authentifizierte RPCs. RLS zeigt normalen Konten nur eigene verknüpfte IDs und Antworten, während Admins die gesamte Reise sehen. Antwort und Schließen verwenden kompatible Row Locks für transaktionale Parallelität. Eine Kontolöschung setzt die optionale Profilverknüpfung auf `null`, lässt die physische Teilnehmerhistorie aber bestehen. Bei einem Auth-/Function-Grant-Fehler erneuert der Bus-Client die Supabase-Session und wiederholt die Statusmutation genau einmal, sofern dieselbe User-ID angemeldet bleibt; ein endgültiger Fehler löst einen autoritativen Refresh aus und wird ohne sensible Serverdetails als Auth-, geschlossenes Boarding-, Zuordnungs-, Offline- oder Serverzustand angezeigt.
+
+Am 27. August 2026 wurden die Migrationen `20260826000000_expand_group_check_results.sql`, `20260826010000_drop_unused_group_check_answer_index.sql`, `20260826020000_protect_account_deletion.sql`, `20260826021000_add_account_deletion_precheck.sql` und `20260827000000_add_bus_management.sql` nach ausdrücklicher Freigabe auf das verknüpfte Remote-Projekt ausgerollt. Lokal und remote waren damit alle Migrationen bis `20260827000000` synchron; `db lint --linked --level warning` meldete anschließend keine Schemafehler. Keine bestehende Migration wurde verändert, gelöscht oder zusammengefasst. Die Edge Function `delete-account` ist remote als aktive Version 1 mit `verify_jwt = false` bereitgestellt; ein anonymer POST erreichte die interne Auth-Prüfung und wurde erwartungsgemäß mit HTTP 401 abgelehnt. Es wurde kein reales Konto testweise gelöscht und die Remote-Redirect-Allowlist wurde nicht verändert.
+
+Der anschließend ergänzte Busstatus-Session-Retry ist Clientcode im lokalen Worktree. Dafür war keine weitere Schemaänderung notwendig. Bereits installierte Apps erhalten diesen Fix erst über einen neuen Client-Build beziehungsweise ein App-Update; ein solcher Build wurde nicht deployed, committed oder gepusht. Remote-Zustand kann sich unabhängig vom Repository ändern: vor späteren Annahmen mit autorisiertem Zugriff `npx supabase migration list --linked` und `npx supabase functions list` prüfen. Migrationen, Functions und Auth-Redirects nur innerhalb eines ausdrücklich beauftragten Implementierungs- oder Deployment-Schritts remote ändern.
 
 ## Kapazität für die Reisegruppe
 
 - Zielgröße sind ungefähr 100 Konten zuzüglich mehrerer Admin-/Mitarbeitergeräte.
 - Der Supabase-Client teilt mehrere Realtime-Kanäle über eine Verbindung. Aktuelle Tarifgrenzen trotzdem vor der Reise im Dashboard gegen die erwarteten gleichzeitig aktiven Geräte prüfen.
-- Durch die gestaffelten Fallback-Intervalle entstehen bei 100 dauerhaft aktiven Clients grob 120 Fallback-Leseabfragen pro Minute ohne aktive Pflichtabfrage und etwa 200 pro Minute mit aktiver Pflichtabfrage; Realtime und App-Fokus sind der Primärweg.
+- Durch die gestaffelten Fallback-Intervalle entstehen bei 100 dauerhaft aktiven Clients grob 220 Fallback-Leseabfragen pro Minute ohne aktive Pflichtabfrage und etwa 300 pro Minute mit aktiver Pflichtabfrage; darin ist der Bus-Refresh alle 60–90 Sekunden enthalten. Realtime und App-Fokus sind der Primärweg.
 - Antwortwellen werden in den Adminpanels 250 ms gebündelt. Die Benutzer-RPC wird in 200er-Seiten geladen, die Fragenansicht zeigt maximal 50 weitere Einträge pro Schritt.
 - Ein realer Lasttest mit dem gewählten Supabase-Tarif, Reise-WLAN/Mobilfunk und den Zielgeräten bleibt vor Freigabe erforderlich.
 
@@ -342,21 +375,25 @@ npx supabase db lint --local --level warning
 npx supabase test db --local
 ```
 
-`npm test` führt derzeit 80 Jest-Tests in 15 Suites aus. Abgedeckt sind unter anderem AuthContext, GroupCheckContext, QuestionRoundContext, Persistenz-Races und Speicherfehler, der gerenderte `RequireAuth`-Guard, der öffentliche Providerstart ohne Supabase-Zugriff, Recovery-/Account-Löschverträge sowie die globale Error Boundary. `npm run test:coverage` beziehungsweise `npm run validate` erzwingt mindestens 50 % globale Line Coverage und jeweils 80 % für die drei Kernkontexte. Der lokale Stand vom 26. August 2026 liegt bei 85,69 % global, 90,82 % AuthContext, 94,53 % GroupCheckContext und 95,65 % QuestionRoundContext.
+`npm test` führt derzeit 97 Jest-Tests in 17 Suites aus. Abgedeckt sind unter anderem AuthContext, BusManagementContext einschließlich Session-Refresh-Retry und Fehlerklassifizierung, GroupCheckContext, QuestionRoundContext, Persistenz-Races und Speicherfehler, der gerenderte `RequireAuth`-Guard, der öffentliche Providerstart ohne Supabase-Zugriff, Recovery-/Account-Löschverträge sowie die globale Error Boundary. `npm run test:coverage` beziehungsweise `npm run validate` erzwingt mindestens 50 % globale Line Coverage und jeweils 80 % für die vier Kernkontexte. Der zuletzt vollständig ausgeführte lokale Stand vom 27. August 2026 liegt bei 87,21 % global, 90,82 % AuthContext, 92,70 % BusManagementContext, 94,53 % GroupCheckContext und 95,65 % QuestionRoundContext.
 
-Unter `supabase/tests/database` prüfen zusätzlich 60 pgTAP-Assertions die RLS-/RPC-/Parallelitätsregeln sowie Cascades, Audit-Anonymisierung, Function-Grants und konkurrierende Account-Löschungen. `npm run test:e2e` führt sechs serielle Playwright-Smokes mit synthetischen Konten gegen die lokale Expo-/Supabase-/Mailpit-Umgebung aus: Registrierung/Login, Recovery-Link, öffentlicher Guide bei abgebrochenen Supabase-Requests, Gruppencheck, anonyme Fragerunde und Rollenänderung. `.github/workflows/ci.yml` führt bei Pushes und Pull Requests App-Validierung samt Coverage, Expo Doctor, getrennte Web-/iOS-/Android-Exports und einen Critical-Audit-Gate aus; der Datenbank-Job startet das lokale Schema aus Migrationen, prüft den 401-Auth-Gate der Edge Function, führt DB-Lint und SQL-Tests sowie danach die Playwright-Smokes aus. Native Gerätetests fehlen weiterhin; Kartenberechtigung, reale Deep Links in signierten Builds, alle Sprachen, beide Themes und dynamische Schrift müssen proportional zur Änderung manuell geprüft werden.
+Unter `supabase/tests/database` prüfen zusätzlich 90 pgTAP-Assertions in sechs SQL-Testdateien die RLS-/RPC-/Parallelitätsregeln sowie Cascades, Audit-Anonymisierung, Function-Grants, konkurrierende Account-Löschungen und beide Reihenfolgen von Boarding-Antwort gegen Schließung. `npm run test:e2e` führt sieben serielle Playwright-Smokes mit synthetischen Konten gegen die lokale Expo-/Supabase-/Mailpit-Umgebung aus: Registrierung/Login, Recovery-Link, öffentlicher Guide bei abgebrochenen Supabase-Requests, Gruppencheck, anonyme Fragerunde, Busmanagement und Rollenänderung. `.github/workflows/ci.yml` führt bei Pushes und Pull Requests App-Validierung samt Coverage, Expo Doctor, getrennte Web-/iOS-/Android-Exports und einen Critical-Audit-Gate aus; der Datenbank-Job startet das lokale Schema aus Migrationen, prüft den 401-Auth-Gate der Edge Function, führt DB-Lint und SQL-Tests sowie danach die Playwright-Smokes aus.
+
+Der letzte vollständige Prüfstand vom 27. August 2026: `npm run validate` bestanden, Expo Doctor 21/21, Web-/iOS-/Android-Export bestanden, lokaler DB-Lint ohne Schemafehler, 90/90 pgTAP-Assertions und 7/7 Playwright-Smokes bestanden. `git diff --check` war sauber. Native Gerätetests fehlen weiterhin; Kartenberechtigung, reale Deep Links in signierten Builds, Bus-UI und Realtime unter realem Reise-Mobilfunk, alle Sprachen, beide Themes und dynamische Schrift müssen proportional zur Änderung manuell geprüft werden.
 
 ## Bekannte Lücken und Risiken
 
+- Die App ist noch nicht vollständig store-releasefähig. Die folgenden Punkte sind konkrete Release-Blocker beziehungsweise notwendige Vorabnahmen, nicht bloß optionale Verbesserungen.
 - Sämtliche kuratierten Orts- und religiösen Inhalte benötigen weiterhin qualifizierte Prüfung.
 - Ziyarat Ashura enthält bereits Volltext, steht aber noch auf `needs_review` und `pending_rights_review`.
 - Native Kartenkacheln sind offline nicht garantiert.
 - Finale Store-Metadaten und veröffentlichungsfertige Datenschutz-/Supportseiten fehlen. Externes Crash-Reporting ist nicht integriert.
 - App-Icon und Splash-Grafik sind noch Expo-Startergrafiken und müssen vor einem Store-Release durch freigegebene Markenassets ersetzt werden.
 - Bundle-Identifier und finale Store-/Build-Konfiguration sind in `app.json` noch nicht vollständig.
-- Die Recovery- und Account-Löschpfade sind lokal vollständig implementiert und getestet, benötigen vor einem Release aber noch die ausdrücklich freizugebende Remote-Migration, Function-Bereitstellung und Auth-Redirect-Allowlist sowie einen Test auf einem signierten nativen Build.
+- Die Recovery- und Account-Löschpfade sind lokal vollständig implementiert; Migrationen und Löschfunktion sind remote ausgerollt. Vor einem Release fehlen noch die Remote-Auth-Redirect-Allowlist sowie Recovery- und Löschtests auf einem signierten nativen Build mit einem ausdrücklich freigegebenen Testkonto.
+- Das Busmanagement-Schema ist remote ausgerollt und der gesamte Flow lokal getestet. Der neueste Session-Retry liegt nur im lokalen Clientcode und benötigt einen neuen App-Build. Vor der Nutzung mit der ganzen Reisegruppe bleibt außerdem ein realer Last-/Mobilfunktest erforderlich.
 - Arabisch richtet Texte aus, schaltet aber die gesamte native Layoutreihenfolge noch nicht über `I18nManager` auf RTL um.
-- Der vollständige npm-Audit meldete am 26. August 2026 keine Critical-, aber 4 High- und 11 Moderate-Einträge. Die High-Einträge hängen an der Expo-/Metro-Buildkette und deren `image-size`-Parsern; der vollständige Moderate-Fix würde Expo beziehungsweise `expo-splash-screen` inkompatibel herabstufen. Auf kompatible Expo-/Metro-Patches warten und keinen `npm audit fix --force` ausführen.
+- Der vollständige npm-Audit meldete am 27. August 2026 keine Critical-, aber 4 High- und 11 Moderate-Einträge. Die High-Einträge hängen an der Expo-/Metro-Buildkette und deren `image-size`-Parsern; der vollständige Moderate-Fix würde Expo beziehungsweise `expo-splash-screen` inkompatibel herabstufen. Auf kompatible Expo-/Metro-Patches warten und keinen `npm audit fix --force` ausführen.
 - Es fehlen weiterhin native Store-Builds und der reale Last-/Netzwerktest mit etwa 100 Geräten; die vorhandenen Playwright-Smokes ersetzen keine signierten iOS-/Android-Gerätetests.
 
 ## Definition of Done

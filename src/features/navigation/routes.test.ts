@@ -2,6 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import { getProtectedRouteDecision } from '@/features/auth/protected-route-policy';
 import {
+  busRoute,
   getProtectedReturnRoute,
   loginRoute,
   protectedRoutePaths,
@@ -49,5 +50,14 @@ describe('protected navigation', () => {
 
     expect(getProtectedReturnRoute('https://example.com')).toBe('/');
     expect(getProtectedReturnRoute('//example.com')).toBe('/');
+  });
+
+  it('führt das Busmanagement als geschützte interne Route', () => {
+    expect(busRoute()).toBe('/bus');
+    expect(protectedRoutePaths).toContain('/bus');
+    expect(loginRoute(busRoute())).toEqual({
+      params: { returnTo: '/bus' },
+      pathname: '/login',
+    });
   });
 });

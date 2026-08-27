@@ -1,4 +1,4 @@
-import { Redirect, useLocalSearchParams } from 'expo-router';
+import { Redirect, type Href, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -63,7 +63,7 @@ function CheckInContent({ returnTo }: { returnTo: ReturnType<typeof getProtected
 
   if (!activeCheck) {
     if (!isLoading && !hasSyncError) {
-      return <Redirect href={returnTo} />;
+      return <Redirect href={returnTo as Href} />;
     }
 
     return (

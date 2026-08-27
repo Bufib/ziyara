@@ -3,6 +3,7 @@ import type { Href } from 'expo-router';
 export const protectedRoutePaths = [
   '/account',
   '/admin',
+  '/bus',
   '/check-in',
   '/question-round',
 ] as const;
@@ -53,6 +54,10 @@ export function forgotPasswordRoute(): Href {
 
 export function resetPasswordRoute(): Href {
   return '/reset-password' as Href;
+}
+
+export function busRoute(): Href & ProtectedRoutePath {
+  return '/bus' as Href & ProtectedRoutePath;
 }
 
 export function checkInRoute(returnTo: ProtectedRoutePath | '/' = '/'): Href {

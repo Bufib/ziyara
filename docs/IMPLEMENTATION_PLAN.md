@@ -305,9 +305,9 @@ Risks:
 Acceptance criteria:
 
 - TypeScript and lint pass.
-- Jest covers catalog logic, AuthContext, GroupCheckContext, QuestionRoundContext, persistent state, rendered route guards, offline provider startup and the global Error Boundary.
-- Coverage gates require at least 50% global line coverage and 80% per auth/group-check/question-round context.
-- Six local Playwright full-stack smokes cover registration/login, password recovery, the public offline guide, group check, question round and role changes.
+- Jest covers catalog logic, AuthContext, BusManagementContext, GroupCheckContext, QuestionRoundContext, persistent state, rendered route guards, offline provider startup and the global Error Boundary.
+- Coverage gates require at least 50% global line coverage and 80% per auth/bus-management/group-check/question-round context.
+- Seven local Playwright full-stack smokes cover registration/login, password recovery, the public offline guide, group check, question round, bus management and role changes.
 - Unhandled React render errors show a local fallback without an external monitoring dependency.
 - Manual QA checklist covers navigation, map, permissions, reader, search, bookmarks, offline behavior, dark mode, and accessibility.
 - CI runs required checks before merging.
@@ -356,3 +356,33 @@ Tests/checks:
 - `eas build --profile preview --platform android`
 - Manual app-store metadata review.
 - Manual TestFlight/internal testing pass.
+
+## Phase 11: Bus management
+
+Files to create or modify:
+
+- `src/app/bus.tsx`
+- `src/features/bus-management/*`
+- `src/app/admin.tsx`
+- `src/domain/database.ts`
+- `supabase/migrations/20260827000000_add_bus_management.sql`
+- `supabase/tests/database/phase8_bus_management*.test.sql`
+- `e2e/phase7-smoke.spec.ts`
+
+Acceptance criteria:
+
+- Admins create one active trip, named buses, physical participant IDs and account links.
+- One account may control multiple physical participant IDs; unlinked IDs remain visible to trip admins.
+- Participants report `on_way`, `boarded` or `problem` only for their linked IDs.
+- Admins see not-confirmed participants and may set any participant status manually.
+- Realtime, focus and fallback refreshes retain the latest optimistic state and ignore stale reads.
+- An expired authenticated session is refreshed once before retrying a participant or admin status mutation; final errors refresh the authoritative state and remain actionable in the UI.
+- Concurrent response and close operations produce a fully ordered result without post-close writes.
+- The public offline guide remains independent from Supabase and the bus route remains session-protected.
+
+Tests/checks:
+
+- Jest context/state and protected-route tests.
+- Fresh local migration rebuild, DB lint and pgTAP RLS/RPC/concurrency tests.
+- Playwright full-stack smoke from trip creation through boarding confirmation and close.
+- Web, iOS and Android JavaScript exports.

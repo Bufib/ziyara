@@ -97,7 +97,7 @@ function runLocalSql(sql: string) {
 export async function resetE2EAccounts() {
   const serviceClient = createServiceRoleTestClient();
   runLocalSql(
-    "update public.group_checks set closed_at = coalesce(closed_at, now()) where closed_at is null; update public.question_rounds set closed_at = coalesce(closed_at, now()) where closed_at is null; delete from public.question_submission_limits where round_id in (select id from public.question_rounds where closed_at is not null);",
+    "update public.group_checks set closed_at = coalesce(closed_at, now()) where closed_at is null; update public.question_rounds set closed_at = coalesce(closed_at, now()) where closed_at is null; delete from public.question_submission_limits where round_id in (select id from public.question_rounds where closed_at is not null); delete from public.trips;",
   );
   runLocalSql(
     "update public.profiles set role = 'user' where user_id in (select id from auth.users where email in ('e2e-admin@example.invalid', 'e2e-member@example.invalid'));",

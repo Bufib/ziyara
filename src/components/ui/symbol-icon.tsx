@@ -6,6 +6,7 @@ export type SymbolIconName =
   | 'account'
   | 'book'
   | 'bookmark'
+  | 'bus'
   | 'chevron'
   | 'close'
   | 'confirm'
@@ -24,12 +25,14 @@ export type SymbolIconName =
   | 'search'
   | 'settings'
   | 'share'
-  | 'unchecked';
+  | 'unchecked'
+  | 'warning';
 
 const symbolNames: Record<SymbolIconName, React.ComponentProps<typeof SymbolView>['name']> = {
   account: { ios: 'person.crop.circle', android: 'account_circle', web: 'account_circle' },
   book: { ios: 'book.closed', android: 'menu_book', web: 'menu_book' },
   bookmark: { ios: 'bookmark', android: 'bookmark', web: 'bookmark' },
+  bus: { ios: 'bus.fill', android: 'directions_bus', web: 'directions_bus' },
   chevron: { ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' },
   close: { ios: 'xmark', android: 'close', web: 'close' },
   confirm: { ios: 'checkmark.circle.fill', android: 'check_circle', web: 'check_circle' },
@@ -53,6 +56,7 @@ const symbolNames: Record<SymbolIconName, React.ComponentProps<typeof SymbolView
   settings: { ios: 'gearshape', android: 'settings', web: 'settings' },
   share: { ios: 'square.and.arrow.up', android: 'share', web: 'share' },
   unchecked: { ios: 'circle', android: 'radio_button_unchecked', web: 'radio_button_unchecked' },
+  warning: { ios: 'exclamationmark.triangle.fill', android: 'warning', web: 'warning' },
 };
 
 export function SymbolIcon({

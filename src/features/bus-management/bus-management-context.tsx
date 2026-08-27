@@ -1,0 +1,372 @@
+import type { PostgrestError } from '@supabase/supabase-js';
+import {
+  createContext,
+  type PropsWithChildren,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { AppState, Platform } from 'react-native';
+
+import type {
+  BusBoarding,
+  BusBoardingResponse,
+  BusBoardingStatus,
+  Trip,
+  TripBus,
+  TripParticipant,
+} from '@/domain/database';
+import { useAuth } from '@/features/auth/auth-context';
+import { supabase } from '@/features/auth/supabase';
+import {
+  buildBusParticipantStates,
+  shouldRetryBusStatusAfterSessionRefresh,
+  type BusParticipantState,
+} from '@/features/bus-management/bus-management-state';
+import {
+  getSupabaseReadFailureKind,
+  type SupabaseReadFailureKind,
+  withSupabaseReadTimeout,
+} from '@/features/network/supabase-read';
+
+type BusManagementActionResult = {
+  error: PostgrestError | null;
+};
+
+type SyncState = 'error' | 'loading' | 'ready' | 'refreshing';
+
+type BusManagementContextValue = {
+  activeBoarding: BusBoarding | null;
+  activeTrip: Trip | null;
+  buses: TripBus[];
+  hasSyncError: boolean;
+  isLoading: boolean;
+  isRefreshing: boolean;
+  participants: BusParticipantState[];
+  refresh: () => Promise<void>;
+  setStatus: (
+    boardingId: number,
+    participantId: number,
+    status: BusBoardingStatus,
+  ) => Promise<BusManagementActionResult>;
+  syncErrorKind: SupabaseReadFailureKind | null;
+};
+
+const BusManagementContext = createContext<BusManagementContextValue | null>(null);
+const fallbackRefreshIntervalMs = 60_000;
+const fallbackRefreshJitterMs = 30_000;
+
+type BusManagementSnapshot = {
+  activeBoarding: BusBoarding | null;
+  activeTrip: Trip | null;
+  buses: TripBus[];
+  participants: TripParticipant[];
+  responses: BusBoardingResponse[];
+};
+
+const emptySnapshot: BusManagementSnapshot = {
+  activeBoarding: null,
+  activeTrip: null,
+  buses: [],
+  participants: [],
+  responses: [],
+};
+
+export function BusManagementProvider({ children }: PropsWithChildren) {
+  const { isLoading: isAuthLoading, session } = useAuth();
+  const userId = session?.user.id ?? null;
+  const userIdRef = useRef(userId);
+  const previousUserIdRef = useRef(userId);
+  const syncedUserIdRef = useRef<string | null>(null);
+  const [snapshot, setSnapshot] = useState<BusManagementSnapshot>(emptySnapshot);
+  const [syncedUserId, setSyncedUserId] = useState<string | null>(null);
+  const [syncState, setSyncState] = useState<SyncState>('loading');
+  const [syncErrorKind, setSyncErrorKind] = useState<SupabaseReadFailureKind | null>(null);
+  const stateVersion = useRef(0);
+  const latestMutationVersion = useRef(0);
+
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
+
+  useEffect(() => {
+    if (previousUserIdRef.current === userId) return;
+
+    previousUserIdRef.current = userId;
+    stateVersion.current += 1;
+    latestMutationVersion.current = stateVersion.current;
+    syncedUserIdRef.current = null;
+    setSyncedUserId(null);
+    setSnapshot(emptySnapshot);
+    setSyncErrorKind(null);
+    setSyncState(userId ? 'loading' : 'ready');
+  }, [userId]);
+
+  const refresh = useCallback(async () => {
+    const requestVersion = ++stateVersion.current;
+
+    if (!userId) {
+      setSnapshot(emptySnapshot);
+      syncedUserIdRef.current = null;
+      setSyncedUserId(null);
+      setSyncErrorKind(null);
+      setSyncState('ready');
+      return;
+    }
+
+    setSyncState((current) =>
+      syncedUserIdRef.current === userId && current !== 'loading' ? 'refreshing' : 'loading',
+    );
+
+    try {
+      const { data: activeTrip, error: tripError } = await withSupabaseReadTimeout((signal) =>
+        supabase
+          .from('trips')
+          .select('id, name, created_by_profile_id, created_at, archived_at')
+          .is('archived_at', null)
+          .abortSignal(signal)
+          .maybeSingle(),
+      );
+
+      if (tripError) {
+        throw tripError;
+      }
+
+      if (!activeTrip) {
+        if (requestVersion === stateVersion.current) {
+          setSnapshot(emptySnapshot);
+          syncedUserIdRef.current = userId;
+          setSyncedUserId(userId);
+          setSyncErrorKind(null);
+          setSyncState('ready');
+        }
+        return;
+      }
+
+      const [busesResult, participantsResult, boardingResult] = await Promise.all([
+        withSupabaseReadTimeout((signal) =>
+          supabase
+            .from('trip_buses')
+            .select('id, trip_id, name, sort_order, created_at')
+            .eq('trip_id', activeTrip.id)
+            .order('sort_order')
+            .abortSignal(signal),
+        ),
+        withSupabaseReadTimeout((signal) =>
+          supabase
+            .from('trip_participants')
+            .select(
+              'id, trip_id, bus_id, profile_id, participant_code, display_name, created_at, updated_at',
+            )
+            .eq('trip_id', activeTrip.id)
+            .order('participant_code')
+            .abortSignal(signal),
+        ),
+        withSupabaseReadTimeout((signal) =>
+          supabase
+            .from('bus_boardings')
+            .select(
+              'id, trip_id, title, departure_at, created_by_profile_id, opened_at, closed_at',
+            )
+            .eq('trip_id', activeTrip.id)
+            .is('closed_at', null)
+            .abortSignal(signal)
+            .maybeSingle(),
+        ),
+      ]);
+
+      if (busesResult.error) throw busesResult.error;
+      if (participantsResult.error) throw participantsResult.error;
+      if (boardingResult.error) throw boardingResult.error;
+
+      let responses: BusBoardingResponse[] = [];
+
+      if (boardingResult.data) {
+        const boardingId = boardingResult.data.id;
+        const responseResult = await withSupabaseReadTimeout((signal) =>
+          supabase
+            .from('bus_boarding_responses')
+            .select(
+              'id, trip_id, boarding_id, participant_id, status, updated_by_profile_id, created_at, updated_at',
+            )
+            .eq('boarding_id', boardingId)
+            .abortSignal(signal),
+        );
+
+        if (responseResult.error) throw responseResult.error;
+        responses = responseResult.data ?? [];
+      }
+
+      if (requestVersion === stateVersion.current) {
+        setSnapshot({
+          activeBoarding: boardingResult.data,
+          activeTrip,
+          buses: busesResult.data ?? [],
+          participants: participantsResult.data ?? [],
+          responses,
+        });
+        syncedUserIdRef.current = userId;
+        setSyncedUserId(userId);
+        setSyncErrorKind(null);
+        setSyncState('ready');
+      }
+    } catch (error) {
+      if (requestVersion === stateVersion.current) {
+        syncedUserIdRef.current = userId;
+        setSyncedUserId(userId);
+        setSyncErrorKind(getSupabaseReadFailureKind(error));
+        setSyncState('error');
+      }
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (isAuthLoading) {
+      return;
+    }
+
+    const initialRefreshTimeout = setTimeout(() => void refresh(), 0);
+
+    if (!userId) {
+      return () => {
+        clearTimeout(initialRefreshTimeout);
+        latestMutationVersion.current = ++stateVersion.current;
+      };
+    }
+
+    const channel = supabase.channel(`bus-management-state:${userId}`);
+    for (const table of [
+      'trips',
+      'trip_buses',
+      'trip_participants',
+      'bus_boardings',
+      'bus_boarding_responses',
+    ]) {
+      channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => void refresh());
+    }
+    channel.subscribe();
+
+    let pollingTimeout: ReturnType<typeof setTimeout> | null = null;
+    let stopped = false;
+    const scheduleFallbackRefresh = () => {
+      if (stopped) return;
+      const delay = fallbackRefreshIntervalMs + Math.random() * fallbackRefreshJitterMs;
+      pollingTimeout = setTimeout(() => void refresh().finally(scheduleFallbackRefresh), delay);
+    };
+    scheduleFallbackRefresh();
+
+    const appStateSubscription =
+      Platform.OS === 'web'
+        ? null
+        : AppState.addEventListener('change', (state) => {
+            if (state === 'active') void refresh();
+          });
+
+    return () => {
+      stopped = true;
+      clearTimeout(initialRefreshTimeout);
+      latestMutationVersion.current = ++stateVersion.current;
+      if (pollingTimeout) clearTimeout(pollingTimeout);
+      appStateSubscription?.remove();
+      void supabase.removeChannel(channel);
+    };
+  }, [isAuthLoading, refresh, userId]);
+
+  const setStatus = useCallback(
+    async (boardingId: number, participantId: number, status: BusBoardingStatus) => {
+      const mutationVersion = ++stateVersion.current;
+      latestMutationVersion.current = mutationVersion;
+      const submitStatus = () =>
+        supabase.rpc('respond_to_bus_boarding', {
+          p_boarding_id: boardingId,
+          p_participant_id: participantId,
+          p_status: status,
+        });
+      let result = await submitStatus();
+
+      if (
+        result.error &&
+        shouldRetryBusStatusAfterSessionRefresh(result.error) &&
+        userIdRef.current === userId
+      ) {
+        try {
+          const refreshedSession = await supabase.auth.refreshSession();
+
+          if (
+            !refreshedSession.error &&
+            refreshedSession.data.session?.user.id === userId &&
+            mutationVersion === latestMutationVersion.current
+          ) {
+            result = await submitStatus();
+          }
+        } catch {
+          // Preserve the original RPC error so the UI can explain the failed save.
+        }
+      }
+
+      const { data, error } = result;
+
+      if (error && mutationVersion === latestMutationVersion.current) {
+        setSyncState((current) => (current === 'refreshing' ? 'ready' : current));
+        await refresh();
+      }
+
+      if (!error && data && userIdRef.current === userId) {
+        if (mutationVersion === latestMutationVersion.current) {
+          stateVersion.current += 1;
+          setSnapshot((current) => ({
+            ...current,
+            responses: [
+              ...current.responses.filter(
+                (response) => response.participant_id !== participantId,
+              ),
+              data,
+            ],
+          }));
+          setSyncErrorKind(null);
+          setSyncState('ready');
+        }
+
+        await refresh();
+      }
+
+      return { error };
+    },
+    [refresh, userId],
+  );
+
+  const participants = useMemo(
+    () => buildBusParticipantStates(snapshot.participants, snapshot.buses, snapshot.responses),
+    [snapshot.buses, snapshot.participants, snapshot.responses],
+  );
+  const value = useMemo<BusManagementContextValue>(
+    () => ({
+      activeBoarding: snapshot.activeBoarding,
+      activeTrip: snapshot.activeTrip,
+      buses: snapshot.buses,
+      hasSyncError: syncState === 'error',
+      isLoading: syncState === 'loading' || syncedUserId !== userId,
+      isRefreshing: syncState === 'refreshing',
+      participants,
+      refresh,
+      setStatus,
+      syncErrorKind,
+    }),
+    [participants, refresh, setStatus, snapshot.activeBoarding, snapshot.activeTrip, snapshot.buses, syncErrorKind, syncState, syncedUserId, userId],
+  );
+
+  return <BusManagementContext.Provider value={value}>{children}</BusManagementContext.Provider>;
+}
+
+export function useBusManagement() {
+  const value = useContext(BusManagementContext);
+
+  if (!value) {
+    throw new Error('useBusManagement must be used inside BusManagementProvider.');
+  }
+
+  return value;
+}
