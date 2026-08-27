@@ -232,6 +232,24 @@ describe('GroupCheckProvider request versioning', () => {
     });
   });
 
+  it('entfernt Admin-Routen nicht, solange das Rollenprofil noch geladen wird', async () => {
+    mockAuthState.isAdmin = false;
+    mockAuthState.isLoading = true;
+    mockAuthState.profile = null;
+
+    await act(async () => {
+      renderer = create(
+        <GroupCheckProvider>
+          <GroupCheckProbe />
+        </GroupCheckProvider>,
+      );
+    });
+
+    expect(getContext().isLoading).toBe(true);
+    expect(getContext().isBlocking).toBe(false);
+    expect(mockSupabase.from).not.toHaveBeenCalled();
+  });
+
   afterEach(async () => {
     if (renderer) {
       await act(async () => renderer?.unmount());

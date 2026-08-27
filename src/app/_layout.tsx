@@ -15,6 +15,7 @@ import { AppI18nProvider, useI18n } from '@/features/i18n/i18n';
 import { supabaseReadFailureTranslationKey } from '@/features/network/supabase-read';
 import { QuestionRoundProvider } from '@/features/question-round/question-round-context';
 import { AppThemeProvider, useThemeMode } from '@/features/theme/theme-mode';
+import { TripGuidanceProvider } from '@/features/trip-guidance/trip-guidance-context';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -25,11 +26,13 @@ export default function RootLayout() {
         <AppThemeProvider>
           <AuthProvider>
             <BusManagementProvider>
-              <GroupCheckProvider>
-                <QuestionRoundProvider>
-                  <RootNavigation />
-                </QuestionRoundProvider>
-              </GroupCheckProvider>
+              <TripGuidanceProvider>
+                <GroupCheckProvider>
+                  <QuestionRoundProvider>
+                    <RootNavigation />
+                  </QuestionRoundProvider>
+                </GroupCheckProvider>
+              </TripGuidanceProvider>
             </BusManagementProvider>
           </AuthProvider>
         </AppThemeProvider>
@@ -91,6 +94,7 @@ function RootNavigation() {
             <Stack.Screen name="about" options={{ title: t('nav.about') }} />
             <Stack.Screen name="account" options={{ title: t('nav.account') }} />
             <Stack.Screen name="bus" options={{ title: t('bus.navTitle') }} />
+            <Stack.Screen name="guide" options={{ title: t('guide.navTitle') }} />
             <Stack.Screen name="sources" options={{ title: t('nav.sources') }} />
             <Stack.Screen name="disclaimer" options={{ title: t('nav.disclaimer') }} />
             <Stack.Screen

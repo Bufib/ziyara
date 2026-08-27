@@ -386,3 +386,36 @@ Tests/checks:
 - Fresh local migration rebuild, DB lint and pgTAP RLS/RPC/concurrency tests.
 - Playwright full-stack smoke from trip creation through boarding confirmation and close.
 - Web, iOS and Android JavaScript exports.
+
+## Phase 12: Trip guidance and “Where are we?”
+
+Files to create or modify:
+
+- `src/app/guide.tsx`
+- `src/features/trip-guidance/*`
+- `src/app/admin.tsx`
+- `src/app/(tabs)/index.tsx`
+- `src/app/_layout.tsx`
+- `src/domain/database.ts`
+- `src/features/i18n/i18n.tsx`
+- `supabase/migrations/20260827120000_add_trip_guidance.sql`
+- `supabase/tests/database/phase9_trip_guidance.test.sql`
+- `e2e/phase7-smoke.spec.ts`
+
+Acceptance criteria:
+
+- An admin publishes one current itinerary point for the active trip with current place, next item, departure, meeting point, relevant gate, distance hint, description and actions.
+- Meeting-point corrections update the current item in place; publishing a new item closes the old version and starts fresh participant reports.
+- Linked participants report `on_way`, `almost_there`, `at_meeting_point`, `problem`, `lost` or `medical_help` for their physical participant IDs.
+- An admin explicitly accepts a problem report, and the participant sees the accepting leader’s captured display name.
+- Place links, external meeting-point navigation and a one-shot distance check work without continuous tracking or backend location storage.
+- Realtime, app focus and staggered fallback refreshes keep guidance and reports current.
+- Clear network failures queue reports in a validated, user-scoped AsyncStorage outbox. Pending UI never claims the leader received the report, and retries remain idempotent.
+- RLS exposes only the active trip to members, only linked participant reports to normal accounts and the complete overview to admins. All writes use authenticated RPCs.
+
+Tests/checks:
+
+- Jest state, outbox parsing, distance and protected-route tests.
+- Fresh local migration, database lint and pgTAP RLS/RPC lifecycle tests.
+- Playwright full-stack smoke from publication through a Realtime meeting-point edit and explicit problem acceptance.
+- Web, iOS and Android JavaScript exports plus manual native location-permission review.

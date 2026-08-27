@@ -2,7 +2,7 @@
 
 Produktionsorientierte Expo-SDK-57-App für eine schiitische Ziyarah-Reise im Irak. Stand dieser Dokumentation: 27. August 2026.
 
-Der Guide ist mit seinen Orts-, Stadt-, Karten-, Such-, Lesezeichen-, Reader-, Einstellungs-, About-, Disclaimer- und Quelleninhalten lokal gebündelt und startet ohne Anmeldung sowie ohne Supabase-Verbindung. Konto-, Bus-, Gruppencheck-, Fragerunden- und Administrationsfunktionen bleiben durch Supabase Auth, Row Level Security und serverseitig geprüfte RPCs geschützt.
+Der Guide ist mit seinen Orts-, Stadt-, Karten-, Such-, Lesezeichen-, Reader-, Einstellungs-, About-, Disclaimer- und Quelleninhalten lokal gebündelt und startet ohne Anmeldung sowie ohne Supabase-Verbindung. Konto-, Bus-, Reiseführungs-, Gruppencheck-, Fragerunden- und Administrationsfunktionen bleiben durch Supabase Auth, Row Level Security und serverseitig geprüfte RPCs geschützt.
 
 ## Dokumentation
 
@@ -29,6 +29,7 @@ Der Guide ist mit seinen Orts-, Stadt-, Karten-, Such-, Lesezeichen-, Reader-, E
 ### Gruppencheck und anonyme Fragerunde
 
 - Gruppencheck-Antworten und Refreshes verwenden eine gemeinsame monotone State-Version, ignorieren veraltete Requests, zeigen erfolgreiche Mutationen optimistisch und laden danach den autoritativen Stand.
+- Während das Rollenprofil lädt, entfernt die Pflichtabfrage keine Admin-Routen aus dem Navigationsstack. Nach einer gespeicherten Admin-Antwort führt ein eigener Button zuverlässig zurück in die App.
 - Die Adminauswertung zeigt alle relevanten Profile als Ja, Nein oder Noch offen. Account-Anzahl und über `party_size` repräsentierte Personenzahl werden getrennt ausgewiesen.
 - Rollenänderungen, Gruppencheck-Antwort gegen Schließen, das Fünf-Fragen-Limit und Account-Löschungen sind auch bei parallelen Transaktionen datenbankseitig abgesichert.
 - Anonyme Fragen speichern keine User-/Profil-ID am Fragetext. Temporäre, für Clients nicht lesbare Limit-Zähler werden beim Schließen der Runde gelöscht.
@@ -39,6 +40,13 @@ Der Guide ist mit seinen Orts-, Stadt-, Karten-, Such-, Lesezeichen-, Reader-, E
 - Während eines Boardings melden verknüpfte Konten pro eigener ID `Unterwegs`, `Im Bus` oder `Problem`. Nicht verknüpfte und noch nicht bestätigte Personen bleiben in der Leiterübersicht sichtbar und können dort manuell gesetzt werden.
 - Realtime, App-Fokus und ein gestaffelter Fallback-Refresh halten die Übersicht aktuell. Monotone Request-Versionen verhindern, dass ältere Reads einen gespeicherten Status zurücksetzen. Antwort und Schließen sperren dieselbe Boarding-Zeile und bleiben dadurch transaktional geordnet.
 - Bei einer abgelaufenen oder fehlenden Auth-Session erneuert der Client die Sitzung und wiederholt eine Teilnehmer- oder Admin-Statusmutation genau einmal für dieselbe User-ID. Endgültige Fehler laden den autoritativen Stand und unterscheiden Auth-, geschlossenes Boarding-, geänderte Zuordnungs-, Offline- und Serverzustände.
+
+### Reiseführung und „Wo sind wir?“
+
+- Admins veröffentlichen den aktuellen Besuchsort, nächsten Programmpunkt, Abfahrt, Treffpunkt, relevante Tür, Entfernungshinweis, Beschreibung und Handlungen. Kurzfristige Treffpunktänderungen erscheinen über Realtime, ohne bestehende Meldungen zu verlieren.
+- Teilnehmer melden je eigener physischer ID „Noch unterwegs“, „Bin gleich da“, „Beim Treffpunkt“, „Problem“, „Verloren“ oder „Medizinische Hilfe benötigt“. Problemfälle werden ausdrücklich von einem Admin übernommen; der meldende Teilnehmer sieht dessen Anzeigenamen.
+- Verknüpfte Katalogorte und externe Navigation sind direkt erreichbar. Die Entfernung wird nur nach einem Klick einmalig bestimmt; es gibt kein permanentes Tracking und keine Speicherung der Geräteposition im Backend.
+- Eindeutige Offlinefehler werden in einer validierten, benutzerspezifischen AsyncStorage-Warteschlange vorgemerkt. Die UI sagt ausdrücklich, dass diese Meldung noch nicht beim Reiseleiter angekommen ist.
 
 ### Fehlerbehandlung und Monitoring
 
@@ -86,17 +94,17 @@ npx expo export --platform android
 npm audit
 ```
 
-`npm run validate` umfasst TypeScript, Lint, Jest mit Coverage-Gates und den Expo-Abhängigkeitscheck. Die Gates verlangen mindestens 50 % globale Line Coverage sowie jeweils 80 % für Auth-, Busmanagement-, Gruppencheck- und Fragerunden-Kontext.
+`npm run validate` umfasst TypeScript, Lint, Jest mit Coverage-Gates und den Expo-Abhängigkeitscheck. Die Gates verlangen mindestens 50 % globale Line Coverage sowie jeweils 80 % für Auth-, Busmanagement-, Reiseführungs-, Gruppencheck- und Fragerunden-Kontext.
 
 Letzter vollständig ausgeführter Stand vom 27. August 2026:
 
-- `npm run validate`: bestanden; 97 Jest-Tests in 17 Suites
-- Line Coverage: global 87,21 %, AuthContext 90,82 %, BusManagementContext 92,70 %, GroupCheckContext 94,53 %, QuestionRoundContext 95,65 %
+- `npm run validate`: bestanden; 108 Jest-Tests in 20 Suites
+- Line Coverage: global 86,93 %, AuthContext 90,82 %, BusManagementContext 92,70 %, TripGuidanceContext 84,97 %, GroupCheckContext 94,53 %, QuestionRoundContext 95,65 %
 - Expo Doctor: 21/21 Checks bestanden
 - Web-, iOS- und Android-JavaScript-Export: bestanden
 - Supabase DB-Lint: keine Schemafehler
-- pgTAP: 90 Assertions in sechs SQL-Testdateien bestanden
-- Playwright: sieben lokale Vollstack-Smokes bestanden, einschließlich Recovery, Offline-Start und Busmanagement
+- pgTAP: 114 Assertions in sieben SQL-Testdateien bestanden
+- Playwright: acht lokale Vollstack-Smokes bestanden, einschließlich Recovery, Offline-Start, Busmanagement und Reiseführung
 - `npm audit`: 0 Critical, 4 High, 11 Moderate
 
 Die High-/Moderate-Auditmeldungen liegen in transitiven Expo-/Metro-Buildabhängigkeiten, insbesondere `image-size`, `metro`, Expo Config und `xcode`/`uuid`. Die von npm angebotenen vollständigen Fixes würden auf inkompatible Expo-Versionen wechseln. Auf SDK-kompatible Upstream-Patches warten.
@@ -121,7 +129,7 @@ Nach ausdrücklicher Freigabe wurden am 27. August 2026 die Migrationen `2026082
 
 Die Edge Function `delete-account` ist remote als aktive Version 1 mit `verify_jwt = false` bereitgestellt. Das schaltet nur die vorgeschaltete Legacy-JWT-Prüfung aus; die Function verlangt weiterhin einen Bearer-Token und validiert ihn über Supabase Auth. Ein anonymer Remote-Aufruf wurde erwartungsgemäß mit HTTP 401 abgewiesen. Es wurde kein reales Konto testweise gelöscht.
 
-Die Remote-Auth-Redirect-Allowlist wurde nicht verändert. Der zuletzt ergänzte Busstatus-Session-Retry befindet sich im lokalen Clientcode und benötigt für bereits installierte Apps einen neuen Build beziehungsweise ein App-Update; es wurde kein Client-Build deployed, committed oder gepusht.
+Die Remote-Auth-Redirect-Allowlist wurde nicht verändert. Der zuletzt ergänzte Busstatus-Session-Retry und die Reiseführungsoberfläche befinden sich im lokalen Clientcode und benötigen für bereits installierte Apps einen neuen Build beziehungsweise ein App-Update. Die neue Migration `20260827120000_add_trip_guidance.sql` ist nur lokal angewandt und noch nicht remote ausgerollt. Es wurde kein Client-Build deployed, committed oder gepusht.
 
 ## CI
 
@@ -138,6 +146,7 @@ Die Kernarchitektur und die automatisierten lokalen Prüfungen sind stabil, die 
 - religiöse, historische und ortsbezogene Inhalte fachlich und rechtlich freigeben
 - native Karte, RTL, dynamische Schrift und alle drei Sprachen auf Zielgeräten prüfen
 - realen Last-/Mobilfunktest für Bus-, Realtime- und Gruppenfunktionen mit der erwarteten Reisegruppengröße durchführen
+- Reiseführungs-Migration nach ausdrücklicher Freigabe remote ausrollen und Realtime/Offline-Warteschlange unter realen Mobilfunkbedingungen prüfen
 - SDK-kompatible Fixes für die verbleibenden High-/Moderate-Auditmeldungen übernehmen, sobald Expo/Metro sie bereitstellt
 
 ## Inhaltsregel

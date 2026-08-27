@@ -33,11 +33,13 @@ import {
   withSupabaseReadTimeout,
 } from '@/features/network/supabase-read';
 import { useTheme } from '@/hooks/use-theme';
+import { AdminTripGuidancePanel } from '@/features/trip-guidance/AdminTripGuidancePanel';
+import { useTripGuidance } from '@/features/trip-guidance/trip-guidance-context';
 
 const adminPageSize = 200;
 const assignableRoles: AppRole[] = ['user', 'medical_staff', 'organization_team', 'admin'];
 
-type AdminSection = 'bus' | 'questions' | 'status' | 'users';
+type AdminSection = 'bus' | 'guidance' | 'questions' | 'status' | 'users';
 type RoleFeedback = {
   type: 'error' | 'last-admin' | 'success';
   userId: string;
@@ -81,6 +83,10 @@ function AdminContent() {
   const { profile, refreshProfile } = useAuth();
   const { activeCheck, hasSyncError: hasGroupCheckSyncError } = useGroupCheck();
   const { activeRound, hasSyncError: hasQuestionRoundSyncError } = useQuestionRound();
+  const {
+    activeGuidance,
+    hasSyncError: hasTripGuidanceSyncError,
+  } = useTripGuidance();
   const [users, setUsers] = useState<AdminUserSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -93,6 +99,7 @@ function AdminContent() {
   const hasError = readErrorKind !== null;
   const [expandedSections, setExpandedSections] = useState<Record<AdminSection, boolean>>({
     bus: false,
+    guidance: false,
     questions: false,
     status: false,
     users: false,
@@ -227,6 +234,31 @@ function AdminContent() {
                   title={t('admin.section.bus.title')}
                 />
                 {expandedSections.bus ? <AdminBusManagementPanel users={users} /> : null}
+              </View>
+
+              <View style={styles.section}>
+                <AdminSectionHeader
+                  description={t('admin.section.guidance.description')}
+                  expanded={expandedSections.guidance}
+                  icon="map"
+                  onToggle={() => toggleSection('guidance')}
+                  status={t(
+                    hasTripGuidanceSyncError
+                      ? 'admin.section.guidance.error'
+                      : activeGuidance
+                        ? 'admin.section.guidance.active'
+                        : 'admin.section.guidance.inactive',
+                  )}
+                  statusColor={
+                    hasTripGuidanceSyncError
+                      ? 'danger'
+                      : activeGuidance
+                        ? 'success'
+                        : 'textSecondary'
+                  }
+                  title={t('admin.section.guidance.title')}
+                />
+                {expandedSections.guidance ? <AdminTripGuidancePanel /> : null}
               </View>
 
               <View style={styles.section}>

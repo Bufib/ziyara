@@ -19,7 +19,7 @@ Wenn Dokumentation und Code voneinander abweichen, den Code prüfen, die richtig
 
 ## Produkt in einem Absatz
 
-Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-Reise in den Irak. Reisende können wichtige Städte und Orte ohne Anmeldung offline aus einem gebündelten Katalog öffnen, Orte auf einer Karte sehen, Inhalte durchsuchen, Einträge merken und religiöse Texte in einem Reader anzeigen. Eine Supabase-Anmeldung wird erst für Konto-, Bus-, Gruppencheck-, Fragerunden- und Adminfunktionen benötigt. Die App bietet Deutsch, Englisch und Arabisch, Light/Dark Mode sowie administrative Gruppenfunktionen: Buszuordnung und Boarding, verpflichtende Statusabfragen, eine anonyme Fragerunde und eine Benutzerübersicht. Passwort-Recovery und sichere Eigenkonto-Löschung sind implementiert. Religiöse, historische und ortsbezogene Inhalte bleiben bis zu einer qualifizierten Prüfung sichtbar als `needs_review` markiert.
+Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-Reise in den Irak. Reisende können wichtige Städte und Orte ohne Anmeldung offline aus einem gebündelten Katalog öffnen, Orte auf einer Karte sehen, Inhalte durchsuchen, Einträge merken und religiöse Texte in einem Reader anzeigen. Eine Supabase-Anmeldung wird erst für Konto-, Bus-, Reiseführungs-, Gruppencheck-, Fragerunden- und Adminfunktionen benötigt. Die App bietet Deutsch, Englisch und Arabisch, Light/Dark Mode sowie administrative Gruppenfunktionen: live veröffentlichte Programmpunkte und Treffpunkte, Buszuordnung und Boarding, verpflichtende Statusabfragen, eine anonyme Fragerunde und eine Benutzerübersicht. Passwort-Recovery und sichere Eigenkonto-Löschung sind implementiert. Religiöse, historische und ortsbezogene Inhalte bleiben bis zu einer qualifizierten Prüfung sichtbar als `needs_review` markiert.
 
 ## Aktueller Funktionsumfang
 
@@ -56,8 +56,14 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 - Ein Admin kann eine aktive Reise mit benannten Bussen anlegen und einzelne physische Teilnehmer-IDs wie `BER01` einem Bus zuordnen. Eine ID kann optional mit einem App-Profil verknüpft werden; mehrere IDs dürfen demselben Konto gehören. Nicht verknüpfte Teilnehmer bleiben in der Leiterübersicht sichtbar.
 - Für jede Abfahrt kann genau ein Boarding pro Reise geöffnet werden. Verknüpfte Konten melden pro eigener Teilnehmer-ID `on_way`, `boarded` oder `problem`; Admins sehen zusätzlich nicht bestätigte IDs und dürfen jeden Status manuell korrigieren. Die Übersicht zählt physische Teilnehmer-IDs und nicht `party_size`, damit Account- und reale Busbelegung nicht vermischt werden.
 - Boarding-Reads und -Mutationen verwenden monotone Request-Versionen, optimistische Zustände und einen autoritativen Folge-Refresh. Antwort und Schließen sperren dieselbe Boarding-Zeile, sodass ein paralleler Status entweder vollständig vor dem Schließen gespeichert oder danach abgewiesen wird.
+- Ein Admin kann für die aktive Reise einen aktuellen Programmpunkt veröffentlichen. Teilnehmer sehen Besuchsort, nächsten Programmpunkt, Abfahrtszeit, Treffpunkt, relevante Tür, einen optionalen Entfernungshinweis, Beschreibung und Handlungen. Verknüpfte Katalogorte öffnen die lokale Ortsseite; hinterlegte Koordinaten öffnen die externe Navigation.
+- Die Entfernung zum Treffpunkt wird auf Wunsch aus einer einzelnen Standortabfrage berechnet. Es existiert kein permanentes Standorttracking und keine Speicherung der abgefragten Geräteposition im App- oder Backendzustand.
+- Kurzfristige Treffpunktänderungen aktualisieren denselben Programmpunkt und behalten Statusmeldungen. Ein ausdrücklich neu veröffentlichter Programmpunkt schließt den vorherigen und beginnt mit leeren Meldungen. Beide Tabellen werden über Realtime und gestaffelte Fallback-Refreshes synchronisiert.
+- Teilnehmer melden je verknüpfter physischer Teilnehmer-ID `on_way`, `almost_there`, `at_meeting_point`, `problem`, `lost` oder `medical_help`. Ein Admin muss einen Problemfall ausdrücklich übernehmen; der Teilnehmer sieht anschließend den dabei erfassten Anzeigenamen der Leitung.
+- Bei einem eindeutigen Netzwerkfehler wird eine Statusmeldung benutzerspezifisch in `AsyncStorage` vorgemerkt und später idempotent erneut übertragen. Die UI kennzeichnet den lokalen Status deutlich als noch nicht beim Reiseleiter angekommen. Server-, Berechtigungs- oder geschlossene Programmpunktfehler werden nicht fälschlich als erfolgreiche Offlineübertragung dargestellt.
 - Ein Admin kann genau eine verpflichtende Gruppenabfrage mit freiem Fragetext öffnen.
 - Während sie aktiv ist, sehen Konten ohne Adminrolle ausschließlich den Check-in und antworten mit Ja oder Nein. Admins bleiben in der App, sehen auf Home einen Hinweis und können die Abfrage ebenfalls beantworten.
+- Solange das Auth-Profil und damit die Rolle noch geladen werden, greift die blockierende Navigation nicht; dadurch werden Admin-Routen nicht vorübergehend aus dem Stack entfernt. Nach einer gespeicherten Admin-Antwort bietet der Check-in zusätzlich einen expliziten, per `replace` funktionierenden Rückweg in die App.
 - Bei einem Synchronisationsfehler bleibt die App für Konten ohne Adminrolle vorsorglich gesperrt.
 - Ein Admin kann eine anonyme Fragerunde öffnen und schließen, Fragen lesen und als erledigt markieren.
 - Jede angemeldete Rolle einschließlich Admin kann während einer offenen Runde bis zu fünf anonyme Fragen absenden. Die Fragentabelle speichert keine Profil- oder User-ID. Eine getrennte, für Clients nicht lesbare Zähltabelle hält während der offenen Runde nur Profil, Runde und Anzahl fest und wird beim Schließen geleert. Nutzer sollten trotzdem keine personenbezogenen Daten in den Freitext schreiben.
@@ -77,6 +83,7 @@ Die ursprünglich getrennt beauftragten Produktionsphasen sind im aktuellen Work
 6. **Recovery und Eigenkonto-Löschung:** vollständiger Recovery-Deep-Link, neuer Passwortscreen, serverseitig authentifizierte Löschfunktion ohne frei wählbare Ziel-ID, Last-Admin-Schutz, sichere Cascades und anonymisierte Auditbezüge.
 7. **Tests und Fehlerbehandlung:** Coverage-Gates, sieben Playwright-Vollstack-Smokes und eine globale Error Boundary sind aktiv. Sentry beziehungsweise externes Crash-Reporting wurden entfernt; es existieren weder Clientabhängigkeit noch DSN-Konfiguration oder Monitoring-Datenübertragung.
 8. **Busmanagement:** Reise-, Bus-, Teilnehmer-ID- und Boardingmodell, Adminoberfläche, Teilnehmerstatus, RLS/RPCs, Realtime, monotone Request-Versionen, Parallelitätstests und E2E-Smoke sind implementiert. Der spätere Speicherfix erneuert bei Auth-/Function-Grant-Fehlern die Session und wiederholt den Status-RPC genau einmal für dieselbe User-ID.
+9. **Reiseführung und Treffpunkt:** versionierte aktuelle Programmpunkte, kurzfristige Live-Änderungen, sechs Teilnehmerzustände, ausdrückliche Problemübernahme, lokale Offline-Warteschlange und einmalige Distanzberechnung ohne Tracking sind implementiert. RLS bindet Meldungen an physische Teilnehmer-IDs und zeigt normalen Konten ausschließlich eigene Meldungen.
 
 ## Technischer Stack
 
@@ -137,6 +144,7 @@ src/features/auth/          Supabase-Client, Auth-State, Formulare
 src/features/bus-management/Buszuordnung, Boarding-State und Adminoberfläche
 src/features/group-check/   Pflichtabfrage für die Reisegruppe
 src/features/question-round/Anonyme Fragerunden
+src/features/trip-guidance/ Live-Programmpunkt, Teilnehmerstatus und Offline-Warteschlange
 src/features/i18n/          UI-Wörterbücher und lokalisierte Fachdaten
 src/features/map/           Native Karte und Web-Fallback
 src/features/network/       Abbruch und Fehlerklassifizierung für Supabase-Lesezugriffe
@@ -162,12 +170,13 @@ AppErrorBoundary
     └── AppThemeProvider
         └── AuthProvider
             └── BusManagementProvider
-                └── GroupCheckProvider
-                    └── QuestionRoundProvider
-                        └── RootNavigation
+                └── TripGuidanceProvider
+                    └── GroupCheckProvider
+                        └── QuestionRoundProvider
+                            └── RootNavigation
 ```
 
-Die Reihenfolge ist relevant: Bus-, Gruppen- und Fragerundenfunktionen benötigen den Auth-State. Der Splash Screen wartet nur auf die lokal gespeicherten Sprach- und Themezustände; Auth-, Profil-, Bus-, Gruppen- und Fragerundenabfragen dürfen den öffentlichen Guide nicht blockieren. Ohne Session überspringen die privaten Provider Tabellenabfragen und Realtime-Kanäle vollständig. Bei einer vorhandenen Session blockiert nur das initiale Profil-/Pflichtabfrage-Laden beziehungsweise ein echter Benutzerwechsel die geschützte Navigation. Bus-Hintergrundrefreshes behalten die letzte Zuordnung sichtbar und melden Offline-, Timeout- oder Serverfehler ohne die Navigation auszuhängen. Ein Profilfehler bleibt als wiederholbarer, nicht blockierender Hinweis sichtbar; Rollen- und Gruppenrechte werden dadurch nicht erweitert.
+Die Reihenfolge ist relevant: Bus-, Reiseführungs-, Gruppen- und Fragerundenfunktionen benötigen den Auth-State. Der Splash Screen wartet nur auf die lokal gespeicherten Sprach- und Themezustände; Auth-, Profil-, Bus-, Reiseführungs-, Gruppen- und Fragerundenabfragen dürfen den öffentlichen Guide nicht blockieren. Ohne Session überspringen die privaten Provider Tabellenabfragen und Realtime-Kanäle vollständig. Bei einer vorhandenen Session blockiert nur das initiale Profil-/Pflichtabfrage-Laden beziehungsweise ein echter Benutzerwechsel die geschützte Navigation. Bus- und Reiseführungs-Hintergrundrefreshes behalten den letzten Stand sichtbar und melden Offline-, Timeout- oder Serverfehler ohne die Navigation auszuhängen. Ein Profilfehler bleibt als wiederholbarer, nicht blockierender Hinweis sichtbar; Rollen- und Gruppenrechte werden dadurch nicht erweitert.
 
 `AppErrorBoundary` verwendet absichtlich keine Theme-, I18n-, Auth- oder Netzwerkabhängigkeit, damit der Fallback auch bei einem Providerfehler rendern kann. Die Fehlergrenze arbeitet vollständig lokal; externes Crash-Reporting ist nicht Bestandteil der App.
 
@@ -193,6 +202,7 @@ Der gleiche Provider registriert den nativen Linking-Listener für Passwort-Reco
 | `/reader/[slug]` | öffentlich | religiöser Reader |
 | `/account` | Session, nicht blockiert | Kontodaten und Personenzahl |
 | `/bus` | Session; nur eigene verknüpfte Teilnehmer-IDs | Buszuordnung und Status für ein aktives Boarding |
+| `/guide` | Session; nur eigene verknüpfte Teilnehmer-IDs | aktueller Programmpunkt, Treffpunkt, Navigation und Teilnehmerstatus |
 | `/about`, `/sources`, `/disclaimer` | öffentlich | Produkt- und Quellenhinweise |
 | `/check-in` | Session; Konten ohne Adminrolle sind bei aktiver oder unsicherer Abfrage blockiert | verpflichtende Ja-/Nein-Antwort |
 | `/question-round` | jede Session bei offener Runde | anonyme Frage absenden |
@@ -245,6 +255,7 @@ Verbindliche Inhaltsregeln:
 | `ziyara.bookmarks` | Keys wie `place:<slug>` und `content:<slug>` |
 | `ziyara.reader.preferences` | arabische Schriftgröße und Zeilenansicht |
 | `ziyara.reader.positions` | Scrolloffset je Reader-Slug |
+| `ziyara.trip-guidance.outbox` | benutzerspezifische, noch nicht übertragene Treffpunktmeldungen |
 
 Der Reader speichert und restauriert Positionen beim erneuten Öffnen. Nichtkritische lokale Speicherfehler fallen auf den In-Memory-Zustand zurück; serverseitige Auth-, Profil- und Pflichtabfragefehler besitzen sichtbare beziehungsweise fail-closed Zustände.
 
@@ -268,8 +279,10 @@ Aktuelle Tabellen:
 - `trip_participants`: physische Teilnehmer-ID, Anzeigename, Bus und optionale Profilverknüpfung.
 - `bus_boardings`: Abfahrt mit geplantem Zeitpunkt und Öffnungs-/Schließzeit; höchstens ein offenes Boarding je Reise.
 - `bus_boarding_responses`: letzter Status je Boarding und physischer Teilnehmer-ID.
+- `trip_guidance_updates`: versionierter aktueller Programmpunkt mit Ort, Abfahrt, Treffpunkt, Koordinaten und organisatorischen Hinweisen.
+- `trip_guidance_responses`: letzter Treffpunktstatus je Programmpunkt und physischer Teilnehmer-ID einschließlich ausdrücklicher Problemübernahme.
 
-Damit existieren aktuell zwölf Anwendungstabellen im `public`-Schema. Die sieben Tabellen vor Einführung des Busmanagements wurden vollständig beibehalten; ebenso `profiles.id`, `profiles.user_id`, `group_check_responses.id` und `member_type`.
+Damit existieren aktuell vierzehn Anwendungstabellen im `public`-Schema. Die zwölf Tabellen vor Einführung der Reiseführung wurden vollständig beibehalten; ebenso `profiles.id`, `profiles.user_id`, `group_check_responses.id` und `member_type`.
 
 Wichtige RPCs:
 
@@ -284,6 +297,8 @@ Wichtige RPCs:
 - `admin_create_trip`, `admin_archive_trip`, `admin_create_trip_bus`
 - `admin_upsert_trip_participant`, `admin_start_bus_boarding`, `admin_close_bus_boarding`
 - `respond_to_bus_boarding`, `admin_set_bus_boarding_status`
+- `admin_publish_trip_guidance`, `admin_update_trip_guidance`
+- `respond_to_trip_guidance`, `admin_acknowledge_trip_guidance_problem`
 
 RLS ist aktiviert. Privilegierte Aktionen laufen über `security definer`-Funktionen, die Admin- beziehungsweise Session-Berechtigungen selbst prüfen. Neue Funktionen müssen einen festen `search_path`, minimale Grants und explizite Auth-Prüfungen besitzen.
 
@@ -309,15 +324,17 @@ Die Migration `20260826021000_add_account_deletion_precheck.sql` ergänzt den au
 
 Die additive Migration `20260827000000_add_bus_management.sql` ergänzt Reise, Busse, physische Teilnehmer-IDs, Boardings und Statusantworten. Direkte Client-Schreibrechte sind entzogen; Admin- und Teilnehmermutationen laufen ausschließlich über serverseitig authentifizierte RPCs. RLS zeigt normalen Konten nur eigene verknüpfte IDs und Antworten, während Admins die gesamte Reise sehen. Antwort und Schließen verwenden kompatible Row Locks für transaktionale Parallelität. Eine Kontolöschung setzt die optionale Profilverknüpfung auf `null`, lässt die physische Teilnehmerhistorie aber bestehen. Bei einem Auth-/Function-Grant-Fehler erneuert der Bus-Client die Supabase-Session und wiederholt die Statusmutation genau einmal, sofern dieselbe User-ID angemeldet bleibt; ein endgültiger Fehler löst einen autoritativen Refresh aus und wird ohne sensible Serverdetails als Auth-, geschlossenes Boarding-, Zuordnungs-, Offline- oder Serverzustand angezeigt.
 
+Die additive Migration `20260827120000_add_trip_guidance.sql` ergänzt versionierte Programmpunkte und Teilnehmermeldungen. Neue Veröffentlichungen schließen den vorherigen Programmpunkt transaktionssicher über eine Sperre der aktiven Reise; Treffpunktkorrekturen aktualisieren dagegen denselben Datensatz. Teilnehmerantworten sperren den offenen Programmpunkt kompatibel gegen einen gleichzeitigen Wechsel. Direkte Client-Schreibrechte sind entzogen, RLS zeigt Konten nur eigene Statusmeldungen und Admins die Gesamtübersicht. Nur ein aktueller `problem`-Status kann über die Admin-RPC ausdrücklich übernommen werden; eine spätere Teilnehmeränderung entfernt die alte Übernahme. Die Migration ist im lokalen Stack angewandt und mit 24 zusätzlichen pgTAP-Assertions geprüft, aber noch nicht auf das verknüpfte Remote-Projekt ausgerollt.
+
 Am 27. August 2026 wurden die Migrationen `20260826000000_expand_group_check_results.sql`, `20260826010000_drop_unused_group_check_answer_index.sql`, `20260826020000_protect_account_deletion.sql`, `20260826021000_add_account_deletion_precheck.sql` und `20260827000000_add_bus_management.sql` nach ausdrücklicher Freigabe auf das verknüpfte Remote-Projekt ausgerollt. Lokal und remote waren damit alle Migrationen bis `20260827000000` synchron; `db lint --linked --level warning` meldete anschließend keine Schemafehler. Keine bestehende Migration wurde verändert, gelöscht oder zusammengefasst. Die Edge Function `delete-account` ist remote als aktive Version 1 mit `verify_jwt = false` bereitgestellt; ein anonymer POST erreichte die interne Auth-Prüfung und wurde erwartungsgemäß mit HTTP 401 abgelehnt. Es wurde kein reales Konto testweise gelöscht und die Remote-Redirect-Allowlist wurde nicht verändert.
 
-Der anschließend ergänzte Busstatus-Session-Retry ist Clientcode im lokalen Worktree. Dafür war keine weitere Schemaänderung notwendig. Bereits installierte Apps erhalten diesen Fix erst über einen neuen Client-Build beziehungsweise ein App-Update; ein solcher Build wurde nicht deployed, committed oder gepusht. Remote-Zustand kann sich unabhängig vom Repository ändern: vor späteren Annahmen mit autorisiertem Zugriff `npx supabase migration list --linked` und `npx supabase functions list` prüfen. Migrationen, Functions und Auth-Redirects nur innerhalb eines ausdrücklich beauftragten Implementierungs- oder Deployment-Schritts remote ändern.
+Der anschließend ergänzte Busstatus-Session-Retry ist Clientcode im lokalen Worktree. Dafür war keine weitere Schemaänderung notwendig. Die Reiseführung benötigt dagegen vor Remote-Nutzung ausdrücklich die neue Migration `20260827120000_add_trip_guidance.sql`. Bereits installierte Apps erhalten beide Clientänderungen erst über einen neuen Build beziehungsweise ein App-Update; ein solcher Build wurde nicht deployed, committed oder gepusht. Remote-Zustand kann sich unabhängig vom Repository ändern: vor späteren Annahmen mit autorisiertem Zugriff `npx supabase migration list --linked` und `npx supabase functions list` prüfen. Migrationen, Functions und Auth-Redirects nur innerhalb eines ausdrücklich beauftragten Implementierungs- oder Deployment-Schritts remote ändern.
 
 ## Kapazität für die Reisegruppe
 
 - Zielgröße sind ungefähr 100 Konten zuzüglich mehrerer Admin-/Mitarbeitergeräte.
 - Der Supabase-Client teilt mehrere Realtime-Kanäle über eine Verbindung. Aktuelle Tarifgrenzen trotzdem vor der Reise im Dashboard gegen die erwarteten gleichzeitig aktiven Geräte prüfen.
-- Durch die gestaffelten Fallback-Intervalle entstehen bei 100 dauerhaft aktiven Clients grob 220 Fallback-Leseabfragen pro Minute ohne aktive Pflichtabfrage und etwa 300 pro Minute mit aktiver Pflichtabfrage; darin ist der Bus-Refresh alle 60–90 Sekunden enthalten. Realtime und App-Fokus sind der Primärweg.
+- Durch die gestaffelten Fallback-Intervalle entstehen bei 100 dauerhaft aktiven Clients mit Bus- und Reiseführungsprovider grob 300 Fallback-Leseabfragen pro Minute ohne aktive Pflichtabfrage und etwa 380 pro Minute mit aktiver Pflichtabfrage. Realtime und App-Fokus sind der Primärweg; die Offline-Warteschlange versucht nicht in einer engen Schleife erneut zu senden.
 - Antwortwellen werden in den Adminpanels 250 ms gebündelt. Die Benutzer-RPC wird in 200er-Seiten geladen, die Fragenansicht zeigt maximal 50 weitere Einträge pro Schritt.
 - Ein realer Lasttest mit dem gewählten Supabase-Tarif, Reise-WLAN/Mobilfunk und den Zielgeräten bleibt vor Freigabe erforderlich.
 
@@ -375,11 +392,11 @@ npx supabase db lint --local --level warning
 npx supabase test db --local
 ```
 
-`npm test` führt derzeit 97 Jest-Tests in 17 Suites aus. Abgedeckt sind unter anderem AuthContext, BusManagementContext einschließlich Session-Refresh-Retry und Fehlerklassifizierung, GroupCheckContext, QuestionRoundContext, Persistenz-Races und Speicherfehler, der gerenderte `RequireAuth`-Guard, der öffentliche Providerstart ohne Supabase-Zugriff, Recovery-/Account-Löschverträge sowie die globale Error Boundary. `npm run test:coverage` beziehungsweise `npm run validate` erzwingt mindestens 50 % globale Line Coverage und jeweils 80 % für die vier Kernkontexte. Der zuletzt vollständig ausgeführte lokale Stand vom 27. August 2026 liegt bei 87,21 % global, 90,82 % AuthContext, 92,70 % BusManagementContext, 94,53 % GroupCheckContext und 95,65 % QuestionRoundContext.
+`npm test` führt derzeit 108 Jest-Tests in 20 Suites aus. Abgedeckt sind unter anderem AuthContext, BusManagementContext einschließlich Session-Refresh-Retry und Fehlerklassifizierung, TripGuidanceContext einschließlich Offline-Vormerkung, Wiederholung und Problemübernahme, GroupCheckContext einschließlich des Rollenlade-Timings, QuestionRoundContext, die Navigationsübergabe an Karten-Apps, Persistenz-Races und Speicherfehler, der gerenderte `RequireAuth`-Guard, der öffentliche Providerstart ohne Supabase-Zugriff, Recovery-/Account-Löschverträge sowie die globale Error Boundary. `npm run test:coverage` beziehungsweise `npm run validate` erzwingt mindestens 50 % globale Line Coverage und jeweils 80 % für die fünf Kernkontexte. Der zuletzt vollständig ausgeführte lokale Stand vom 27. August 2026 liegt bei 87,42 % global, 90,82 % AuthContext, 92,70 % BusManagementContext, 87,56 % TripGuidanceContext, 95,31 % GroupCheckContext und 95,65 % QuestionRoundContext.
 
-Unter `supabase/tests/database` prüfen zusätzlich 90 pgTAP-Assertions in sechs SQL-Testdateien die RLS-/RPC-/Parallelitätsregeln sowie Cascades, Audit-Anonymisierung, Function-Grants, konkurrierende Account-Löschungen und beide Reihenfolgen von Boarding-Antwort gegen Schließung. `npm run test:e2e` führt sieben serielle Playwright-Smokes mit synthetischen Konten gegen die lokale Expo-/Supabase-/Mailpit-Umgebung aus: Registrierung/Login, Recovery-Link, öffentlicher Guide bei abgebrochenen Supabase-Requests, Gruppencheck, anonyme Fragerunde, Busmanagement und Rollenänderung. `.github/workflows/ci.yml` führt bei Pushes und Pull Requests App-Validierung samt Coverage, Expo Doctor, getrennte Web-/iOS-/Android-Exports und einen Critical-Audit-Gate aus; der Datenbank-Job startet das lokale Schema aus Migrationen, prüft den 401-Auth-Gate der Edge Function, führt DB-Lint und SQL-Tests sowie danach die Playwright-Smokes aus.
+Unter `supabase/tests/database` prüfen zusätzlich 114 pgTAP-Assertions in sieben SQL-Testdateien die RLS-/RPC-/Parallelitätsregeln sowie Cascades, Audit-Anonymisierung, Function-Grants, konkurrierende Account-Löschungen, beide Reihenfolgen von Boarding-Antwort gegen Schließung und den vollständigen Reiseführungs-Lebenszyklus. `npm run test:e2e` führt acht serielle Playwright-Smokes mit synthetischen Konten gegen die lokale Expo-/Supabase-/Mailpit-Umgebung aus: Registrierung/Login, Recovery-Link, öffentlicher Guide bei abgebrochenen Supabase-Requests, Gruppencheck, anonyme Fragerunde, Busmanagement, Reiseführung mit Realtime-Treffpunktänderung und Problemübernahme sowie Rollenänderung. `.github/workflows/ci.yml` führt bei Pushes und Pull Requests App-Validierung samt Coverage, Expo Doctor, getrennte Web-/iOS-/Android-Exports und einen Critical-Audit-Gate aus; der Datenbank-Job startet das lokale Schema aus Migrationen, prüft den 401-Auth-Gate der Edge Function, führt DB-Lint und SQL-Tests sowie danach die Playwright-Smokes aus.
 
-Der letzte vollständige Prüfstand vom 27. August 2026: `npm run validate` bestanden, Expo Doctor 21/21, Web-/iOS-/Android-Export bestanden, lokaler DB-Lint ohne Schemafehler, 90/90 pgTAP-Assertions und 7/7 Playwright-Smokes bestanden. `git diff --check` war sauber. Native Gerätetests fehlen weiterhin; Kartenberechtigung, reale Deep Links in signierten Builds, Bus-UI und Realtime unter realem Reise-Mobilfunk, alle Sprachen, beide Themes und dynamische Schrift müssen proportional zur Änderung manuell geprüft werden.
+Der letzte vollständige Prüfstand vom 27. August 2026: `npm run validate` bestanden, Expo Doctor 21/21, Web-/iOS-/Android-Export bestanden, lokaler DB-Lint ohne Schemafehler, 114/114 pgTAP-Assertions und 8/8 Playwright-Smokes bestanden. `git diff --check` war sauber. Native Gerätetests fehlen weiterhin; Karten- und Distanzberechtigung, reale Deep Links in signierten Builds, Bus-/Reiseführungs-UI, Offline-Warteschlange und Realtime unter realem Reise-Mobilfunk, alle Sprachen, beide Themes und dynamische Schrift müssen proportional zur Änderung manuell geprüft werden.
 
 ## Bekannte Lücken und Risiken
 
@@ -392,6 +409,7 @@ Der letzte vollständige Prüfstand vom 27. August 2026: `npm run validate` best
 - Bundle-Identifier und finale Store-/Build-Konfiguration sind in `app.json` noch nicht vollständig.
 - Die Recovery- und Account-Löschpfade sind lokal vollständig implementiert; Migrationen und Löschfunktion sind remote ausgerollt. Vor einem Release fehlen noch die Remote-Auth-Redirect-Allowlist sowie Recovery- und Löschtests auf einem signierten nativen Build mit einem ausdrücklich freigegebenen Testkonto.
 - Das Busmanagement-Schema ist remote ausgerollt und der gesamte Flow lokal getestet. Der neueste Session-Retry liegt nur im lokalen Clientcode und benötigt einen neuen App-Build. Vor der Nutzung mit der ganzen Reisegruppe bleibt außerdem ein realer Last-/Mobilfunktest erforderlich.
+- Das Reiseführungsschema ist vollständig lokal migriert und getestet, aber noch nicht auf das verknüpfte Remote-Projekt ausgerollt. Vor produktiver Nutzung sind Remote-Migration, neuer Client-Build sowie reale Tests von Realtime, einmaliger Standortfreigabe und Offline-Warteschlange erforderlich.
 - Arabisch richtet Texte aus, schaltet aber die gesamte native Layoutreihenfolge noch nicht über `I18nManager` auf RTL um.
 - Der vollständige npm-Audit meldete am 27. August 2026 keine Critical-, aber 4 High- und 11 Moderate-Einträge. Die High-Einträge hängen an der Expo-/Metro-Buildkette und deren `image-size`-Parsern; der vollständige Moderate-Fix würde Expo beziehungsweise `expo-splash-screen` inkompatibel herabstufen. Auf kompatible Expo-/Metro-Patches warten und keinen `npm audit fix --force` ausführen.
 - Es fehlen weiterhin native Store-Builds und der reale Last-/Netzwerktest mit etwa 100 Geräten; die vorhandenen Playwright-Smokes ersetzen keine signierten iOS-/Android-Gerätetests.

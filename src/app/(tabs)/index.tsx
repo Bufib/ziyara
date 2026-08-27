@@ -12,11 +12,12 @@ import { useBusManagement } from "@/features/bus-management/bus-management-conte
 import { useI18n } from "@/features/i18n/i18n";
 import { useGroupCheck } from "@/features/group-check/group-check-context";
 import { localizeCityName, localizePlace } from "@/features/i18n/localizedData";
-import { busRoute, cityRoute } from "@/features/navigation/routes";
+import { busRoute, cityRoute, guideRoute } from "@/features/navigation/routes";
 import { supabaseReadFailureTranslationKey } from "@/features/network/supabase-read";
 import { PlaceImageCard } from "@/features/places/PlaceImageCard";
 import { useQuestionRound } from "@/features/question-round/question-round-context";
 import { useTheme } from "@/hooks/use-theme";
+import { useTripGuidance } from "@/features/trip-guidance/trip-guidance-context";
 
 const featuredSlugs = [
   "shrine-imam-hussain",
@@ -32,7 +33,7 @@ function isPlace(place: Place | undefined): place is Place {
 export default function HomeScreen() {
   const theme = useTheme();
   const { language, t } = useI18n();
-  const { session } = useAuth();
+  const { profile, session } = useAuth();
   const { activeBoarding, participants: busParticipants } = useBusManagement();
   const { activeCheck } = useGroupCheck();
   const {
@@ -41,6 +42,10 @@ export default function HomeScreen() {
     refresh: refreshQuestionRound,
     syncErrorKind: questionRoundSyncErrorKind,
   } = useQuestionRound();
+  const {
+    activeGuidance,
+    participants: guidanceParticipants,
+  } = useTripGuidance();
   const featuredPlaces = featuredSlugs
     .map((slug) => allPlaces.find((place) => place.slug === slug))
     .filter(isPlace)
@@ -112,6 +117,29 @@ export default function HomeScreen() {
             icon="bus"
             label={t("bus.open")}
             onPress={() => router.push(busRoute())}
+          />
+        </View>
+      ) : null}
+
+      {session &&
+      profile !== null &&
+      profile.role !== "admin" &&
+      activeGuidance &&
+      guidanceParticipants.length > 0 ? (
+        <View
+          style={[
+            styles.notice,
+            { backgroundColor: theme.successSoft, borderColor: theme.success },
+          ]}
+        >
+          <ThemedText type="heading">{t("guide.homeTitle")}</ThemedText>
+          <ThemedText themeColor="textSecondary">
+            {t("guide.homeBody", { place: activeGuidance.current_place_name })}
+          </ThemedText>
+          <Button
+            icon="map"
+            label={t("guide.open")}
+            onPress={() => router.push(guideRoute())}
           />
         </View>
       ) : null}

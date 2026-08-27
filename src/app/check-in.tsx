@@ -1,4 +1,4 @@
-import { Redirect, type Href, useLocalSearchParams } from 'expo-router';
+import { Redirect, type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -28,6 +28,7 @@ export default function CheckInScreen() {
 }
 
 function CheckInContent({ returnTo }: { returnTo: ReturnType<typeof getProtectedReturnRoute> }) {
+  const router = useRouter();
   const theme = useTheme();
   const { t } = useI18n();
   const { isAdmin } = useAuth();
@@ -138,6 +139,15 @@ function CheckInContent({ returnTo }: { returnTo: ReturnType<typeof getProtected
         <ThemedText type="small" themeColor="textSecondary" style={styles.waitingText}>
           {t(isAdmin ? 'groupCheck.adminParticipantBody' : 'groupCheck.lockedBody')}
         </ThemedText>
+
+        {isAdmin && currentResponse !== null ? (
+          <Button
+            icon="home"
+            label={t('groupCheck.returnToApp')}
+            onPress={() => router.replace(returnTo as Href)}
+            style={styles.returnButton}
+          />
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -245,6 +255,11 @@ const styles = StyleSheet.create({
     marginTop: Spacing.three,
     maxWidth: 520,
     textAlign: 'center',
+  },
+  returnButton: {
+    marginTop: Spacing.three,
+    maxWidth: 520,
+    width: '100%',
   },
   pressed: {
     opacity: 0.72,

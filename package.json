@@ -87,6 +87,7 @@
       "src/features/question-round/question-round-context.tsx",
       "src/features/storage/**/*.{ts,tsx}",
       "src/features/theme/**/*.{ts,tsx}",
+      "src/features/trip-guidance/{trip-guidance-context,trip-guidance-state}.{ts,tsx}",
       "src/hooks/**/*.{ts,tsx}",
       "supabase/functions/delete-account/handler.ts",
       "!**/*.test.{ts,tsx}"
@@ -110,6 +111,9 @@
         "lines": 80
       },
       "./src/features/question-round/question-round-context.tsx": {
+        "lines": 80
+      },
+      "./src/features/trip-guidance/trip-guidance-context.tsx": {
         "lines": 80
       }
     }
