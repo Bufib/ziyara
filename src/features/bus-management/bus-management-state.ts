@@ -1,4 +1,6 @@
 import type {
+  BusBoarding,
+  BusBoardingEscalation,
   BusBoardingResponse,
   BusBoardingStatus,
   TripBus,
@@ -7,16 +9,31 @@ import type {
 
 export type BusParticipantState = TripParticipant & {
   bus_name: string | null;
+  escalation: BusBoardingEscalation | null;
+  response_updated_at: string | null;
   status: BusBoardingStatus | null;
 };
 
 export type BusBoardingSummary = {
   boarded: number;
+  confirmed: number;
   notConfirmed: number;
   onWay: number;
   problem: number;
+  read: number;
   total: number;
 };
+
+export type BusClosureState = {
+  boarded: number;
+  busId: number | null;
+  busName: string | null;
+  canClose: boolean;
+  outstandingParticipantCodes: string[];
+  total: number;
+};
+
+export type GeneralAlarmUrgency = 'normal' | 'overdue' | 'urgent';
 
 export type BusStatusSubmitFailureKind =
   | 'auth'
@@ -62,11 +79,15 @@ export function buildBusParticipantStates(
   participants: TripParticipant[],
   buses: TripBus[],
   responses: BusBoardingResponse[],
+  escalations: BusBoardingEscalation[] = [],
 ): BusParticipantState[] {
   const busNames = new Map(buses.map((bus) => [bus.id, bus.name]));
   const busSortOrders = new Map(buses.map((bus) => [bus.id, bus.sort_order]));
-  const responseStatuses = new Map(
-    responses.map((response) => [response.participant_id, response.status]),
+  const responsesByParticipant = new Map(
+    responses.map((response) => [response.participant_id, response]),
+  );
+  const escalationsByParticipant = new Map(
+    escalations.map((escalation) => [escalation.participant_id, escalation]),
   );
 
   return [...participants]
@@ -81,11 +102,16 @@ export function buildBusParticipantStates(
           : (busSortOrders.get(right.bus_id) ?? Number.MAX_SAFE_INTEGER - 1);
       return leftBus - rightBus || left.participant_code.localeCompare(right.participant_code);
     })
-    .map((participant) => ({
-      ...participant,
-      bus_name: participant.bus_id === null ? null : (busNames.get(participant.bus_id) ?? null),
-      status: responseStatuses.get(participant.id) ?? null,
-    }));
+    .map((participant) => {
+      const response = responsesByParticipant.get(participant.id);
+      return {
+        ...participant,
+        bus_name: participant.bus_id === null ? null : (busNames.get(participant.bus_id) ?? null),
+        escalation: escalationsByParticipant.get(participant.id) ?? null,
+        response_updated_at: response?.updated_at ?? null,
+        status: response?.status ?? null,
+      };
+    });
 }
 
 export function summarizeBusBoarding(
@@ -97,16 +123,90 @@ export function summarizeBusBoarding(
 
       if (participant.status === 'boarded') {
         summary.boarded += 1;
+        summary.confirmed += 1;
+      } else if (participant.status === 'read') {
+        summary.read += 1;
+        summary.confirmed += 1;
       } else if (participant.status === 'on_way') {
         summary.onWay += 1;
+        summary.confirmed += 1;
       } else if (participant.status === 'problem') {
         summary.problem += 1;
+        summary.confirmed += 1;
       } else {
         summary.notConfirmed += 1;
       }
 
       return summary;
     },
-    { boarded: 0, notConfirmed: 0, onWay: 0, problem: 0, total: 0 },
+    { boarded: 0, confirmed: 0, notConfirmed: 0, onWay: 0, problem: 0, read: 0, total: 0 },
   );
+}
+
+export function getNextGeneralAlarmStatus(
+  status: BusBoardingStatus | null,
+): BusBoardingStatus | null {
+  if (status === null) return 'read';
+  if (status === 'read') return 'on_way';
+  if (status === 'on_way') return 'boarded';
+  return null;
+}
+
+export function getGeneralAlarmReminderDueAt(
+  boarding: Pick<BusBoarding, 'opened_at' | 'reminder_interval_minutes'>,
+  participant: Pick<BusParticipantState, 'response_updated_at' | 'status'>,
+) {
+  if (getNextGeneralAlarmStatus(participant.status) === null) return null;
+  const stageStartedAt = participant.response_updated_at ?? boarding.opened_at;
+  return new Date(
+    new Date(stageStartedAt).getTime() + boarding.reminder_interval_minutes * 60_000,
+  );
+}
+
+export function isGeneralAlarmReminderDue(
+  boarding: Pick<BusBoarding, 'opened_at' | 'reminder_interval_minutes'>,
+  participant: Pick<BusParticipantState, 'response_updated_at' | 'status'>,
+  now = new Date(),
+) {
+  const dueAt = getGeneralAlarmReminderDueAt(boarding, participant);
+  return dueAt ? dueAt.getTime() <= now.getTime() : false;
+}
+
+export function getGeneralAlarmUrgency(
+  boarding: Pick<BusBoarding, 'departure_at' | 'urgent_before_minutes'>,
+  now = new Date(),
+): GeneralAlarmUrgency {
+  const remainingMs = new Date(boarding.departure_at).getTime() - now.getTime();
+  if (remainingMs <= 0) return 'overdue';
+  if (remainingMs <= boarding.urgent_before_minutes * 60_000) return 'urgent';
+  return 'normal';
+}
+
+export function buildBusClosureStates(
+  participants: Pick<BusParticipantState, 'bus_id' | 'bus_name' | 'participant_code' | 'status'>[],
+): BusClosureState[] {
+  const groups = new Map<number | null, BusClosureState>();
+
+  for (const participant of participants) {
+    const current = groups.get(participant.bus_id) ?? {
+      boarded: 0,
+      busId: participant.bus_id,
+      busName: participant.bus_name,
+      canClose: true,
+      outstandingParticipantCodes: [],
+      total: 0,
+    };
+    current.total += 1;
+
+    if (participant.status === 'boarded') {
+      current.boarded += 1;
+    } else {
+      current.canClose = false;
+      current.outstandingParticipantCodes.push(participant.participant_code);
+    }
+
+    groups.set(participant.bus_id, current);
+  }
+
+  return [...groups.values()];
 }

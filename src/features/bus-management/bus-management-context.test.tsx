@@ -91,8 +91,10 @@ const activeBoarding: BusBoarding = {
   departure_at: '2026-08-27T09:00:00Z',
   id: 40,
   opened_at: '2026-08-27T08:30:00Z',
+  reminder_interval_minutes: 5,
   title: 'Abfahrt Karbala',
   trip_id: activeTrip.id,
+  urgent_before_minutes: 5,
 };
 const onWayResponse: BusBoardingResponse = {
   boarding_id: activeBoarding.id,
@@ -146,6 +148,7 @@ function queueSnapshot(response: BusBoardingResponse[] = [onWayResponse]) {
   enqueue('trip_participants', { data: [participant], error: null });
   enqueue('bus_boardings', { data: activeBoarding, error: null });
   enqueue('bus_boarding_responses', { data: response, error: null });
+  enqueue('bus_boarding_escalations', { data: [], error: null });
 }
 
 function Probe() {
@@ -338,6 +341,7 @@ describe('BusManagementProvider', () => {
     enqueue('trip_participants', { data: [participant], error: null });
     enqueue('bus_boardings', { data: activeBoarding, error: null });
     enqueue('bus_boarding_responses', { data: [boardedResponse], error: null });
+    enqueue('bus_boarding_escalations', { data: [], error: null });
 
     await act(async () => {
       tripRefresh.resolve({ data: activeTrip, error: null });
@@ -371,6 +375,7 @@ describe('BusManagementProvider', () => {
     enqueue('trip_participants', { data: [participant], error: null });
     enqueue('bus_boardings', { data: activeBoarding, error: null });
     enqueue('bus_boarding_responses', { data: [onWayResponse], error: null });
+    enqueue('bus_boarding_escalations', { data: [], error: null });
     await act(async () => {
       staleTrip.resolve({ data: activeTrip, error: null });
       await flush();

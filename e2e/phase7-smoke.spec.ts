@@ -178,19 +178,28 @@ test.describe.serial('Phase 7 E2E smoke flows', () => {
     await admin.page.getByRole('button', { name: 'Teilnehmer speichern' }).click();
     await expect(admin.page.getByText('E2E01')).toBeVisible();
 
-    await admin.page.getByLabel('Bezeichnung der Abfahrt').fill('Abfahrt vom E2E Hotel');
-    await admin.page.getByRole('button', { name: 'Boarding starten' }).click();
+    await admin.page.getByRole('button', { name: /Generalalarm/u }).click();
+    await admin.page.getByLabel('Alarmmeldung').fill('Abfahrt vom E2E Hotel');
+    await admin.page
+      .getByRole('button', { name: /Generalalarm einschalten$/u })
+      .click();
     await expect(admin.page.getByText('Abfahrt vom E2E Hotel')).toBeVisible();
 
     await member.page.getByRole('button', { name: 'Busstatus öffnen' }).click();
     await expect(member.page.getByText('Abfahrt vom E2E Hotel')).toBeVisible();
     await expect(member.page.getByText('E2E01')).toBeVisible();
-    await member.page.getByRole('radio', { name: 'Im Bus' }).click();
+    await member.page.getByRole('button', { name: 'Gelesen' }).click();
+    await member.page.getByRole('button', { name: 'Unterwegs' }).click();
+    await member.page.getByRole('button', { name: 'Im Bus' }).click();
     await expect(member.page.getByText('Dein Busstatus wurde gespeichert.')).toBeVisible();
     await expect(admin.page.getByText('Im Bus').first()).toBeVisible();
 
-    await admin.page.getByRole('button', { name: 'Boarding schließen' }).click();
-    await expect(admin.page.getByRole('button', { name: 'Boarding starten' })).toBeVisible();
+    await admin.page
+      .getByRole('button', { name: /Generalalarm beenden$/u })
+      .click();
+    await expect(
+      admin.page.getByRole('button', { exact: true, name: 'Generalalarm einschalten' }),
+    ).toBeVisible();
     await admin.context.close();
     await member.context.close();
   });

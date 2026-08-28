@@ -1,5 +1,5 @@
 export type AppRole = 'admin' | 'medical_staff' | 'organization_team' | 'user';
-export type BusBoardingStatus = 'boarded' | 'on_way' | 'problem';
+export type BusBoardingStatus = 'boarded' | 'on_way' | 'problem' | 'read';
 export type MemberType = 'brother' | 'sister';
 export type TripGuidanceStatus =
   | 'almost_there'
@@ -113,8 +113,10 @@ export type BusBoarding = {
   departure_at: string;
   id: number;
   opened_at: string;
+  reminder_interval_minutes: number;
   title: string;
   trip_id: number;
+  urgent_before_minutes: number;
 };
 
 export type BusBoardingResponse = {
@@ -126,6 +128,52 @@ export type BusBoardingResponse = {
   trip_id: number;
   updated_at: string;
   updated_by_profile_id: number | null;
+};
+
+export type BusBoardingEscalation = {
+  boarding_id: number;
+  escalated_at: string;
+  escalated_by_display_name: string;
+  escalated_by_profile_id: number | null;
+  id: number;
+  participant_id: number;
+  trip_id: number;
+};
+
+export type PushNotificationDevice = {
+  created_at: string;
+  expo_push_token: string;
+  id: number;
+  locale: 'ar' | 'de' | 'en';
+  platform: 'android' | 'ios';
+  profile_id: number;
+  updated_at: string;
+};
+
+export type GeneralAlarmNotificationAttempt = {
+  accepted_at: string | null;
+  boarding_id: number;
+  claimed_at: string;
+  error_code: string | null;
+  expected_status: BusBoardingStatus;
+  id: number;
+  participant_id: number;
+  push_device_id: number;
+  reminder_slot: number;
+};
+
+export type GeneralAlarmNotificationClaim = {
+  attempt_id: number;
+  boarding_id: number;
+  departure_at: string;
+  expected_status: BusBoardingStatus;
+  expo_push_token: string;
+  is_urgent: boolean;
+  locale: string;
+  participant_code: string;
+  participant_id: number;
+  platform: string;
+  title: string;
 };
 
 export type TripGuidanceUpdate = {
@@ -201,6 +249,24 @@ export type Database = {
           updated_by_profile_id?: number | null;
         };
       };
+      bus_boarding_escalations: {
+        Insert: {
+          boarding_id: number;
+          escalated_at?: string;
+          escalated_by_display_name: string;
+          escalated_by_profile_id?: number | null;
+          id?: never;
+          participant_id: number;
+          trip_id: number;
+        };
+        Relationships: [];
+        Row: BusBoardingEscalation;
+        Update: {
+          escalated_at?: string;
+          escalated_by_display_name?: string;
+          escalated_by_profile_id?: number | null;
+        };
+      };
       bus_boardings: {
         Insert: {
           closed_at?: string | null;
@@ -208,15 +274,38 @@ export type Database = {
           departure_at: string;
           id?: never;
           opened_at?: string;
+          reminder_interval_minutes?: number;
           title: string;
           trip_id: number;
+          urgent_before_minutes?: number;
         };
         Relationships: [];
         Row: BusBoarding;
         Update: {
           closed_at?: string | null;
           departure_at?: string;
+          reminder_interval_minutes?: number;
           title?: string;
+          urgent_before_minutes?: number;
+        };
+      };
+      general_alarm_notification_attempts: {
+        Insert: {
+          accepted_at?: string | null;
+          boarding_id: number;
+          claimed_at?: string;
+          error_code?: string | null;
+          expected_status: BusBoardingStatus;
+          id?: never;
+          participant_id: number;
+          push_device_id: number;
+          reminder_slot: number;
+        };
+        Relationships: [];
+        Row: GeneralAlarmNotificationAttempt;
+        Update: {
+          accepted_at?: string | null;
+          error_code?: string | null;
         };
       };
       group_check_responses: {
@@ -267,6 +356,26 @@ export type Database = {
           member_type?: MemberType | null;
           party_size?: number;
           role?: AppRole;
+          updated_at?: string;
+        };
+      };
+      push_notification_devices: {
+        Insert: {
+          created_at?: string;
+          expo_push_token: string;
+          id?: never;
+          locale?: 'ar' | 'de' | 'en';
+          platform: 'android' | 'ios';
+          profile_id: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+        Row: PushNotificationDevice;
+        Update: {
+          expo_push_token?: string;
+          locale?: 'ar' | 'de' | 'en';
+          platform?: 'android' | 'ios';
+          profile_id?: number;
           updated_at?: string;
         };
       };
@@ -430,6 +539,10 @@ export type Database = {
         Args: { p_trip_id: number };
         Returns: Trip;
       };
+      admin_escalate_bus_boarding_participant: {
+        Args: { p_boarding_id: number; p_participant_id: number };
+        Returns: BusBoardingEscalation;
+      };
       admin_close_bus_boarding: {
         Args: { p_boarding_id: number };
         Returns: BusBoarding;
@@ -522,6 +635,22 @@ export type Database = {
         Args: { p_user_id: string };
         Returns: boolean;
       };
+      can_dispatch_general_alarm: {
+        Args: { p_user_id: string };
+        Returns: boolean;
+      };
+      claim_due_general_alarm_notifications: {
+        Args: never;
+        Returns: GeneralAlarmNotificationClaim[];
+      };
+      complete_general_alarm_notification_attempts: {
+        Args: {
+          p_accepted: boolean;
+          p_attempt_ids: number[];
+          p_error_code: string;
+        };
+        Returns: undefined;
+      };
       is_admin: {
         Args: never;
         Returns: boolean;
@@ -562,6 +691,14 @@ export type Database = {
         };
         Returns: BusBoardingResponse;
       };
+      register_push_notification_device: {
+        Args: {
+          p_expo_push_token: string;
+          p_locale: 'ar' | 'de' | 'en';
+          p_platform: 'android' | 'ios';
+        };
+        Returns: undefined;
+      };
       start_group_check: {
         Args: { p_question: string };
         Returns: GroupCheck;
@@ -573,6 +710,10 @@ export type Database = {
       submit_anonymous_question: {
         Args: { p_question: string; p_round_id: number };
         Returns: AnonymousQuestion;
+      };
+      unregister_push_notification_device: {
+        Args: { p_expo_push_token: string };
+        Returns: undefined;
       };
     };
     Enums: {

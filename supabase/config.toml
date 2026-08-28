@@ -394,6 +394,11 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/delete-account/index.ts"
 
+[functions.dispatch-general-alarm]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/dispatch-general-alarm/index.ts"
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 

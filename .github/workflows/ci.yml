@@ -49,6 +49,11 @@ jobs:
           status="$(curl --silent --output /tmp/delete-account-response.json --write-out '%{http_code}' --request POST --header 'Content-Type: application/json' --data '{}' http://127.0.0.1:54321/functions/v1/delete-account)"
           test "$status" = "401"
           node -e "const body = JSON.parse(require('node:fs').readFileSync('/tmp/delete-account-response.json', 'utf8')); if (body.code !== 'unauthorized') process.exit(1)"
+      - name: Verify general-alarm dispatcher auth gate
+        run: |
+          status="$(curl --silent --output /tmp/general-alarm-response.json --write-out '%{http_code}' --request POST --header 'Content-Type: application/json' --data '{}' http://127.0.0.1:54321/functions/v1/dispatch-general-alarm)"
+          test "$status" = "401"
+          node -e "const body = JSON.parse(require('node:fs').readFileSync('/tmp/general-alarm-response.json', 'utf8')); if (body.code !== 'unauthorized') process.exit(1)"
       - run: npx supabase db lint --local --level warning
       - run: npx supabase test db --local
       - name: Run local full-stack E2E smoke flows

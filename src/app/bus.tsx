@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -11,15 +11,17 @@ import type { BusBoardingStatus } from '@/domain/database';
 import { RequireAuth } from '@/features/auth/RequireAuth';
 import { useBusManagement } from '@/features/bus-management/bus-management-context';
 import {
+  getGeneralAlarmUrgency,
+  getNextGeneralAlarmStatus,
   getBusStatusSubmitFailureKind,
+  isGeneralAlarmReminderDue,
   type BusParticipantState,
   type BusStatusSubmitFailureKind,
 } from '@/features/bus-management/bus-management-state';
+import { useGeneralAlarmNotifications } from '@/features/general-alarm/general-alarm-notifications-context';
 import { useI18n } from '@/features/i18n/i18n';
 import { supabaseReadFailureTranslationKey } from '@/features/network/supabase-read';
 import { useTheme } from '@/hooks/use-theme';
-
-const statusOptions: BusBoardingStatus[] = ['on_way', 'boarded', 'problem'];
 
 export default function BusScreen() {
   return (
@@ -48,12 +50,19 @@ function BusContent() {
     kind: BusStatusSubmitFailureKind;
     participantId: number;
   } | null>(null);
+  const [now, setNow] = useState(() => new Date());
+  const alarmUrgency = activeBoarding ? getGeneralAlarmUrgency(activeBoarding, now) : 'normal';
   const departureLabel = activeBoarding
     ? new Intl.DateTimeFormat(language, {
         dateStyle: 'medium',
         timeStyle: 'short',
       }).format(new Date(activeBoarding.departure_at))
     : null;
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 15_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const submitStatus = async (participantId: number, status: BusBoardingStatus) => {
     if (!activeBoarding || submittingParticipantId !== null) return;
@@ -135,13 +144,34 @@ function BusContent() {
         ) : (
           <>
             {activeBoarding ? (
-              <Card style={[styles.boardingCard, { borderColor: theme.warning }]}>
-                <ThemedText type="smallBold" themeColor="warning">
+              <Card
+                accessibilityRole="alert"
+                style={[
+                  styles.boardingCard,
+                  {
+                    backgroundColor:
+                      alarmUrgency === 'normal' ? theme.surface : theme.dangerSoft,
+                    borderColor:
+                      alarmUrgency === 'normal' ? theme.warning : theme.danger,
+                  },
+                ]}>
+                <ThemedText
+                  type="smallBold"
+                  themeColor={alarmUrgency === 'normal' ? 'warning' : 'danger'}>
                   {t('bus.activeLabel')}
                 </ThemedText>
                 <ThemedText type="heading">{activeBoarding.title}</ThemedText>
                 <ThemedText themeColor="textSecondary">
                   {t('bus.departureAt', { date: departureLabel ?? '—' })}
+                </ThemedText>
+                <ThemedText
+                  accessibilityLiveRegion="polite"
+                  type="heading"
+                  themeColor={alarmUrgency === 'normal' ? 'warning' : 'danger'}>
+                  {departureCountdown(activeBoarding.departure_at, now, t)}
+                </ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t('generalAlarm.sequenceBody')}
                 </ThemedText>
               </Card>
             ) : (
@@ -150,6 +180,8 @@ function BusContent() {
                 <ThemedText themeColor="textSecondary">{t('bus.noBoardingBody')}</ThemedText>
               </Card>
             )}
+
+            <GeneralAlarmNotificationCard />
 
             <View style={styles.participantList}>
               {participants.map((participant) => (
@@ -160,6 +192,11 @@ function BusContent() {
                   key={participant.id}
                   onStatus={(status) => void submitStatus(participant.id, status)}
                   participant={participant}
+                  reminderDue={
+                    activeBoarding
+                      ? isGeneralAlarmReminderDue(activeBoarding, participant, now)
+                      : false
+                  }
                   submitErrorKind={
                     submitError?.participantId === participant.id ? submitError.kind : null
                   }
@@ -180,6 +217,7 @@ function ParticipantCard({
   isSubmitting,
   onStatus,
   participant,
+  reminderDue,
   submitErrorKind,
 }: {
   active: boolean;
@@ -187,10 +225,15 @@ function ParticipantCard({
   isSubmitting: boolean;
   onStatus: (status: BusBoardingStatus) => void;
   participant: BusParticipantState;
+  reminderDue: boolean;
   submitErrorKind: BusStatusSubmitFailureKind | null;
 }) {
   const theme = useTheme();
   const { t } = useI18n();
+  const nextStatus = getNextGeneralAlarmStatus(participant.status);
+  const statusOptions: BusBoardingStatus[] = nextStatus
+    ? [nextStatus, 'problem']
+    : [];
 
   return (
     <Card style={styles.participantCard}>
@@ -206,7 +249,7 @@ function ParticipantCard({
       </View>
 
       {active ? (
-        <View accessibilityRole="radiogroup" style={styles.statusButtons}>
+        <View style={styles.statusButtons}>
           {statusOptions.map((status) => {
             const selected = participant.status === status;
             const color =
@@ -214,12 +257,14 @@ function ParticipantCard({
                 ? theme.success
                 : status === 'problem'
                   ? theme.danger
-                  : theme.accent;
+                  : status === 'read'
+                    ? theme.warning
+                    : theme.accent;
 
             return (
               <Pressable
-                accessibilityRole="radio"
-                accessibilityState={{ checked: selected, disabled }}
+                accessibilityRole="button"
+                accessibilityState={{ disabled }}
                 disabled={disabled}
                 key={status}
                 onPress={() => onStatus(status)}
@@ -240,6 +285,15 @@ function ParticipantCard({
               </Pressable>
             );
           })}
+        </View>
+      ) : null}
+
+      {reminderDue ? (
+        <View style={[styles.reminderDue, { backgroundColor: theme.warningSoft }]}>
+          <SymbolIcon color={theme.warning} name="warning" size={18} />
+          <ThemedText type="smallBold" themeColor="warning">
+            {t(`generalAlarm.reminderDue.${nextStatus ?? 'problem'}`)}
+          </ThemedText>
         </View>
       ) : null}
 
@@ -265,6 +319,8 @@ function StatusBadge({ status }: { status: BusBoardingStatus | null }) {
       ? theme.success
       : status === 'problem'
         ? theme.danger
+        : status === 'read'
+          ? theme.warning
         : status === 'on_way'
           ? theme.accent
           : theme.textSecondary;
@@ -273,7 +329,13 @@ function StatusBadge({ status }: { status: BusBoardingStatus | null }) {
     <View style={[styles.statusBadge, { borderColor: color }]}>
       <SymbolIcon
         color={color}
-        name={status === 'boarded' ? 'confirm' : status === 'problem' ? 'warning' : 'bus'}
+        name={
+          status === 'boarded' || status === 'read'
+            ? 'confirm'
+            : status === 'problem'
+              ? 'warning'
+              : 'bus'
+        }
         size={18}
       />
       <ThemedText type="smallBold" style={{ color }}>
@@ -281,6 +343,69 @@ function StatusBadge({ status }: { status: BusBoardingStatus | null }) {
       </ThemedText>
     </View>
   );
+}
+
+function GeneralAlarmNotificationCard() {
+  const theme = useTheme();
+  const { t } = useI18n();
+  const { availability, enable, isWorking, openSettings } =
+    useGeneralAlarmNotifications();
+  const enabled = availability === 'registered';
+
+  return (
+    <Card
+      style={[
+        styles.notificationCard,
+        { borderColor: enabled ? theme.success : theme.border },
+      ]}>
+      <View style={styles.notificationHeader}>
+        <SymbolIcon
+          color={enabled ? theme.success : theme.warning}
+          name={enabled ? 'confirm' : 'warning'}
+          size={22}
+        />
+        <View style={styles.participantText}>
+          <ThemedText type="heading">{t('generalAlarm.notificationsTitle')}</ThemedText>
+          <ThemedText themeColor="textSecondary">
+            {t(`generalAlarm.notifications.${availability}`)}
+          </ThemedText>
+        </View>
+      </View>
+      <ThemedText type="small" themeColor="textSecondary">
+        {t('generalAlarm.platformLimit')}
+      </ThemedText>
+      {!enabled && availability !== 'checking' && availability !== 'unsupported' ? (
+        <View style={styles.notificationActions}>
+          <Button
+            disabled={isWorking}
+            icon="confirm"
+            label={t('generalAlarm.enableNotifications')}
+            onPress={() => void enable()}
+          />
+          {availability === 'denied' ? (
+            <Button
+              icon="settings"
+              label={t('generalAlarm.openSettings')}
+              onPress={() => void openSettings()}
+              variant="secondary"
+            />
+          ) : null}
+        </View>
+      ) : null}
+    </Card>
+  );
+}
+
+function departureCountdown(
+  departureAt: string,
+  now: Date,
+  t: (key: string, params?: Record<string, number | string>) => string,
+) {
+  const remainingMs = new Date(departureAt).getTime() - now.getTime();
+  const minutes = Math.ceil(Math.abs(remainingMs) / 60_000);
+  return remainingMs <= 0
+    ? t('generalAlarm.departureOverdue', { count: minutes })
+    : t('generalAlarm.departureCountdown', { count: Math.max(1, minutes) });
 }
 
 const styles = StyleSheet.create({
@@ -322,6 +447,20 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     justifyContent: 'space-between',
   },
+  notificationActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  notificationCard: {
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: Spacing.two,
+  },
+  notificationHeader: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
   participantCard: {
     gap: Spacing.three,
   },
@@ -340,6 +479,13 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.72,
+  },
+  reminderDue: {
+    alignItems: 'center',
+    borderRadius: 8,
+    flexDirection: 'row',
+    gap: Spacing.two,
+    padding: Spacing.two,
   },
   safeArea: {
     flex: 1,

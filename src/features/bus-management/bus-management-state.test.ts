@@ -2,8 +2,13 @@ import { describe, expect, it } from '@jest/globals';
 
 import type { BusBoardingResponse, TripBus, TripParticipant } from '@/domain/database';
 import {
+  buildBusClosureStates,
   buildBusParticipantStates,
+  getGeneralAlarmReminderDueAt,
+  getGeneralAlarmUrgency,
+  getNextGeneralAlarmStatus,
   getBusStatusSubmitFailureKind,
+  isGeneralAlarmReminderDue,
   shouldRetryBusStatusAfterSessionRefresh,
   summarizeBusBoarding,
   type BusStatusSubmitFailureKind,
@@ -62,25 +67,92 @@ describe('bus management state', () => {
     expect(states[2]).toMatchObject({ bus_name: null, status: null });
   });
 
-  it('unterscheidet bestätigt, unterwegs, Problem und noch offen', () => {
+  it('unterscheidet gelesen, unterwegs, im Bus, Problem und noch offen', () => {
     const states = buildBusParticipantStates(
       [
         participant(1, 'BER01', 40),
         participant(2, 'BER02', 40),
         participant(3, 'BER03', 40),
         participant(4, 'BER04', 40),
+        participant(5, 'BER05', 40),
       ],
       buses,
-      [response(1, 'boarded'), response(2, 'on_way'), response(3, 'problem')],
+      [
+        response(1, 'boarded'),
+        response(2, 'on_way'),
+        response(3, 'problem'),
+        response(5, 'read'),
+      ],
     );
 
     expect(summarizeBusBoarding(states)).toEqual({
       boarded: 1,
+      confirmed: 4,
       notConfirmed: 1,
       onWay: 1,
       problem: 1,
-      total: 4,
+      read: 1,
+      total: 5,
     });
+  });
+
+  it('berechnet Statusfolge, Fünf-Minuten-Frist und Dringlichkeit deterministisch', () => {
+    const boarding = {
+      departure_at: '2026-08-27T09:15:00Z',
+      opened_at: '2026-08-27T09:00:00Z',
+      reminder_interval_minutes: 5,
+      urgent_before_minutes: 5,
+    };
+    const waiting = { response_updated_at: null, status: null };
+
+    expect(getNextGeneralAlarmStatus(null)).toBe('read');
+    expect(getNextGeneralAlarmStatus('read')).toBe('on_way');
+    expect(getNextGeneralAlarmStatus('on_way')).toBe('boarded');
+    expect(getNextGeneralAlarmStatus('boarded')).toBeNull();
+    expect(getNextGeneralAlarmStatus('problem')).toBeNull();
+    expect(getGeneralAlarmReminderDueAt(boarding, waiting)?.toISOString()).toBe(
+      '2026-08-27T09:05:00.000Z',
+    );
+    expect(isGeneralAlarmReminderDue(boarding, waiting, new Date('2026-08-27T09:04:59Z'))).toBe(
+      false,
+    );
+    expect(isGeneralAlarmReminderDue(boarding, waiting, new Date('2026-08-27T09:05:00Z'))).toBe(
+      true,
+    );
+    expect(getGeneralAlarmUrgency(boarding, new Date('2026-08-27T09:09:59Z'))).toBe('normal');
+    expect(getGeneralAlarmUrgency(boarding, new Date('2026-08-27T09:10:00Z'))).toBe('urgent');
+    expect(getGeneralAlarmUrgency(boarding, new Date('2026-08-27T09:15:00Z'))).toBe('overdue');
+  });
+
+  it('zeigt pro Bus, ob noch physische Teilnehmer fehlen', () => {
+    const states = buildBusParticipantStates(
+      [
+        participant(1, 'BER01', 40),
+        participant(2, 'BER02', 40),
+        participant(3, 'DUS01', 20),
+      ],
+      buses,
+      [response(1, 'boarded'), response(2, 'read'), response(3, 'boarded')],
+    );
+
+    expect(buildBusClosureStates(states)).toEqual([
+      {
+        boarded: 1,
+        busId: 40,
+        busName: 'Bus 1',
+        canClose: false,
+        outstandingParticipantCodes: ['BER02'],
+        total: 2,
+      },
+      {
+        boarded: 1,
+        busId: 20,
+        busName: 'Bus 2',
+        canClose: true,
+        outstandingParticipantCodes: [],
+        total: 1,
+      },
+    ]);
   });
 
   it('erneuert die Sitzung nur bei Authentifizierungsfehlern des Busstatus-RPCs', () => {

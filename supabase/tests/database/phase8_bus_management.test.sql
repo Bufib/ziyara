@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(23);
+select plan(24);
 
 select ok(
   (
@@ -22,8 +22,8 @@ select ok(
 select enum_has_labels(
   'public',
   'bus_boarding_status',
-  array['on_way', 'boarded', 'problem'],
-  'boarding status uses the three supported states'
+  array['read', 'on_way', 'boarded', 'problem'],
+  'boarding status includes the general-alarm acknowledgement state'
 );
 
 insert into auth.users (id, email, raw_user_meta_data)
@@ -175,7 +175,7 @@ select is(
   1::bigint,
   'a participant reads only physical IDs linked to their account'
 );
-select lives_ok(
+select throws_ok(
   $$
     select public.respond_to_bus_boarding(
       (select id from public.bus_boardings where closed_at is null),
@@ -183,7 +183,40 @@ select lives_ok(
       'boarded'::public.bus_boarding_status
     )
   $$,
-  'a participant confirms their linked physical ID'
+  '22023',
+  'Invalid participant boarding status transition.',
+  'a participant cannot skip the required acknowledgement stages'
+);
+select lives_ok(
+  $$
+    do $status_flow$
+    declare
+      active_boarding_id int8 := (
+        select id from public.bus_boardings where closed_at is null
+      );
+      linked_participant_id int8 := (
+        select id from public.trip_participants where participant_code = 'BER01'
+      );
+    begin
+      perform public.respond_to_bus_boarding(
+        active_boarding_id,
+        linked_participant_id,
+        'read'::public.bus_boarding_status
+      );
+      perform public.respond_to_bus_boarding(
+        active_boarding_id,
+        linked_participant_id,
+        'on_way'::public.bus_boarding_status
+      );
+      perform public.respond_to_bus_boarding(
+        active_boarding_id,
+        linked_participant_id,
+        'boarded'::public.bus_boarding_status
+      );
+    end;
+    $status_flow$
+  $$,
+  'a participant confirms their linked physical ID in the required order'
 );
 select throws_ok(
   $$

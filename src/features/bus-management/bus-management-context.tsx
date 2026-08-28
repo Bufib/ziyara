@@ -13,6 +13,7 @@ import { AppState, Platform } from 'react-native';
 
 import type {
   BusBoarding,
+  BusBoardingEscalation,
   BusBoardingResponse,
   BusBoardingStatus,
   Trip,
@@ -63,6 +64,7 @@ type BusManagementSnapshot = {
   activeBoarding: BusBoarding | null;
   activeTrip: Trip | null;
   buses: TripBus[];
+  escalations: BusBoardingEscalation[];
   participants: TripParticipant[];
   responses: BusBoardingResponse[];
 };
@@ -71,6 +73,7 @@ const emptySnapshot: BusManagementSnapshot = {
   activeBoarding: null,
   activeTrip: null,
   buses: [],
+  escalations: [],
   participants: [],
   responses: [],
 };
@@ -169,7 +172,7 @@ export function BusManagementProvider({ children }: PropsWithChildren) {
           supabase
             .from('bus_boardings')
             .select(
-              'id, trip_id, title, departure_at, created_by_profile_id, opened_at, closed_at',
+              'id, trip_id, title, departure_at, reminder_interval_minutes, urgent_before_minutes, created_by_profile_id, opened_at, closed_at',
             )
             .eq('trip_id', activeTrip.id)
             .is('closed_at', null)
@@ -183,21 +186,35 @@ export function BusManagementProvider({ children }: PropsWithChildren) {
       if (boardingResult.error) throw boardingResult.error;
 
       let responses: BusBoardingResponse[] = [];
+      let escalations: BusBoardingEscalation[] = [];
 
       if (boardingResult.data) {
         const boardingId = boardingResult.data.id;
-        const responseResult = await withSupabaseReadTimeout((signal) =>
-          supabase
-            .from('bus_boarding_responses')
-            .select(
-              'id, trip_id, boarding_id, participant_id, status, updated_by_profile_id, created_at, updated_at',
-            )
-            .eq('boarding_id', boardingId)
-            .abortSignal(signal),
-        );
+        const [responseResult, escalationResult] = await Promise.all([
+          withSupabaseReadTimeout((signal) =>
+            supabase
+              .from('bus_boarding_responses')
+              .select(
+                'id, trip_id, boarding_id, participant_id, status, updated_by_profile_id, created_at, updated_at',
+              )
+              .eq('boarding_id', boardingId)
+              .abortSignal(signal),
+          ),
+          withSupabaseReadTimeout((signal) =>
+            supabase
+              .from('bus_boarding_escalations')
+              .select(
+                'id, trip_id, boarding_id, participant_id, escalated_by_profile_id, escalated_by_display_name, escalated_at',
+              )
+              .eq('boarding_id', boardingId)
+              .abortSignal(signal),
+          ),
+        ]);
 
         if (responseResult.error) throw responseResult.error;
+        if (escalationResult.error) throw escalationResult.error;
         responses = responseResult.data ?? [];
+        escalations = escalationResult.data ?? [];
       }
 
       if (requestVersion === stateVersion.current) {
@@ -205,6 +222,7 @@ export function BusManagementProvider({ children }: PropsWithChildren) {
           activeBoarding: boardingResult.data,
           activeTrip,
           buses: busesResult.data ?? [],
+          escalations,
           participants: participantsResult.data ?? [],
           responses,
         });
@@ -244,6 +262,7 @@ export function BusManagementProvider({ children }: PropsWithChildren) {
       'trip_participants',
       'bus_boardings',
       'bus_boarding_responses',
+      'bus_boarding_escalations',
     ]) {
       channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => void refresh());
     }
@@ -339,8 +358,14 @@ export function BusManagementProvider({ children }: PropsWithChildren) {
   );
 
   const participants = useMemo(
-    () => buildBusParticipantStates(snapshot.participants, snapshot.buses, snapshot.responses),
-    [snapshot.buses, snapshot.participants, snapshot.responses],
+    () =>
+      buildBusParticipantStates(
+        snapshot.participants,
+        snapshot.buses,
+        snapshot.responses,
+        snapshot.escalations,
+      ),
+    [snapshot.buses, snapshot.escalations, snapshot.participants, snapshot.responses],
   );
   const value = useMemo<BusManagementContextValue>(
     () => ({

@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Shia Ziyarah Iraq",
+    "name": "AL BATOUL",
     "slug": "ziyara",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.jpg",
     "scheme": "ziyara",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -32,6 +32,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-notifications",
       [
         "expo-splash-screen",
         {

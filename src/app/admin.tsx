@@ -21,6 +21,8 @@ import { useAuth } from '@/features/auth/auth-context';
 import { RequireAuth } from '@/features/auth/RequireAuth';
 import { supabase } from '@/features/auth/supabase';
 import { AdminBusManagementPanel } from '@/features/bus-management/AdminBusManagementPanel';
+import { useBusManagement } from '@/features/bus-management/bus-management-context';
+import { AdminGeneralAlarmPanel } from '@/features/general-alarm/AdminGeneralAlarmPanel';
 import { AdminGroupCheckPanel } from '@/features/group-check/AdminGroupCheckPanel';
 import { useGroupCheck } from '@/features/group-check/group-check-context';
 import { AdminQuestionRoundPanel } from '@/features/question-round/AdminQuestionRoundPanel';
@@ -39,7 +41,7 @@ import { useTripGuidance } from '@/features/trip-guidance/trip-guidance-context'
 const adminPageSize = 200;
 const assignableRoles: AppRole[] = ['user', 'medical_staff', 'organization_team', 'admin'];
 
-type AdminSection = 'bus' | 'guidance' | 'questions' | 'status' | 'users';
+type AdminSection = 'alarm' | 'bus' | 'guidance' | 'questions' | 'status' | 'users';
 type RoleFeedback = {
   type: 'error' | 'last-admin' | 'success';
   userId: string;
@@ -81,6 +83,7 @@ function AdminContent() {
   const theme = useTheme();
   const { isRTL, language, t } = useI18n();
   const { profile, refreshProfile } = useAuth();
+  const { activeBoarding, hasSyncError: hasBusSyncError } = useBusManagement();
   const { activeCheck, hasSyncError: hasGroupCheckSyncError } = useGroupCheck();
   const { activeRound, hasSyncError: hasQuestionRoundSyncError } = useQuestionRound();
   const {
@@ -98,6 +101,7 @@ function AdminContent() {
   const usersRequestSequence = useRef(0);
   const hasError = readErrorKind !== null;
   const [expandedSections, setExpandedSections] = useState<Record<AdminSection, boolean>>({
+    alarm: false,
     bus: false,
     guidance: false,
     questions: false,
@@ -234,6 +238,27 @@ function AdminContent() {
                   title={t('admin.section.bus.title')}
                 />
                 {expandedSections.bus ? <AdminBusManagementPanel users={users} /> : null}
+              </View>
+
+              <View style={styles.section}>
+                <AdminSectionHeader
+                  description={t('admin.section.alarm.description')}
+                  expanded={expandedSections.alarm}
+                  icon="warning"
+                  onToggle={() => toggleSection('alarm')}
+                  status={t(
+                    hasBusSyncError
+                      ? 'admin.section.alarm.error'
+                      : activeBoarding
+                        ? 'admin.section.alarm.active'
+                        : 'admin.section.alarm.inactive',
+                  )}
+                  statusColor={
+                    hasBusSyncError ? 'danger' : activeBoarding ? 'warning' : 'textSecondary'
+                  }
+                  title={t('admin.section.alarm.title')}
+                />
+                {expandedSections.alarm ? <AdminGeneralAlarmPanel /> : null}
               </View>
 
               <View style={styles.section}>

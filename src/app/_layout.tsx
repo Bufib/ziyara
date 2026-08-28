@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from '@/features/auth/auth-context';
 import { BusManagementProvider } from '@/features/bus-management/bus-management-context';
 import { AppErrorBoundary } from '@/features/errors/AppErrorBoundary';
 import { GroupCheckProvider, useGroupCheck } from '@/features/group-check/group-check-context';
+import { GeneralAlarmNotificationsProvider } from '@/features/general-alarm/general-alarm-notifications-context';
 import { AppI18nProvider, useI18n } from '@/features/i18n/i18n';
 import { supabaseReadFailureTranslationKey } from '@/features/network/supabase-read';
 import { QuestionRoundProvider } from '@/features/question-round/question-round-context';
@@ -26,13 +27,15 @@ export default function RootLayout() {
         <AppThemeProvider>
           <AuthProvider>
             <BusManagementProvider>
-              <TripGuidanceProvider>
-                <GroupCheckProvider>
-                  <QuestionRoundProvider>
-                    <RootNavigation />
-                  </QuestionRoundProvider>
-                </GroupCheckProvider>
-              </TripGuidanceProvider>
+              <GeneralAlarmNotificationsProvider>
+                <TripGuidanceProvider>
+                  <GroupCheckProvider>
+                    <QuestionRoundProvider>
+                      <RootNavigation />
+                    </QuestionRoundProvider>
+                  </GroupCheckProvider>
+                </TripGuidanceProvider>
+              </GeneralAlarmNotificationsProvider>
             </BusManagementProvider>
           </AuthProvider>
         </AppThemeProvider>
@@ -96,7 +99,6 @@ function RootNavigation() {
             <Stack.Screen name="bus" options={{ title: t('bus.navTitle') }} />
             <Stack.Screen name="guide" options={{ title: t('guide.navTitle') }} />
             <Stack.Screen name="sources" options={{ title: t('nav.sources') }} />
-            <Stack.Screen name="disclaimer" options={{ title: t('nav.disclaimer') }} />
             <Stack.Screen
               name="question-round"
               options={{ title: t('questionRound.navTitle') }}

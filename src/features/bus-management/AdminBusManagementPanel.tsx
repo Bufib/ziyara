@@ -6,21 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { SymbolIcon } from '@/components/ui/symbol-icon';
 import { Spacing } from '@/constants/theme';
-import type { AdminUserSummary, BusBoardingStatus } from '@/domain/database';
+import type { AdminUserSummary } from '@/domain/database';
 import { useAuth } from '@/features/auth/auth-context';
 import { supabase } from '@/features/auth/supabase';
 import { useBusManagement } from '@/features/bus-management/bus-management-context';
-import {
-  shouldRetryBusStatusAfterSessionRefresh,
-  summarizeBusBoarding,
-  type BusParticipantState,
-} from '@/features/bus-management/bus-management-state';
+import { shouldRetryBusStatusAfterSessionRefresh } from '@/features/bus-management/bus-management-state';
 import { useI18n } from '@/features/i18n/i18n';
 import { supabaseReadFailureTranslationKey } from '@/features/network/supabase-read';
 import { useTheme } from '@/hooks/use-theme';
-
-const departureMinuteOptions = [15, 30, 60] as const;
-const statusOptions: BusBoardingStatus[] = ['on_way', 'boarded', 'problem'];
 
 export function AdminBusManagementPanel({ users }: { users: AdminUserSummary[] }) {
   const theme = useTheme();
@@ -43,13 +36,8 @@ export function AdminBusManagementPanel({ users }: { users: AdminUserSummary[] }
   const [selectedBusId, setSelectedBusId] = useState<number | null>(null);
   const [accountSearch, setAccountSearch] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [boardingTitle, setBoardingTitle] = useState('');
-  const [departureMinutes, setDepartureMinutes] = useState<(typeof departureMinuteOptions)[number]>(
-    15,
-  );
   const [isWorking, setIsWorking] = useState(false);
   const [hasActionError, setHasActionError] = useState(false);
-  const summary = summarizeBusBoarding(participants);
   const selectedAccount = users.find((user) => user.user_id === selectedUserId) ?? null;
   const matchingAccounts = useMemo(() => {
     const normalized = accountSearch.trim().toLocaleLowerCase(language);
@@ -131,38 +119,6 @@ export function AdminBusManagementPanel({ users }: { users: AdminUserSummary[] }
         setSelectedUserId(null);
         setAccountSearch('');
       },
-    );
-  };
-
-  const startBoarding = () => {
-    if (!activeTrip) return;
-    const departureAt = new Date(Date.now() + departureMinutes * 60_000).toISOString();
-    void runAction(
-      () =>
-        supabase.rpc('admin_start_bus_boarding', {
-          p_departure_at: departureAt,
-          p_title: boardingTitle.trim(),
-          p_trip_id: activeTrip.id,
-        }),
-      () => setBoardingTitle(''),
-    );
-  };
-
-  const closeBoarding = () => {
-    if (!activeBoarding) return;
-    void runAction(() =>
-      supabase.rpc('admin_close_bus_boarding', { p_boarding_id: activeBoarding.id }),
-    );
-  };
-
-  const setParticipantStatus = (participantId: number, status: BusBoardingStatus) => {
-    if (!activeBoarding) return;
-    void runAction(() =>
-      supabase.rpc('admin_set_bus_boarding_status', {
-        p_boarding_id: activeBoarding.id,
-        p_participant_id: participantId,
-        p_status: status,
-      }),
     );
   };
 
@@ -384,63 +340,6 @@ export function AdminBusManagementPanel({ users }: { users: AdminUserSummary[] }
         />
       </Card>
 
-      <Card style={styles.formCard}>
-        <ThemedText type="heading">
-          {activeBoarding ? activeBoarding.title : t('bus.admin.startBoardingTitle')}
-        </ThemedText>
-        {activeBoarding ? (
-          <>
-            <ThemedText themeColor="textSecondary">
-              {t('bus.departureAt', {
-                date: new Intl.DateTimeFormat(language, {
-                  dateStyle: 'medium',
-                  timeStyle: 'short',
-                }).format(new Date(activeBoarding.departure_at)),
-              })}
-            </ThemedText>
-            <View style={styles.summaryGrid}>
-              <SummaryValue color={theme.textSecondary} label={t('bus.status.not_confirmed')} value={summary.notConfirmed} />
-              <SummaryValue color={theme.accent} label={t('bus.status.on_way')} value={summary.onWay} />
-              <SummaryValue color={theme.success} label={t('bus.status.boarded')} value={summary.boarded} />
-              <SummaryValue color={theme.danger} label={t('bus.status.problem')} value={summary.problem} />
-            </View>
-            <Button
-              disabled={isWorking}
-              icon="close"
-              label={t('bus.admin.closeBoarding')}
-              onPress={closeBoarding}
-              variant="secondary"
-            />
-          </>
-        ) : (
-          <>
-            <LabeledInput
-              label={t('bus.admin.boardingTitle')}
-              onChangeText={setBoardingTitle}
-              placeholder={t('bus.admin.boardingTitlePlaceholder')}
-              value={boardingTitle}
-            />
-            <ThemedText type="smallBold">{t('bus.admin.departureIn')}</ThemedText>
-            <View accessibilityRole="radiogroup" style={styles.chips}>
-              {departureMinuteOptions.map((minutes) => (
-                <SelectionChip
-                  key={minutes}
-                  label={t('bus.admin.minutes', { count: minutes })}
-                  onPress={() => setDepartureMinutes(minutes)}
-                  selected={departureMinutes === minutes}
-                />
-              ))}
-            </View>
-            <Button
-              disabled={isWorking || participants.length === 0 || boardingTitle.trim().length < 3}
-              icon="bus"
-              label={t('bus.admin.startBoarding')}
-              onPress={startBoarding}
-            />
-          </>
-        )}
-      </Card>
-
       <View style={styles.participantList}>
         {participants.length === 0 ? (
           <Card style={styles.stateCard}>
@@ -451,12 +350,13 @@ export function AdminBusManagementPanel({ users }: { users: AdminUserSummary[] }
           </Card>
         ) : (
           participants.map((participant) => (
-            <AdminParticipantRow
-              disabled={isWorking || !activeBoarding}
-              key={participant.id}
-              onStatus={(status) => setParticipantStatus(participant.id, status)}
-              participant={participant}
-            />
+            <Card key={participant.id} style={styles.participantRow}>
+              <ThemedText type="heading">{participant.participant_code}</ThemedText>
+              <ThemedText themeColor="textSecondary">{participant.display_name}</ThemedText>
+              <ThemedText type="smallBold" themeColor="accent">
+                {participant.bus_name ?? t('bus.unassignedBus')}
+              </ThemedText>
+            </Card>
           ))
         )}
       </View>
@@ -530,72 +430,6 @@ function SelectionChip({
   );
 }
 
-function SummaryValue({ color, label, value }: { color: string; label: string; value: number }) {
-  return (
-    <View style={[styles.summaryValue, { borderColor: color }]}>
-      <ThemedText type="title" style={{ color }}>
-        {value}
-      </ThemedText>
-      <ThemedText type="small" style={{ color }}>
-        {label}
-      </ThemedText>
-    </View>
-  );
-}
-
-function AdminParticipantRow({
-  disabled,
-  onStatus,
-  participant,
-}: {
-  disabled: boolean;
-  onStatus: (status: BusBoardingStatus) => void;
-  participant: BusParticipantState;
-}) {
-  const theme = useTheme();
-  const { t } = useI18n();
-  const statusColor =
-    participant.status === 'boarded'
-      ? theme.success
-      : participant.status === 'problem'
-        ? theme.danger
-        : participant.status === 'on_way'
-          ? theme.accent
-          : theme.textSecondary;
-
-  return (
-    <Card style={styles.participantRow}>
-      <View style={styles.participantHeader}>
-        <View style={styles.tripHeaderText}>
-          <ThemedText type="heading">{participant.participant_code}</ThemedText>
-          <ThemedText themeColor="textSecondary">{participant.display_name}</ThemedText>
-          <ThemedText type="smallBold" themeColor="accent">
-            {participant.bus_name ?? t('bus.unassignedBus')}
-          </ThemedText>
-        </View>
-        <View style={[styles.currentStatus, { borderColor: statusColor }]}>
-          <ThemedText type="smallBold" style={{ color: statusColor }}>
-            {t(`bus.status.${participant.status ?? 'not_confirmed'}`)}
-          </ThemedText>
-        </View>
-      </View>
-      {!disabled ? (
-        <View style={styles.rowActions}>
-          {statusOptions.map((status) => (
-            <Button
-              icon={status === 'boarded' ? 'confirm' : status === 'problem' ? 'warning' : 'bus'}
-              key={status}
-              label={t(`bus.status.${status}`)}
-              onPress={() => onStatus(status)}
-              variant={participant.status === status ? 'primary' : 'secondary'}
-            />
-          ))}
-        </View>
-      ) : null}
-    </Card>
-  );
-}
-
 function ActionError() {
   const { t } = useI18n();
   return (
@@ -614,6 +448,25 @@ const styles = StyleSheet.create({
   },
   accountResults: {
     gap: Spacing.one,
+  },
+  alarmBanner: {
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: Spacing.one,
+    padding: Spacing.three,
+  },
+  busClosureCard: {
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexGrow: 1,
+    gap: Spacing.one,
+    minWidth: 180,
+    padding: Spacing.two,
+  },
+  busClosureGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
   },
   chips: {
     flexDirection: 'row',
@@ -669,11 +522,24 @@ const styles = StyleSheet.create({
   participantList: {
     gap: Spacing.two,
   },
+  outstandingHeading: {
+    gap: Spacing.one,
+  },
   participantRow: {
     gap: Spacing.two,
   },
   pressed: {
     opacity: 0.72,
+  },
+  pushDispatchRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  pushDispatchText: {
+    flex: 1,
+    minWidth: 180,
   },
   readonlyChip: {
     alignItems: 'center',

@@ -362,6 +362,7 @@ Tests/checks:
 Files to create or modify:
 
 - `src/app/bus.tsx`
+- `src/app/admin.tsx`
 - `src/features/bus-management/*`
 - `src/app/admin.tsx`
 - `src/domain/database.ts`
@@ -419,3 +420,36 @@ Tests/checks:
 - Fresh local migration, database lint and pgTAP RLS/RPC lifecycle tests.
 - Playwright full-stack smoke from publication through a Realtime meeting-point edit and explicit problem acceptance.
 - Web, iOS and Android JavaScript exports plus manual native location-permission review.
+
+## Phase 13: General alarm and escalation
+
+Files to create or modify:
+
+- `src/app/bus.tsx`
+- `src/features/bus-management/*`
+- `src/features/general-alarm/*`
+- `src/domain/database.ts`
+- `src/features/i18n/i18n.tsx`
+- `supabase/migrations/20260827130000_add_bus_boarding_read_status.sql`
+- `supabase/migrations/20260827140000_add_general_alarm.sql`
+- `supabase/migrations/20260827150000_enforce_general_alarm_status_order.sql`
+- `supabase/functions/dispatch-general-alarm/*`
+- `supabase/tests/database/phase10_general_alarm.test.sql`
+- `docs/GENERAL_ALARM.md`
+
+Acceptance criteria:
+
+- The admin area exposes Generalalarm as its own section, separate from bus setup. An admin explicitly configures and enables it there, sees its active/inactive state and can end it there.
+- Participants confirm `read`, `on_way` and `boarded` in sequence per linked physical participant ID; `problem` remains available as an exception path.
+- A missing next stage becomes due after five minutes. Native clients reconcile bounded local reminders, while an idempotent server dispatcher claims at most one Expo push attempt per device, participant, stage and reminder window.
+- Push tokens are never client-readable. Registration is profile-bound, dispatch requires a verified admin or scheduler secret, and privileged claims/completions are limited to `service_role`.
+- The admin overview shows confirmed and missing totals, every outstanding participant, per-bus closure readiness, urgency near departure and an explicit manual escalation action.
+- Expo ticket acceptance is not presented as guaranteed device delivery. UI and documentation preserve iOS, Android, Expo Go, user-setting and powered-off-device limitations.
+- Web remains functional without importing the native notification module.
+
+Tests/checks:
+
+- Jest tests for stage order, reminder timing, bus closure summaries and dispatcher authorization/results.
+- Fresh local migration, DB lint and pgTAP tests for token secrecy, grants, escalation, read acknowledgements and idempotent five-minute claims.
+- Web/iOS/Android exports and a new native development build.
+- Real-device push and weak-network test after EAS credentials, Remote migration, Edge Function and scheduler are explicitly deployed.

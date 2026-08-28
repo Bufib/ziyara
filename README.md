@@ -2,13 +2,14 @@
 
 Produktionsorientierte Expo-SDK-57-App für eine schiitische Ziyarah-Reise im Irak. Stand dieser Dokumentation: 27. August 2026.
 
-Der Guide ist mit seinen Orts-, Stadt-, Karten-, Such-, Lesezeichen-, Reader-, Einstellungs-, About-, Disclaimer- und Quelleninhalten lokal gebündelt und startet ohne Anmeldung sowie ohne Supabase-Verbindung. Konto-, Bus-, Reiseführungs-, Gruppencheck-, Fragerunden- und Administrationsfunktionen bleiben durch Supabase Auth, Row Level Security und serverseitig geprüfte RPCs geschützt.
+Der Guide ist mit seinen Orts-, Stadt-, Karten-, Such-, Lesezeichen-, Reader-, Einstellungs-, About-, Disclaimer- und Quelleninhalten lokal gebündelt und startet ohne Anmeldung sowie ohne Supabase-Verbindung. Konto-, Bus-, Generalalarm-, Reiseführungs-, Gruppencheck-, Fragerunden- und Administrationsfunktionen bleiben durch Supabase Auth, Row Level Security und serverseitig geprüfte RPCs geschützt.
 
 ## Dokumentation
 
 - [`LLM_CONTEXT.md`](./LLM_CONTEXT.md): verbindlicher Ist-Zustand für LLMs und neue Mitwirkende
 - [`AGENTS.md`](./AGENTS.md): Arbeits-, Sicherheits-, Qualitäts- und Inhaltsregeln
 - [`docs/IMPLEMENTATION_PLAN.md`](./docs/IMPLEMENTATION_PLAN.md): ursprüngliche Roadmap; nicht ungeprüft als Ist-Zustand verwenden
+- [`docs/GENERAL_ALARM.md`](./docs/GENERAL_ALARM.md): Push-/Scheduler-Aktivierung und verbindliche Plattformgrenzen
 
 ## Aktuell umgesetzt
 
@@ -37,9 +38,17 @@ Der Guide ist mit seinen Orts-, Stadt-, Karten-, Such-, Lesezeichen-, Reader-, E
 ### Busmanagement
 
 - Admins legen eine aktive Reise, benannte Busse und physische Teilnehmer-IDs an. IDs können optional mit App-Konten verknüpft werden; mehrere IDs dürfen demselben Konto gehören.
-- Während eines Boardings melden verknüpfte Konten pro eigener ID `Unterwegs`, `Im Bus` oder `Problem`. Nicht verknüpfte und noch nicht bestätigte Personen bleiben in der Leiterübersicht sichtbar und können dort manuell gesetzt werden.
+- Der eigene Admin-Punkt **Generalalarm** übernimmt das Starten, Überwachen und Beenden des Bestätigungsablaufs. Das Busmanagement bleibt auf Reise-, Bus- und Teilnehmerzuordnung konzentriert.
 - Realtime, App-Fokus und ein gestaffelter Fallback-Refresh halten die Übersicht aktuell. Monotone Request-Versionen verhindern, dass ältere Reads einen gespeicherten Status zurücksetzen. Antwort und Schließen sperren dieselbe Boarding-Zeile und bleiben dadurch transaktional geordnet.
 - Bei einer abgelaufenen oder fehlenden Auth-Session erneuert der Client die Sitzung und wiederholt eine Teilnehmer- oder Admin-Statusmutation genau einmal für dieselbe User-ID. Endgültige Fehler laden den autoritativen Stand und unterscheiden Auth-, geschlossenes Boarding-, geänderte Zuordnungs-, Offline- und Serverzustände.
+
+### Generalalarm
+
+- Der Admin öffnet den eigenen Punkt **Generalalarm**, legt Alarmmeldung und Abfahrt fest und schaltet den Alarm ausdrücklich ein. Der Punkt zeigt jederzeit **Eingeschaltet** oder **Ausgeschaltet** und bietet bei aktivem Alarm eine Beenden-Aktion.
+- Ein offenes Boarding führt Teilnehmer pro physischer ID durch `Gelesen` → `Ich bin unterwegs` → `Im Bus`; `Problem` bleibt als Ausnahmeweg verfügbar.
+- Nach fünf Minuten ohne nächste Stufe werden native lokale Erinnerungen geplant. Ein geschützter Dispatcher beansprucht zusätzlich höchstens einen Expo-Push-Versuch je Gerät, Teilnehmer, Stufe und Fünf-Minuten-Fenster.
+- Das separate Generalalarm-Panel zeigt bestätigte und fehlende Teilnehmer, alle ausstehenden IDs, die Schließbereitschaft jedes Busses und eine ausdrücklich protokollierte manuelle Eskalation.
+- Push-Tokens und Versandversuche sind nicht clientlesbar. Ein Expo-Ticket gilt nur als Annahme durch den Push-Dienst, nie als garantierte Zustellung oder garantiertes Aufwecken.
 
 ### Reiseführung und „Wo sind wir?“
 
@@ -60,7 +69,7 @@ Der Guide ist mit seinen Orts-, Stadt-, Karten-, Such-, Lesezeichen-, Reader-, E
 - React Native `0.86.3`, React `19.2.3`, TypeScript `~6.0.3` im Strict Mode
 - Expo Router mit typed routes und nativen Tabs
 - Supabase JS `^2.112.3` für Auth, Postgres, RPC und Realtime
-- AsyncStorage, React Native Maps, Expo Location, Image, Clipboard und Linking
+- AsyncStorage, React Native Maps, Expo Location, Notifications, Device, Image, Clipboard und Linking
 - Jest/Jest Expo, pgTAP und Playwright
 
 Expo-/React-Native-Abhängigkeiten nur mit `npx expo install` auf SDK-57-kompatible Versionen bringen. React Native nicht isoliert aktualisieren und kein `npm audit fix --force` verwenden.
@@ -98,12 +107,12 @@ npm audit
 
 Letzter vollständig ausgeführter Stand vom 27. August 2026:
 
-- `npm run validate`: bestanden; 108 Jest-Tests in 20 Suites
-- Line Coverage: global 86,93 %, AuthContext 90,82 %, BusManagementContext 92,70 %, TripGuidanceContext 84,97 %, GroupCheckContext 94,53 %, QuestionRoundContext 95,65 %
+- `npm run validate`: bestanden; 116 Jest-Tests in 22 Suites
+- Line Coverage: global 88,01 %, AuthContext 90,82 %, BusManagementContext 92,90 %, TripGuidanceContext 87,56 %, GroupCheckContext 95,31 %, QuestionRoundContext 95,65 %
 - Expo Doctor: 21/21 Checks bestanden
 - Web-, iOS- und Android-JavaScript-Export: bestanden
 - Supabase DB-Lint: keine Schemafehler
-- pgTAP: 114 Assertions in sieben SQL-Testdateien bestanden
+- pgTAP: 143 Assertions in acht SQL-Testdateien bestanden
 - Playwright: acht lokale Vollstack-Smokes bestanden, einschließlich Recovery, Offline-Start, Busmanagement und Reiseführung
 - `npm audit`: 0 Critical, 4 High, 11 Moderate
 
@@ -125,11 +134,11 @@ npm run test:e2e
 
 ## Remote-Backend-Stand
 
-Nach ausdrücklicher Freigabe wurden am 27. August 2026 die Migrationen `20260826000000` bis `20260826021000` sowie `20260827000000_add_bus_management.sql` auf das verknüpfte Supabase-Projekt ausgerollt. Lokal und remote waren anschließend alle Migrationen bis `20260827000000` synchron; Remote-DB-Lint meldete keine Schemafehler. Keine bestehende Migration wurde verändert, gelöscht oder zusammengefasst.
+Nach ausdrücklicher Freigabe wurden am 27. August 2026 die Migrationen `20260826000000` bis `20260826021000` sowie `20260827000000_add_bus_management.sql` auf das verknüpfte Supabase-Projekt ausgerollt. Am 28. August 2026 folgten `20260827120000_add_trip_guidance.sql`, `20260827130000_add_bus_boarding_read_status.sql`, `20260827140000_add_general_alarm.sql` und `20260827150000_enforce_general_alarm_status_order.sql`. Lokal und remote sind damit alle Migrationen synchron; der Remote-Lint des `public`-Schemas meldet keine Fehler. Keine bestehende Migration wurde verändert, gelöscht oder zusammengefasst.
 
 Die Edge Function `delete-account` ist remote als aktive Version 1 mit `verify_jwt = false` bereitgestellt. Das schaltet nur die vorgeschaltete Legacy-JWT-Prüfung aus; die Function verlangt weiterhin einen Bearer-Token und validiert ihn über Supabase Auth. Ein anonymer Remote-Aufruf wurde erwartungsgemäß mit HTTP 401 abgewiesen. Es wurde kein reales Konto testweise gelöscht.
 
-Die Remote-Auth-Redirect-Allowlist wurde nicht verändert. Der zuletzt ergänzte Busstatus-Session-Retry und die Reiseführungsoberfläche befinden sich im lokalen Clientcode und benötigen für bereits installierte Apps einen neuen Build beziehungsweise ein App-Update. Die neue Migration `20260827120000_add_trip_guidance.sql` ist nur lokal angewandt und noch nicht remote ausgerollt. Es wurde kein Client-Build deployed, committed oder gepusht.
+Die Remote-Auth-Redirect-Allowlist wurde nicht verändert. Der zuletzt ergänzte Busstatus-Session-Retry, die Reiseführungsoberfläche und der Generalalarm befinden sich im lokalen Clientcode und benötigen für bereits installierte Apps einen neuen Build beziehungsweise ein App-Update. Die zugehörigen Datenbankmigrationen sind remote ausgerollt. `dispatch-general-alarm`, Push-Secrets und Scheduler wurden noch nicht remote eingerichtet. Es wurde kein Client-Build deployed, committed oder gepusht.
 
 ## CI
 
@@ -146,7 +155,8 @@ Die Kernarchitektur und die automatisierten lokalen Prüfungen sind stabil, die 
 - religiöse, historische und ortsbezogene Inhalte fachlich und rechtlich freigeben
 - native Karte, RTL, dynamische Schrift und alle drei Sprachen auf Zielgeräten prüfen
 - realen Last-/Mobilfunktest für Bus-, Realtime- und Gruppenfunktionen mit der erwarteten Reisegruppengröße durchführen
-- Reiseführungs-Migration nach ausdrücklicher Freigabe remote ausrollen und Realtime/Offline-Warteschlange unter realen Mobilfunkbedingungen prüfen
+- Reiseführung mit neuem Client-Build sowie Realtime/Offline-Warteschlange unter realen Mobilfunkbedingungen prüfen
+- Generalalarm-Dispatcher nach ausdrücklicher Freigabe remote ausrollen, EAS-Projekt-ID/Push-Credentials und minutenweisen Scheduler einrichten, neuen nativen Build verteilen und den Ablauf auf echten Geräten prüfen
 - SDK-kompatible Fixes für die verbleibenden High-/Moderate-Auditmeldungen übernehmen, sobald Expo/Metro sie bereitstellt
 
 ## Inhaltsregel

@@ -22,6 +22,8 @@ set search_path = ''
 as $$
 begin
   perform set_config('request.jwt.claim.sub', p_user_id::text, true);
+  perform public.respond_to_bus_boarding(p_boarding_id, p_participant_id, 'read');
+  perform public.respond_to_bus_boarding(p_boarding_id, p_participant_id, 'on_way');
   perform public.respond_to_bus_boarding(p_boarding_id, p_participant_id, 'boarded');
   perform pg_catalog.pg_sleep(p_hold_seconds);
   return 'ok';
