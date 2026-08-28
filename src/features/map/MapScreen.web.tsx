@@ -4,11 +4,13 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { Section } from '@/components/ui/section';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { allPlaces } from '@/data/places';
+import type { TripNavigationDestination } from '@/domain/database';
 import { useI18n } from '@/features/i18n/i18n';
 import {
   formatPlaceLocation,
@@ -17,6 +19,7 @@ import {
 } from '@/features/i18n/localizedData';
 import { placeRoute } from '@/features/navigation/routes';
 import { openNavigation } from '@/features/places/openNavigation';
+import { useTripGuidance } from '@/features/trip-guidance/trip-guidance-context';
 import { useTheme } from '@/hooks/use-theme';
 
 const bounds = {
@@ -46,10 +49,13 @@ function positionFor({ latitude, longitude }: Coordinates) {
 export function MapExperience() {
   const theme = useTheme();
   const { language, t } = useI18n();
+  const { navigationDestinations } = useTripGuidance();
   const places = localizePlaces(allPlaces, language);
   const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle');
   const [locationMessageKey, setLocationMessageKey] = useState<LocationMessageKey | null>(null);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [selectedDestination, setSelectedDestination] =
+    useState<TripNavigationDestination | null>(null);
 
   const requestLocation = () => {
     const geolocation = globalThis.navigator?.geolocation;
@@ -128,6 +134,21 @@ export function MapExperience() {
               <ThemedText style={styles.markerText}> </ThemedText>
             </Pressable>
           ))}
+          {navigationDestinations.map((destination) => (
+            <Pressable
+              accessibilityLabel={`${t('map.tripDestination')}: ${destination.name}`}
+              accessibilityRole="button"
+              key={`destination-${destination.id}`}
+              onPress={() => setSelectedDestination(destination)}
+              style={({ pressed }) => [
+                styles.destinationMarker,
+                positionFor(destination),
+                { backgroundColor: theme.danger, borderColor: theme.surface },
+                pressed && styles.pressed,
+              ]}>
+              <ThemedText style={styles.markerText}> </ThemedText>
+            </Pressable>
+          ))}
           {userLocation ? (
             <View
               accessibilityLabel={t('common.currentLocation')}
@@ -140,7 +161,59 @@ export function MapExperience() {
             </View>
           ) : null}
         </View>
+        {selectedDestination ? (
+          <Card style={[styles.selectedDestination, { borderColor: theme.danger }]}>
+            <View style={styles.placeText}>
+              <ThemedText type="smallBold" themeColor="danger">
+                {t('map.tripDestination')}
+              </ThemedText>
+              <ThemedText type="heading">{selectedDestination.name}</ThemedText>
+              {selectedDestination.details ? (
+                <ThemedText type="small" themeColor="textSecondary">
+                  {selectedDestination.details}
+                </ThemedText>
+              ) : null}
+            </View>
+            <Button
+              icon="map"
+              label={t('common.navigate')}
+              onPress={() => void openNavigation(selectedDestination)}
+            />
+          </Card>
+        ) : null}
       </Section>
+
+      {navigationDestinations.length > 0 ? (
+        <Section title={t('map.tripDestinationsTitle')}>
+          <ThemedText themeColor="textSecondary">
+            {t('map.tripDestinationsBody')}
+          </ThemedText>
+          <View style={styles.list}>
+            {navigationDestinations.map((destination) => (
+              <View
+                key={destination.id}
+                style={[
+                  styles.placeRow,
+                  { backgroundColor: theme.surface, borderColor: theme.danger },
+                ]}>
+                <View style={styles.placeText}>
+                  <ThemedText type="heading">{destination.name}</ThemedText>
+                  {destination.details ? (
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {destination.details}
+                    </ThemedText>
+                  ) : null}
+                </View>
+                <Button
+                  icon="map"
+                  label={t('common.navigate')}
+                  onPress={() => void openNavigation(destination)}
+                />
+              </View>
+            ))}
+          </View>
+        </Section>
+      ) : null}
 
       <Section title={t('map.places')}>
         <View style={styles.list}>
@@ -197,6 +270,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 18,
   },
+  destinationMarker: {
+    borderRadius: 999,
+    borderWidth: 3,
+    height: 26,
+    marginLeft: -13,
+    marginTop: -13,
+    position: 'absolute',
+    width: 26,
+  },
   markerText: {
     fontSize: 1,
   },
@@ -223,6 +305,10 @@ const styles = StyleSheet.create({
   },
   placeText: {
     gap: Spacing.half,
+  },
+  selectedDestination: {
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: Spacing.two,
   },
   actions: {
     flexDirection: 'row',

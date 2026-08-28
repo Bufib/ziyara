@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
 import { allPlaces } from "@/data/places";
+import type { TripNavigationDestination } from "@/domain/database";
 import type { Place } from "@/domain/types";
 import { useI18n } from "@/features/i18n/i18n";
 import {
@@ -20,6 +21,7 @@ import {
 } from "@/features/i18n/localizedData";
 import { placeRoute } from "@/features/navigation/routes";
 import { openNavigation } from "@/features/places/openNavigation";
+import { useTripGuidance } from "@/features/trip-guidance/trip-guidance-context";
 import { useTheme } from "@/hooks/use-theme";
 
 const iraqRegion: Region = {
@@ -34,10 +36,13 @@ type LocationStatus = "idle" | "loading" | "granted" | "denied" | "error";
 export function MapExperience() {
   const theme = useTheme();
   const { language, t } = useI18n();
+  const { navigationDestinations } = useTripGuidance();
   const mapRef = useRef<MapView>(null);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(
     allPlaces[0],
   );
+  const [selectedDestination, setSelectedDestination] =
+    useState<TripNavigationDestination | null>(null);
   const insets = useSafeAreaInsets();
   const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
   const [userLocation, setUserLocation] =
@@ -122,12 +127,28 @@ export function MapExperience() {
               }}
               description={formatPlaceLocation(place, language, true)}
               key={place.id}
-              onPress={() => setSelectedPlace(rawPlace)}
+              onPress={() => {
+                setSelectedDestination(null);
+                setSelectedPlace(rawPlace);
+              }}
               pinColor={markerColor}
               title={place.name}
             />
           );
         })}
+        {navigationDestinations.map((destination) => (
+          <Marker
+            coordinate={destination}
+            description={destination.details ?? t("map.tripDestination")}
+            key={`destination-${destination.id}`}
+            onPress={() => {
+              setSelectedPlace(null);
+              setSelectedDestination(destination);
+            }}
+            pinColor={theme.danger}
+            title={destination.name}
+          />
+        ))}
         {userLocation ? (
           <Marker
             coordinate={userLocation.coords}
@@ -151,6 +172,17 @@ export function MapExperience() {
           variant={userLocation ? "secondary" : "primary"}
           onPress={requestLocation}
         />
+        {navigationDestinations.length > 0 ? (
+          <View
+            style={[
+              styles.destinationCount,
+              { backgroundColor: theme.surface, borderColor: theme.danger },
+            ]}>
+            <ThemedText type="smallBold" themeColor="danger">
+              {t("map.tripDestinationCount", { count: navigationDestinations.length })}
+            </ThemedText>
+          </View>
+        ) : null}
       </View>
 
       {(locationStatus === "denied" || locationStatus === "error") && (
@@ -170,7 +202,7 @@ export function MapExperience() {
         </View>
       )}
 
-      {localizedSelectedPlace && (
+      {(selectedDestination || localizedSelectedPlace) && (
         <View
           style={[
             styles.sheet,
@@ -183,25 +215,35 @@ export function MapExperience() {
         >
           <View style={styles.sheetHeader}>
             <View style={styles.sheetTitle}>
-              <ThemedText type="heading">{localizedSelectedPlace.name}</ThemedText>
+              <ThemedText type="heading">
+                {selectedDestination?.name ?? localizedSelectedPlace?.name}
+              </ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                {formatPlaceLocation(localizedSelectedPlace, language)}
+                {selectedDestination
+                  ? selectedDestination.details ?? t("map.tripDestination")
+                  : localizedSelectedPlace
+                    ? formatPlaceLocation(localizedSelectedPlace, language)
+                    : ""}
               </ThemedText>
             </View>
           </View>
 
           <View style={styles.sheetActions}>
-            <Button
-              icon="info"
-              label={t("common.details")}
-              onPress={() => router.push(placeRoute(localizedSelectedPlace.slug))}
-              style={styles.sheetActionButton}
-            />
+            {localizedSelectedPlace ? (
+              <Button
+                icon="info"
+                label={t("common.details")}
+                onPress={() => router.push(placeRoute(localizedSelectedPlace.slug))}
+                style={styles.sheetActionButton}
+              />
+            ) : null}
             <Button
               icon="map"
               label={t("common.navigate")}
               variant="secondary"
-              onPress={() => openNavigation(localizedSelectedPlace)}
+              onPress={() =>
+                void openNavigation(selectedDestination ?? localizedSelectedPlace!)
+              }
               style={styles.sheetActionButton}
             />
           </View>
@@ -214,6 +256,13 @@ export function MapExperience() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  destinationCount: {
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
   },
   map: {
     ...StyleSheet.absoluteFill,

@@ -124,6 +124,7 @@ function queueSnapshot(serverResponses: TripGuidanceResponse[] = []) {
   enqueue('trips', { data: activeTrip, error: null });
   enqueue('trip_participants', { data: [participant], error: null });
   enqueue('trip_guidance_updates', { data: guidance, error: null });
+  enqueue('trip_navigation_destinations', { data: [], error: null });
   enqueue('trip_guidance_responses', { data: serverResponses, error: null });
 }
 

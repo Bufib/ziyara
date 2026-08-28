@@ -400,6 +400,7 @@ Files to create or modify:
 - `src/domain/database.ts`
 - `src/features/i18n/i18n.tsx`
 - `supabase/migrations/20260827120000_add_trip_guidance.sql`
+- `supabase/migrations/20260828120000_add_trip_navigation_destinations.sql`
 - `supabase/tests/database/phase9_trip_guidance.test.sql`
 - `e2e/phase7-smoke.spec.ts`
 
@@ -410,6 +411,8 @@ Acceptance criteria:
 - Linked participants report `on_way`, `almost_there`, `at_meeting_point`, `problem`, `lost` or `medical_help` for their physical participant IDs.
 - An admin explicitly accepts a problem report, and the participant sees the accepting leader’s captured display name.
 - Place links, external meeting-point navigation and a one-shot distance check work without continuous tracking or backend location storage.
+- The admin dashboard exposes trip destinations and navigation as its own section, separate from trip-guidance editing. Admins can create and edit multiple named destinations, place each on a platform-specific map, drag the native marker or use their current location, preview navigation and archive obsolete entries.
+- Signed-in trip members see every active destination as a distinct marker on the native and web maps; web also exposes a destination list, and every destination opens external navigation.
 - Realtime, app focus and staggered fallback refreshes keep guidance and reports current.
 - Clear network failures queue reports in a validated, user-scoped AsyncStorage outbox. Pending UI never claims the leader received the report, and retries remain idempotent.
 - RLS exposes only the active trip to members, only linked participant reports to normal accounts and the complete overview to admins. All writes use authenticated RPCs.

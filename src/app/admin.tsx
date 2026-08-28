@@ -34,14 +34,22 @@ import {
   type SupabaseReadFailureKind,
   withSupabaseReadTimeout,
 } from '@/features/network/supabase-read';
-import { useTheme } from '@/hooks/use-theme';
+import { AdminMeetingPointPanel } from '@/features/trip-guidance/AdminMeetingPointPanel';
 import { AdminTripGuidancePanel } from '@/features/trip-guidance/AdminTripGuidancePanel';
 import { useTripGuidance } from '@/features/trip-guidance/trip-guidance-context';
+import { useTheme } from '@/hooks/use-theme';
 
 const adminPageSize = 200;
 const assignableRoles: AppRole[] = ['user', 'medical_staff', 'organization_team', 'admin'];
 
-type AdminSection = 'alarm' | 'bus' | 'guidance' | 'questions' | 'status' | 'users';
+type AdminSection =
+  | 'alarm'
+  | 'bus'
+  | 'guidance'
+  | 'navigation'
+  | 'questions'
+  | 'status'
+  | 'users';
 type RoleFeedback = {
   type: 'error' | 'last-admin' | 'success';
   userId: string;
@@ -89,7 +97,9 @@ function AdminContent() {
   const {
     activeGuidance,
     hasSyncError: hasTripGuidanceSyncError,
+    navigationDestinations,
   } = useTripGuidance();
+  const hasNavigationTarget = navigationDestinations.length > 0;
   const [users, setUsers] = useState<AdminUserSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -104,6 +114,7 @@ function AdminContent() {
     alarm: false,
     bus: false,
     guidance: false,
+    navigation: false,
     questions: false,
     status: false,
     users: false,
@@ -284,6 +295,32 @@ function AdminContent() {
                   title={t('admin.section.guidance.title')}
                 />
                 {expandedSections.guidance ? <AdminTripGuidancePanel /> : null}
+              </View>
+
+              <View style={styles.section}>
+                <AdminSectionHeader
+                  description={t('admin.section.navigation.description')}
+                  expanded={expandedSections.navigation}
+                  icon="external-link"
+                  onToggle={() => toggleSection('navigation')}
+                  status={t(
+                    hasTripGuidanceSyncError
+                      ? 'admin.section.navigation.error'
+                      : hasNavigationTarget
+                        ? 'admin.section.navigation.active'
+                        : 'admin.section.navigation.inactive',
+                    { count: navigationDestinations.length },
+                  )}
+                  statusColor={
+                    hasTripGuidanceSyncError
+                      ? 'danger'
+                      : hasNavigationTarget
+                        ? 'success'
+                        : 'textSecondary'
+                  }
+                  title={t('admin.section.navigation.title')}
+                />
+                {expandedSections.navigation ? <AdminMeetingPointPanel /> : null}
               </View>
 
               <View style={styles.section}>

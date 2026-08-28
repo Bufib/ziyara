@@ -52,9 +52,9 @@ Der Guide ist mit seinen Orts-, Stadt-, Karten-, Such-, Lesezeichen-, Reader-, E
 
 ### Reiseführung und „Wo sind wir?“
 
-- Admins veröffentlichen den aktuellen Besuchsort, nächsten Programmpunkt, Abfahrt, Treffpunkt, relevante Tür, Entfernungshinweis, Beschreibung und Handlungen. Kurzfristige Treffpunktänderungen erscheinen über Realtime, ohne bestehende Meldungen zu verlieren.
+- Admins veröffentlichen in **Reiseführung** den aktuellen Besuchsort, nächsten Programmpunkt, Abfahrt, Treffpunkt, relevante Tür, Entfernungshinweis, Beschreibung und Handlungen. Im davon getrennten Punkt **Reiseziele & Navigation** legen sie unabhängig davon mehrere benannte Ziele an, setzen deren Standort per Karte, verschiebbarem Marker oder aktuellem Gerätestandort und bearbeiten oder entfernen sie später.
 - Teilnehmer melden je eigener physischer ID „Noch unterwegs“, „Bin gleich da“, „Beim Treffpunkt“, „Problem“, „Verloren“ oder „Medizinische Hilfe benötigt“. Problemfälle werden ausdrücklich von einem Admin übernommen; der meldende Teilnehmer sieht dessen Anzeigenamen.
-- Verknüpfte Katalogorte und externe Navigation sind direkt erreichbar. Die Entfernung wird nur nach einem Klick einmalig bestimmt; es gibt kein permanentes Tracking und keine Speicherung der Geräteposition im Backend.
+- Alle aktiven Reiseziele erscheinen angemeldeten Teilnehmern als rote Marker auf der nativen und der Webkarte und sind einzeln über externe Navigation erreichbar. Verknüpfte Katalogorte bleiben separat sichtbar. Die Entfernung zum aktuellen Programmtreffpunkt wird nur nach einem Klick einmalig bestimmt; es gibt kein permanentes Tracking und keine Speicherung der Geräteposition im Backend.
 - Eindeutige Offlinefehler werden in einer validierten, benutzerspezifischen AsyncStorage-Warteschlange vorgemerkt. Die UI sagt ausdrücklich, dass diese Meldung noch nicht beim Reiseleiter angekommen ist.
 
 ### Fehlerbehandlung und Monitoring
@@ -134,7 +134,7 @@ npm run test:e2e
 
 ## Remote-Backend-Stand
 
-Nach ausdrücklicher Freigabe wurden am 27. August 2026 die Migrationen `20260826000000` bis `20260826021000` sowie `20260827000000_add_bus_management.sql` auf das verknüpfte Supabase-Projekt ausgerollt. Am 28. August 2026 folgten `20260827120000_add_trip_guidance.sql`, `20260827130000_add_bus_boarding_read_status.sql`, `20260827140000_add_general_alarm.sql` und `20260827150000_enforce_general_alarm_status_order.sql`. Lokal und remote sind damit alle Migrationen synchron; der Remote-Lint des `public`-Schemas meldet keine Fehler. Keine bestehende Migration wurde verändert, gelöscht oder zusammengefasst.
+Nach ausdrücklicher Freigabe wurden am 27. August 2026 die Migrationen `20260826000000` bis `20260826021000` sowie `20260827000000_add_bus_management.sql` auf das verknüpfte Supabase-Projekt ausgerollt. Am 28. August 2026 folgten `20260827120000_add_trip_guidance.sql`, `20260827130000_add_bus_boarding_read_status.sql`, `20260827140000_add_general_alarm.sql` und `20260827150000_enforce_general_alarm_status_order.sql`. Die neue additive Mehrzielmigration `20260828120000_add_trip_navigation_destinations.sql` liegt derzeit nur lokal vor und muss vor Nutzung des neuen Admin- und Kartenablaufs ausdrücklich remote angewandt werden. Keine bestehende Migration wurde verändert, gelöscht oder zusammengefasst.
 
 Die Edge Function `delete-account` ist remote als aktive Version 1 mit `verify_jwt = false` bereitgestellt. Das schaltet nur die vorgeschaltete Legacy-JWT-Prüfung aus; die Function verlangt weiterhin einen Bearer-Token und validiert ihn über Supabase Auth. Ein anonymer Remote-Aufruf wurde erwartungsgemäß mit HTTP 401 abgewiesen. Es wurde kein reales Konto testweise gelöscht.
 

@@ -16,6 +16,7 @@ import type {
   TripGuidanceResponse,
   TripGuidanceStatus,
   TripGuidanceUpdate,
+  TripNavigationDestination,
   TripParticipant,
 } from '@/domain/database';
 import { useAuth } from '@/features/auth/auth-context';
@@ -46,6 +47,7 @@ type TripGuidanceContextValue = {
   hasSyncError: boolean;
   isLoading: boolean;
   isRefreshing: boolean;
+  navigationDestinations: TripNavigationDestination[];
   participants: TripGuidanceParticipantState[];
   pendingCount: number;
   refresh: () => Promise<void>;
@@ -61,6 +63,7 @@ type TripGuidanceContextValue = {
 type Snapshot = {
   activeGuidance: TripGuidanceUpdate | null;
   activeTrip: Trip | null;
+  navigationDestinations: TripNavigationDestination[];
   participants: TripParticipant[];
   responses: TripGuidanceResponse[];
 };
@@ -71,6 +74,7 @@ const TripGuidanceContext = createContext<TripGuidanceContextValue | null>(null)
 const emptySnapshot: Snapshot = {
   activeGuidance: null,
   activeTrip: null,
+  navigationDestinations: [],
   participants: [],
   responses: [],
 };
@@ -155,7 +159,7 @@ export function TripGuidanceProvider({ children }: PropsWithChildren) {
         return;
       }
 
-      const [participantsResult, guidanceResult] = await Promise.all([
+      const [participantsResult, guidanceResult, destinationsResult] = await Promise.all([
         withSupabaseReadTimeout((signal) =>
           supabase
             .from('trip_participants')
@@ -177,9 +181,24 @@ export function TripGuidanceProvider({ children }: PropsWithChildren) {
             .abortSignal(signal)
             .maybeSingle(),
         ),
+        withSupabaseReadTimeout((signal) =>
+          supabase
+            .from('trip_navigation_destinations')
+            .select(
+              'id, trip_id, name, details, latitude, longitude, sort_order, created_by_profile_id, created_at, updated_at, archived_at',
+            )
+            .eq('trip_id', activeTrip.id)
+            .is('archived_at', null)
+            .order('sort_order')
+            .order('id')
+            .abortSignal(signal),
+        ),
       ]);
       if (participantsResult.error) throw participantsResult.error;
       if (guidanceResult.error) throw guidanceResult.error;
+      if (destinationsResult.error && destinationsResult.error.code !== 'PGRST205') {
+        throw destinationsResult.error;
+      }
 
       let responses: TripGuidanceResponse[] = [];
       const activeGuidance = guidanceResult.data;
@@ -201,6 +220,9 @@ export function TripGuidanceProvider({ children }: PropsWithChildren) {
         setSnapshot({
           activeGuidance,
           activeTrip,
+          navigationDestinations: destinationsResult.error
+            ? []
+            : (destinationsResult.data ?? []),
           participants: participantsResult.data ?? [],
           responses,
         });
@@ -332,6 +354,7 @@ export function TripGuidanceProvider({ children }: PropsWithChildren) {
       'trip_participants',
       'trip_guidance_updates',
       'trip_guidance_responses',
+      'trip_navigation_destinations',
     ]) {
       channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => void refresh());
     }
@@ -465,6 +488,7 @@ export function TripGuidanceProvider({ children }: PropsWithChildren) {
       hasSyncError: syncState === 'error',
       isLoading: syncState === 'loading' || syncedUserId !== userId,
       isRefreshing: syncState === 'refreshing',
+      navigationDestinations: snapshot.navigationDestinations,
       participants,
       pendingCount: applicableOutbox.length,
       refresh,
@@ -472,7 +496,7 @@ export function TripGuidanceProvider({ children }: PropsWithChildren) {
       setStatus,
       syncErrorKind,
     }),
-    [acknowledgeProblem, applicableOutbox.length, participants, refresh, retryPending, setStatus, snapshot.activeGuidance, snapshot.activeTrip, syncErrorKind, syncState, syncedUserId, userId],
+    [acknowledgeProblem, applicableOutbox.length, participants, refresh, retryPending, setStatus, snapshot.activeGuidance, snapshot.activeTrip, snapshot.navigationDestinations, syncErrorKind, syncState, syncedUserId, userId],
   );
 
   return <TripGuidanceContext.Provider value={value}>{children}</TripGuidanceContext.Provider>;

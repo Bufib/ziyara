@@ -209,7 +209,7 @@ test.describe.serial('Phase 7 E2E smoke flows', () => {
     const member = await openAuthenticatedPage(browser, memberEmail, memberResetPassword);
 
     await admin.page.goto('/admin');
-    await admin.page.getByRole('button', { name: /Reiseführung und Treffpunkt/u }).click();
+    await admin.page.getByRole('button', { name: /Reiseführung/u }).click();
     await admin.page.getByLabel('Aktueller Besuchsort').fill('E2E Besuchsort');
     await admin.page.getByLabel('Nächster Programmpunkt').fill('E2E Weiterfahrt');
     await admin.page.getByLabel('Treffpunkt', { exact: true }).fill('E2E Tor 3');
@@ -220,6 +220,14 @@ test.describe.serial('Phase 7 E2E smoke flows', () => {
       .getByRole('button', { name: 'Programmpunkt veröffentlichen' })
       .click();
     await expect(admin.page.getByText('Live veröffentlicht')).toBeVisible();
+
+    await admin.page.getByRole('button', { name: /Reiseziele & Navigation/u }).click();
+    await admin.page.getByLabel('Name des Reiseziels').fill('E2E Tor 3');
+    await admin.page.getByLabel('Breitengrad des Treffpunkts').fill('32.617');
+    await admin.page.getByLabel('Längengrad des Treffpunkts').fill('44.033');
+    await admin.page.getByRole('button', { name: /Reiseziel veröffentlichen$/u }).click();
+    await expect(admin.page.getByText('„E2E Tor 3“ wurde auf der Karte veröffentlicht.')).toBeVisible();
+    await admin.page.getByRole('button', { name: /Reiseziele & Navigation/u }).click();
 
     await member.page.goto('/');
     await expect(member.page.getByText('Aktueller Programmpunkt')).toBeVisible();

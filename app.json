@@ -10,7 +10,7 @@
     "ios": {
       "icon": "./assets/expo.icon",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Erlaube Shia Ziyarah Iraq, deinen Standort in der Nähe von Ziyarah-Orten anzuzeigen, wenn du diese Funktion aktivierst."
+        "NSLocationWhenInUseUsageDescription": "Erlaube Shia Ziyarah Iraq, deinen Standort auf der Karte anzuzeigen, als Treffpunkt zu übernehmen oder die Entfernung zum Treffpunkt zu berechnen, wenn du diese Funktionen aktivierst."
       }
     },
     "android": {

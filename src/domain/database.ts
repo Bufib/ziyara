@@ -107,6 +107,20 @@ export type TripParticipant = {
   updated_at: string;
 };
 
+export type TripNavigationDestination = {
+  archived_at: string | null;
+  created_at: string;
+  created_by_profile_id: number | null;
+  details: string | null;
+  id: number;
+  latitude: number;
+  longitude: number;
+  name: string;
+  sort_order: number;
+  trip_id: number;
+  updated_at: string;
+};
+
 export type BusBoarding = {
   closed_at: string | null;
   created_by_profile_id: number | null;
@@ -452,6 +466,32 @@ export type Database = {
           updated_at?: string;
         };
       };
+      trip_navigation_destinations: {
+        Insert: {
+          archived_at?: string | null;
+          created_at?: string;
+          created_by_profile_id?: number | null;
+          details?: string | null;
+          id?: never;
+          latitude: number;
+          longitude: number;
+          name: string;
+          sort_order?: number;
+          trip_id: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+        Row: TripNavigationDestination;
+        Update: {
+          archived_at?: string | null;
+          details?: string | null;
+          latitude?: number;
+          longitude?: number;
+          name?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+      };
       trips: {
         Insert: {
           archived_at?: string | null;
@@ -563,6 +603,10 @@ export type Database = {
         Args: { p_response_id: number };
         Returns: TripGuidanceResponse;
       };
+      admin_archive_trip_navigation_destination: {
+        Args: { p_destination_id: number };
+        Returns: TripNavigationDestination;
+      };
       admin_publish_trip_guidance: {
         Args: {
           p_acts: string;
@@ -600,6 +644,17 @@ export type Database = {
           p_relevant_gate: string;
         };
         Returns: TripGuidanceUpdate;
+      };
+      admin_upsert_trip_navigation_destination: {
+        Args: {
+          p_destination_id?: number | null;
+          p_details: string;
+          p_latitude: number;
+          p_longitude: number;
+          p_name: string;
+          p_trip_id: number;
+        };
+        Returns: TripNavigationDestination;
       };
       admin_list_users: {
         Args: never;

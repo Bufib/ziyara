@@ -11,6 +11,7 @@ import { supabase } from '@/features/auth/supabase';
 import { useI18n } from '@/features/i18n/i18n';
 import { localizePlace } from '@/features/i18n/localizedData';
 import { supabaseReadFailureTranslationKey } from '@/features/network/supabase-read';
+import type { MeetingPointCoordinate } from '@/features/trip-guidance/meeting-point-picker-types';
 import { useTripGuidance } from '@/features/trip-guidance/trip-guidance-context';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -74,6 +75,25 @@ function optionalCoordinate(value: string) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function coordinatePair(
+  latitudeValue: string,
+  longitudeValue: string,
+): MeetingPointCoordinate | null {
+  const latitude = optionalCoordinate(latitudeValue);
+  const longitude = optionalCoordinate(longitudeValue);
+  if (
+    latitude === null ||
+    longitude === null ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    return null;
+  }
+  return { latitude, longitude };
+}
+
 export function AdminTripGuidancePanel() {
   const theme = useTheme();
   const { language, t } = useI18n();
@@ -119,14 +139,11 @@ export function AdminTripGuidancePanel() {
     [language],
   );
   const coordinatePairsValid =
-    Boolean(form.currentLatitude.trim()) === Boolean(form.currentLongitude.trim()) &&
-    Boolean(form.meetingLatitude.trim()) === Boolean(form.meetingLongitude.trim());
+    Boolean(form.currentLatitude.trim()) === Boolean(form.currentLongitude.trim());
+  const currentCoordinate = coordinatePair(form.currentLatitude, form.currentLongitude);
   const coordinatesValid =
     coordinatePairsValid &&
-    (form.currentLatitude.trim() === '' || optionalCoordinate(form.currentLatitude) !== null) &&
-    (form.currentLongitude.trim() === '' || optionalCoordinate(form.currentLongitude) !== null) &&
-    (form.meetingLatitude.trim() === '' || optionalCoordinate(form.meetingLatitude) !== null) &&
-    (form.meetingLongitude.trim() === '' || optionalCoordinate(form.meetingLongitude) !== null);
+    (form.currentLatitude.trim() === '' || currentCoordinate !== null);
   const formValid =
     form.currentPlaceName.trim().length >= 2 &&
     form.nextProgramName.trim().length >= 2 &&
@@ -148,8 +165,6 @@ export function AdminTripGuidancePanel() {
       currentLongitude: place.longitude.toString(),
       currentPlaceName: place.name,
       currentPlaceSlug: place.slug,
-      meetingLatitude: current.meetingLatitude || place.latitude.toString(),
-      meetingLongitude: current.meetingLongitude || place.longitude.toString(),
     }));
     setSaved(false);
   };
@@ -356,6 +371,9 @@ export function AdminTripGuidancePanel() {
             />
           </View>
         </View>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('guide.admin.coordinatesHint')}
+        </ThemedText>
 
         <LabeledInput
           label={t('guide.admin.nextProgram')}
@@ -395,30 +413,6 @@ export function AdminTripGuidancePanel() {
           placeholder={t('guide.admin.meetingPointPlaceholder')}
           value={form.meetingPoint}
         />
-        <View style={styles.twoColumns}>
-          <View style={styles.flexField}>
-            <LabeledInput
-              keyboardType="decimal-pad"
-              label={t('guide.admin.meetingLatitude')}
-              onChangeText={(value) => updateForm('meetingLatitude', value)}
-              placeholder="32.616"
-              value={form.meetingLatitude}
-            />
-          </View>
-          <View style={styles.flexField}>
-            <LabeledInput
-              keyboardType="decimal-pad"
-              label={t('guide.admin.meetingLongitude')}
-              onChangeText={(value) => updateForm('meetingLongitude', value)}
-              placeholder="44.032"
-              value={form.meetingLongitude}
-            />
-          </View>
-        </View>
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('guide.admin.coordinatesHint')}
-        </ThemedText>
-
         <View style={styles.twoColumns}>
           <View style={styles.flexField}>
             <LabeledInput
