@@ -9,6 +9,10 @@ import {
 } from '@/features/question-round/question-round-context';
 import { supabase } from '@/features/auth/supabase';
 import {
+  DailyProgramProvider,
+  useDailyProgram,
+} from '@/features/daily-program/daily-program-context';
+import {
   TripGuidanceProvider,
   useTripGuidance,
 } from '@/features/trip-guidance/trip-guidance-context';
@@ -42,22 +46,25 @@ const originalActEnvironment = actEnvironmentGlobal.IS_REACT_ACT_ENVIRONMENT;
 let renderer: ReactTestRenderer | null;
 let providerState: {
   groupLoading: boolean;
+  dailyProgramLoading: boolean;
   guidanceLoading: boolean;
   questionLoading: boolean;
 } | null;
 
 function ProviderProbe() {
   const group = useGroupCheck();
+  const dailyProgram = useDailyProgram();
   const questions = useQuestionRound();
   const guidance = useTripGuidance();
 
   useEffect(() => {
     providerState = {
       groupLoading: group.isLoading,
+      dailyProgramLoading: dailyProgram.isLoading,
       guidanceLoading: guidance.isLoading,
       questionLoading: questions.isLoading,
     };
-  }, [group.isLoading, guidance.isLoading, questions.isLoading]);
+  }, [dailyProgram.isLoading, group.isLoading, guidance.isLoading, questions.isLoading]);
 
   return null;
 }
@@ -86,13 +93,15 @@ describe('private providers without a session', () => {
   it('führt für den öffentlichen Offline-Start keine Supabase-Abfrage aus', async () => {
     await act(async () => {
       renderer = create(
-        <TripGuidanceProvider>
-          <GroupCheckProvider>
-            <QuestionRoundProvider>
-              <ProviderProbe />
-            </QuestionRoundProvider>
-          </GroupCheckProvider>
-        </TripGuidanceProvider>,
+        <DailyProgramProvider>
+          <TripGuidanceProvider>
+            <GroupCheckProvider>
+              <QuestionRoundProvider>
+                <ProviderProbe />
+              </QuestionRoundProvider>
+            </GroupCheckProvider>
+          </TripGuidanceProvider>
+        </DailyProgramProvider>,
       );
     });
 
@@ -103,6 +112,7 @@ describe('private providers without a session', () => {
     expect(mockSupabase.from).not.toHaveBeenCalled();
     expect(mockSupabase.channel).not.toHaveBeenCalled();
     expect(providerState).toEqual({
+      dailyProgramLoading: false,
       groupLoading: false,
       guidanceLoading: false,
       questionLoading: false,

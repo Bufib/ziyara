@@ -9,6 +9,7 @@ import { allPlaces } from "@/data/places";
 import type { Place } from "@/domain/types";
 import { useAuth } from "@/features/auth/auth-context";
 import { useBusManagement } from "@/features/bus-management/bus-management-context";
+import { DailyProgramHome } from "@/features/daily-program/DailyProgramHome";
 import { useI18n } from "@/features/i18n/i18n";
 import { useGroupCheck } from "@/features/group-check/group-check-context";
 import { localizeCityName, localizePlace } from "@/features/i18n/localizedData";
@@ -181,6 +182,8 @@ export default function HomeScreen() {
           />
         </View>
       ) : null}
+
+      {session ? <DailyProgramHome /> : null}
 
       <Section title={t("home.importantCities")}>
         <ScrollView

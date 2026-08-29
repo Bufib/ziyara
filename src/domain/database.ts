@@ -88,6 +88,23 @@ export type Trip = {
   name: string;
 };
 
+export type TripDailyProgram = {
+  created_at: string;
+  details: string;
+  id: number;
+  program_date: string;
+  published_by_profile_id: number | null;
+  title: string | null;
+  trip_id: number;
+  updated_at: string;
+};
+
+export type TripDailyProgramInput = {
+  details: string;
+  program_date: string;
+  title: string;
+};
+
 export type TripBus = {
   created_at: string;
   id: number;
@@ -445,6 +462,27 @@ export type Database = {
           sort_order?: number;
         };
       };
+      trip_daily_programs: {
+        Insert: {
+          created_at?: string;
+          details: string;
+          id?: never;
+          program_date: string;
+          published_by_profile_id?: number | null;
+          title?: string | null;
+          trip_id: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+        Row: TripDailyProgram;
+        Update: {
+          details?: string;
+          program_date?: string;
+          published_by_profile_id?: number | null;
+          title?: string | null;
+          updated_at?: string;
+        };
+      };
       trip_participants: {
         Insert: {
           bus_id?: number | null;
@@ -594,6 +632,14 @@ export type Database = {
       admin_create_trip_bus: {
         Args: { p_name: string; p_trip_id: number };
         Returns: TripBus;
+      };
+      admin_upsert_trip_daily_programs: {
+        Args: { p_programs: TripDailyProgramInput[]; p_trip_id: number };
+        Returns: TripDailyProgram[];
+      };
+      can_read_current_trip_daily_program: {
+        Args: { p_trip_id: number };
+        Returns: boolean;
       };
       admin_group_check_results: {
         Args: { p_check_id: number };

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/features/auth/auth-context';
 import { BusManagementProvider } from '@/features/bus-management/bus-management-context';
+import { DailyProgramProvider } from '@/features/daily-program/daily-program-context';
 import { AppErrorBoundary } from '@/features/errors/AppErrorBoundary';
 import { GroupCheckProvider, useGroupCheck } from '@/features/group-check/group-check-context';
 import { GeneralAlarmNotificationsProvider } from '@/features/general-alarm/general-alarm-notifications-context';
@@ -27,15 +28,17 @@ export default function RootLayout() {
         <AppThemeProvider>
           <AuthProvider>
             <BusManagementProvider>
-              <GeneralAlarmNotificationsProvider>
-                <TripGuidanceProvider>
-                  <GroupCheckProvider>
-                    <QuestionRoundProvider>
-                      <RootNavigation />
-                    </QuestionRoundProvider>
-                  </GroupCheckProvider>
-                </TripGuidanceProvider>
-              </GeneralAlarmNotificationsProvider>
+              <DailyProgramProvider>
+                <GeneralAlarmNotificationsProvider>
+                  <TripGuidanceProvider>
+                    <GroupCheckProvider>
+                      <QuestionRoundProvider>
+                        <RootNavigation />
+                      </QuestionRoundProvider>
+                    </GroupCheckProvider>
+                  </TripGuidanceProvider>
+                </GeneralAlarmNotificationsProvider>
+              </DailyProgramProvider>
             </BusManagementProvider>
           </AuthProvider>
         </AppThemeProvider>

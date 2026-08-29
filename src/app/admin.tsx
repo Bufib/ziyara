@@ -22,6 +22,8 @@ import { RequireAuth } from '@/features/auth/RequireAuth';
 import { supabase } from '@/features/auth/supabase';
 import { AdminBusManagementPanel } from '@/features/bus-management/AdminBusManagementPanel';
 import { useBusManagement } from '@/features/bus-management/bus-management-context';
+import { AdminDailyProgramPanel } from '@/features/daily-program/AdminDailyProgramPanel';
+import { useDailyProgram } from '@/features/daily-program/daily-program-context';
 import { AdminGeneralAlarmPanel } from '@/features/general-alarm/AdminGeneralAlarmPanel';
 import { AdminGroupCheckPanel } from '@/features/group-check/AdminGroupCheckPanel';
 import { useGroupCheck } from '@/features/group-check/group-check-context';
@@ -47,6 +49,7 @@ type AdminSection =
   | 'bus'
   | 'guidance'
   | 'navigation'
+  | 'program'
   | 'questions'
   | 'status'
   | 'users';
@@ -92,6 +95,10 @@ function AdminContent() {
   const { isRTL, language, t } = useI18n();
   const { profile, refreshProfile } = useAuth();
   const { activeBoarding, hasSyncError: hasBusSyncError } = useBusManagement();
+  const {
+    hasSyncError: hasDailyProgramSyncError,
+    programs: dailyPrograms,
+  } = useDailyProgram();
   const { activeCheck, hasSyncError: hasGroupCheckSyncError } = useGroupCheck();
   const { activeRound, hasSyncError: hasQuestionRoundSyncError } = useQuestionRound();
   const {
@@ -115,6 +122,7 @@ function AdminContent() {
     bus: false,
     guidance: false,
     navigation: false,
+    program: false,
     questions: false,
     status: false,
     users: false,
@@ -270,6 +278,32 @@ function AdminContent() {
                   title={t('admin.section.alarm.title')}
                 />
                 {expandedSections.alarm ? <AdminGeneralAlarmPanel /> : null}
+              </View>
+
+              <View style={styles.section}>
+                <AdminSectionHeader
+                  description={t('admin.section.program.description')}
+                  expanded={expandedSections.program}
+                  icon="book"
+                  onToggle={() => toggleSection('program')}
+                  status={t(
+                    hasDailyProgramSyncError
+                      ? 'admin.section.program.error'
+                      : dailyPrograms.length > 0
+                        ? 'admin.section.program.active'
+                        : 'admin.section.program.inactive',
+                    { count: dailyPrograms.length },
+                  )}
+                  statusColor={
+                    hasDailyProgramSyncError
+                      ? 'danger'
+                      : dailyPrograms.length > 0
+                        ? 'success'
+                        : 'textSecondary'
+                  }
+                  title={t('admin.section.program.title')}
+                />
+                {expandedSections.program ? <AdminDailyProgramPanel /> : null}
               </View>
 
               <View style={styles.section}>
