@@ -6,6 +6,7 @@ import {
   dailyProgramDateRange,
   localISODate,
   parseLocalISODate,
+  splitProgramDetails,
   visibleDailyPrograms,
 } from '@/features/daily-program/daily-program-state';
 
@@ -61,5 +62,12 @@ describe('daily program date helpers', () => {
         2,
       ).map((item) => item.id),
     ).toEqual([2, 4]);
+  });
+
+  it('teilt mehrzeilige Programme in sichtbare Ablaufpunkte', () => {
+    expect(splitProgramDetails('08:00 Frühstück\r\n\n 09:00 Abfahrt ')).toEqual([
+      '08:00 Frühstück',
+      '09:00 Abfahrt',
+    ]);
   });
 });

@@ -58,3 +58,10 @@ export function visibleDailyPrograms(
     .sort((left, right) => left.program_date.localeCompare(right.program_date))
     .slice(0, limit);
 }
+
+export function splitProgramDetails(details: string) {
+  return details
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}

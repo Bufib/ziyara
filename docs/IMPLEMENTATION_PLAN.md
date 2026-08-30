@@ -465,6 +465,7 @@ Files to create or modify:
 - `src/features/daily-program/*`
 - `src/app/admin.tsx`
 - `src/app/(tabs)/index.tsx`
+- `src/app/program.tsx`
 - `src/app/_layout.tsx`
 - `src/domain/database.ts`
 - `src/features/i18n/i18n.tsx`
@@ -477,7 +478,7 @@ Acceptance criteria:
 - Admins can publish one day or prepare multiple consecutive days in one form, with an optional heading and a separate organizational program for each date.
 - One row per trip and calendar date is updated atomically through an authenticated admin RPC; direct client writes remain unavailable.
 - Every signed-in account can read the active trip's programs even before a physical participant ID is linked.
-- Home shows today and upcoming programs chronologically, highlights today and preserves line breaks.
+- Home shows a compact preview of today's program. Opening it shows today and the next six days in separate day sections with structured agenda lines.
 - Realtime, app focus and staggered fallback refreshes retain the last visible data during background read failures.
 - Calendar helpers use local dates and reject invalid ISO dates without shifting a day through UTC conversion.
 - German, English and Arabic UI copy plus loading, empty, validation and sync-error states are present.

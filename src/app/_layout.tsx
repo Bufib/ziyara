@@ -105,6 +105,7 @@ function RootNavigation() {
             <Stack.Screen name="bus" options={{ title: t('bus.navTitle') }} />
             <Stack.Screen name="group" options={{ title: t('tripGroups.navTitle') }} />
             <Stack.Screen name="guide" options={{ title: t('guide.navTitle') }} />
+            <Stack.Screen name="program" options={{ title: t('dailyProgram.weekTitle') }} />
             <Stack.Screen name="sources" options={{ title: t('nav.sources') }} />
             <Stack.Screen
               name="question-round"

@@ -3,6 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import { getProtectedRouteDecision } from '@/features/auth/protected-route-policy';
 import {
   busRoute,
+  dailyProgramRoute,
   guideRoute,
   getProtectedReturnRoute,
   groupRoute,
@@ -77,6 +78,15 @@ describe('protected navigation', () => {
     expect(protectedRoutePaths).toContain('/group');
     expect(loginRoute(groupRoute())).toEqual({
       params: { returnTo: '/group' },
+      pathname: '/login',
+    });
+  });
+
+  it('führt das Wochenprogramm als geschützte interne Route', () => {
+    expect(dailyProgramRoute()).toBe('/program');
+    expect(protectedRoutePaths).toContain('/program');
+    expect(loginRoute(dailyProgramRoute())).toEqual({
+      params: { returnTo: '/program' },
       pathname: '/login',
     });
   });

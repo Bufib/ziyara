@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Screen } from "@/components/ui/screen";
 import { Section } from "@/components/ui/section";
@@ -25,7 +25,6 @@ import { useQuestionRound } from "@/features/question-round/question-round-conte
 import { useTheme } from "@/hooks/use-theme";
 import { useTripGuidance } from "@/features/trip-guidance/trip-guidance-context";
 import { useTripGroups } from "@/features/trip-groups/trip-group-context";
-import { Image } from "expo-image";
 
 const featuredSlugs = [
   "shrine-imam-hussain",
@@ -75,20 +74,10 @@ export default function HomeScreen() {
           {
             backgroundColor: "#618764",
             flex: 1,
-            flexDirection: "row",
-            justifyContent: "flex-start",
           },
         ]}
       >
-        <Image
-          source={require("@/assets/images/logo.png")}
-          style={{
-            width: 120,
-            height: 120,
-            aspectRatio: 1,
-          }}
-          contentFit="contain"
-        />
+        {session ? <DailyProgramHome /> : null}
       </View>
 
       {session && activeCheck ? (
@@ -235,8 +224,6 @@ export default function HomeScreen() {
         </View>
       ) : null}
 
-      {session ? <DailyProgramHome /> : null}
-
       <Section title={t("home.importantCities")}>
         <ScrollView
           style={styles.cityGrid}
@@ -281,8 +268,7 @@ const styles = StyleSheet.create({
   hero: {
     borderRadius: 8,
     gap: Spacing.four,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.four,
+    padding: Spacing.four,
     borderWidth: 0.2,
   },
   heroText: {

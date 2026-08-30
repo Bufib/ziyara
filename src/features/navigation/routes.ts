@@ -6,6 +6,7 @@ export const protectedRoutePaths = [
   '/bus',
   '/group',
   '/guide',
+  '/program',
   '/check-in',
   '/question-round',
 ] as const;
@@ -68,6 +69,10 @@ export function guideRoute(): Href & ProtectedRoutePath {
 
 export function groupRoute(): Href & ProtectedRoutePath {
   return '/group' as Href & ProtectedRoutePath;
+}
+
+export function dailyProgramRoute(): Href & ProtectedRoutePath {
+  return '/program' as Href & ProtectedRoutePath;
 }
 
 export function checkInRoute(returnTo: ProtectedRoutePath | '/' = '/'): Href {

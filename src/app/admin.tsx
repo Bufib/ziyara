@@ -17,6 +17,7 @@ import { SymbolIcon } from '@/components/ui/symbol-icon';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import type { AccountFamily, AdminUserSummary, AppRole } from '@/domain/database';
 import { AdminAccountFamilyPanel } from '@/features/account-families/AdminAccountFamilyPanel';
+import { buildAdminUserListItems } from '@/features/admin/admin-user-list';
 import { AdminSectionHeader } from '@/features/admin/AdminSectionHeader';
 import { useAuth } from '@/features/auth/auth-context';
 import { RequireAuth } from '@/features/auth/RequireAuth';
@@ -139,6 +140,7 @@ function AdminContent() {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [readErrorKind, setReadErrorKind] = useState<SupabaseReadFailureKind | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [expandedRoleUserId, setExpandedRoleUserId] = useState<string | null>(null);
   const [roleFeedback, setRoleFeedback] = useState<RoleFeedback | null>(null);
   const [updatingRoleUserId, setUpdatingRoleUserId] = useState<string | null>(null);
@@ -161,17 +163,10 @@ function AdminContent() {
     () => users.reduce((total, user) => total + user.party_size, 0),
     [users],
   );
-  const filteredUsers = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLocaleLowerCase(language);
-
-    if (!normalizedQuery) {
-      return users;
-    }
-
-    return users.filter((user) =>
-      user.display_name.toLocaleLowerCase(language).includes(normalizedQuery),
-    );
-  }, [language, searchQuery, users]);
+  const userListItems = useMemo(
+    () => buildAdminUserListItems(users, searchQuery, language),
+    [language, searchQuery, users],
+  );
 
   const loadUsers = useCallback(async () => {
     const requestSequence = ++usersRequestSequence.current;
@@ -254,15 +249,27 @@ function AdminContent() {
     setExpandedSections((current) => ({ ...current, [section]: !current[section] }));
   };
 
+  const toggleUserDetails = (userId: string) => {
+    setRoleFeedback(null);
+    setExpandedRoleUserId(null);
+    setExpandedUserId((current) => (current === userId ? null : userId));
+  };
+
   return (
     <SafeAreaView
       edges={['right', 'bottom', 'left']}
       style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <FlatList
         contentContainerStyle={styles.content}
-        data={expandedSections.users && hasLoaded && !hasError ? filteredUsers : []}
+        data={expandedSections.users && hasLoaded && !hasError ? userListItems : []}
+        extraData={{
+          expandedRoleUserId,
+          expandedUserId,
+          roleFeedback,
+          updatingRoleUserId,
+        }}
         keyboardShouldPersistTaps="handled"
-        keyExtractor={(item) => item.user_id}
+        keyExtractor={(item) => item.key}
         refreshControl={
           <RefreshControl
             colors={[theme.accent]}
@@ -605,98 +612,191 @@ function AdminContent() {
             </Card>
           ) : null
         }
-        renderItem={({ item }) => (
-          <Card style={styles.userCard}>
-            <View style={styles.userHeader}>
-              <ThemedText type="heading" style={styles.userName}>
-                {item.display_name}
-              </ThemedText>
-              <View
-                style={[
-                  styles.roleBadge,
-                  {
-                    backgroundColor: item.role === 'admin' ? theme.accentSoft : theme.backgroundElement,
-                    borderColor: item.role === 'admin' ? theme.accent : theme.border,
-                  },
-                ]}>
-                <ThemedText type="tinyBold">{t(`admin.role.${item.role}`)}</ThemedText>
-              </View>
-            </View>
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('admin.partySize', { count: item.party_size })}
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('admin.luggageCount', { count: item.luggage_count })}
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {item.family_name
-                ? t('admin.accountFamily', { name: item.family_name })
-                : t('admin.accountFamilyUnassigned')}
-            </ThemedText>
-
-            <Button
-              icon={expandedRoleUserId === item.user_id ? 'close' : 'settings'}
-              label={t(
-                expandedRoleUserId === item.user_id
-                  ? 'admin.roleAssignment.close'
-                  : 'admin.roleAssignment.title',
-              )}
-              onPress={() => {
+        renderItem={({ item }) => {
+          const renderUser = (user: AdminUserSummary) => (
+            <AdminUserDisclosure
+              expanded={expandedUserId === user.user_id}
+              key={user.user_id}
+              onAssignRole={(role) => void assignRole(user.user_id, role)}
+              onToggleDetails={() => toggleUserDetails(user.user_id)}
+              onToggleRoleAssignment={() => {
                 setRoleFeedback(null);
                 setExpandedRoleUserId((current) =>
-                  current === item.user_id ? null : item.user_id,
+                  current === user.user_id ? null : user.user_id,
                 );
               }}
-              style={styles.roleAssignmentButton}
-              variant="secondary"
+              roleAssignmentExpanded={expandedRoleUserId === user.user_id}
+              roleFeedback={
+                roleFeedback?.userId === user.user_id ? roleFeedback.type : null
+              }
+              roleChoicesDisabled={updatingRoleUserId !== null}
+              updatingRole={updatingRoleUserId === user.user_id}
+              user={user}
             />
+          );
 
-            {expandedRoleUserId === item.user_id ? (
-              <View style={[styles.roleAssignment, { borderColor: theme.border }]}>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {t('admin.roleAssignment.body')}
+          if (item.type === 'user') {
+            return renderUser(item.user);
+          }
+
+          return (
+            <Card style={styles.familyPacket}>
+              <View style={styles.familyPacketHeader}>
+                <ThemedText type="heading" style={styles.familyPacketName}>
+                  {item.familyName ?? t('accountFamilies.unknownFamily')}
                 </ThemedText>
-                <View accessibilityRole="radiogroup" style={styles.roleChoices}>
-                  {assignableRoles.map((role) => (
-                    <RoleChoice
-                      disabled={updatingRoleUserId !== null}
-                      key={role}
-                      label={t(`admin.role.${role}`)}
-                      onPress={() => void assignRole(item.user_id, role)}
-                      selected={item.role === role}
-                    />
-                  ))}
-                </View>
-
-                {updatingRoleUserId === item.user_id ? (
-                  <View style={styles.roleProgress}>
-                    <ActivityIndicator color={theme.accent} size="small" />
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {t('admin.roleAssignment.saving')}
-                    </ThemedText>
-                  </View>
-                ) : null}
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t('accountFamilies.memberCount', { count: item.members.length })}
+                </ThemedText>
               </View>
-            ) : null}
-
-            {roleFeedback?.userId === item.user_id ? (
-              <ThemedText
-                accessibilityLiveRegion="polite"
-                type="small"
-                themeColor={roleFeedback.type === 'success' ? 'success' : 'danger'}>
-                {t(
-                  roleFeedback.type === 'success'
-                    ? 'admin.roleAssignment.saved'
-                    : roleFeedback.type === 'last-admin'
-                      ? 'admin.roleAssignment.lastAdmin'
-                      : 'admin.roleAssignment.error',
-                )}
-              </ThemedText>
-            ) : null}
-          </Card>
-        )}
+              <View style={styles.familyMembers}>{item.members.map(renderUser)}</View>
+            </Card>
+          );
+        }}
       />
     </SafeAreaView>
+  );
+}
+
+function AdminUserDisclosure({
+  expanded,
+  onAssignRole,
+  onToggleDetails,
+  onToggleRoleAssignment,
+  roleAssignmentExpanded,
+  roleChoicesDisabled,
+  roleFeedback,
+  updatingRole,
+  user,
+}: {
+  expanded: boolean;
+  onAssignRole: (role: AppRole) => void;
+  onToggleDetails: () => void;
+  onToggleRoleAssignment: () => void;
+  roleAssignmentExpanded: boolean;
+  roleChoicesDisabled: boolean;
+  roleFeedback: RoleFeedback['type'] | null;
+  updatingRole: boolean;
+  user: AdminUserSummary;
+}) {
+  const theme = useTheme();
+  const { isRTL, t } = useI18n();
+  const chevronRotation = expanded ? '90deg' : isRTL ? '180deg' : '0deg';
+
+  return (
+    <View
+      style={[
+        styles.userDisclosure,
+        { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+      ]}>
+      <Pressable
+        accessibilityLabel={t(
+          expanded ? 'admin.details.hide' : 'admin.details.show',
+          { name: user.display_name },
+        )}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        onPress={onToggleDetails}
+        style={({ pressed }) => [
+          styles.userSummary,
+          pressed && styles.userSummaryPressed,
+        ]}>
+        <ThemedText type="heading" style={styles.userName}>
+          {user.display_name}
+        </ThemedText>
+        <View style={[styles.userChevron, { transform: [{ rotate: chevronRotation }] }]}>
+          <SymbolIcon color={theme.textSecondary} name="chevron" size={22} />
+        </View>
+      </Pressable>
+
+      {expanded ? (
+        <View style={[styles.userDetails, { borderColor: theme.border }]}>
+          <View style={styles.userRole}>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('admin.roleLabel')}
+            </ThemedText>
+            <View
+              style={[
+                styles.roleBadge,
+                {
+                  backgroundColor:
+                    user.role === 'admin' ? theme.accentSoft : theme.background,
+                  borderColor: user.role === 'admin' ? theme.accent : theme.border,
+                },
+              ]}>
+              <ThemedText type="tinyBold">{t(`admin.role.${user.role}`)}</ThemedText>
+            </View>
+          </View>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('admin.partySize', { count: user.party_size })}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('admin.luggageCount', { count: user.luggage_count })}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {user.family_name
+              ? t('admin.accountFamily', { name: user.family_name })
+              : t('admin.accountFamilyUnassigned')}
+          </ThemedText>
+
+          <Button
+            disabled={roleChoicesDisabled}
+            icon={roleAssignmentExpanded ? 'close' : 'settings'}
+            label={t(
+              roleAssignmentExpanded
+                ? 'admin.roleAssignment.close'
+                : 'admin.roleAssignment.title',
+            )}
+            onPress={onToggleRoleAssignment}
+            style={styles.roleAssignmentButton}
+            variant="secondary"
+          />
+
+          {roleAssignmentExpanded ? (
+            <View style={[styles.roleAssignment, { borderColor: theme.border }]}>
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('admin.roleAssignment.body')}
+              </ThemedText>
+              <View accessibilityRole="radiogroup" style={styles.roleChoices}>
+                {assignableRoles.map((role) => (
+                  <RoleChoice
+                    disabled={roleChoicesDisabled}
+                    key={role}
+                    label={t(`admin.role.${role}`)}
+                    onPress={() => onAssignRole(role)}
+                    selected={user.role === role}
+                  />
+                ))}
+              </View>
+
+              {updatingRole ? (
+                <View style={styles.roleProgress}>
+                  <ActivityIndicator color={theme.accent} size="small" />
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {t('admin.roleAssignment.saving')}
+                  </ThemedText>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+
+          {roleFeedback ? (
+            <ThemedText
+              accessibilityLiveRegion="polite"
+              type="small"
+              themeColor={roleFeedback === 'success' ? 'success' : 'danger'}>
+              {t(
+                roleFeedback === 'success'
+                  ? 'admin.roleAssignment.saved'
+                  : roleFeedback === 'last-admin'
+                    ? 'admin.roleAssignment.lastAdmin'
+                    : 'admin.roleAssignment.error',
+              )}
+            </ThemedText>
+          ) : null}
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -750,17 +850,58 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 180,
   },
-  userCard: {
+  familyPacket: {
     gap: Spacing.three,
   },
-  userHeader: {
-    alignItems: 'center',
+  familyPacketHeader: {
+    alignItems: 'flex-end',
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.two,
     justifyContent: 'space-between',
   },
+  familyPacketName: {
+    flex: 1,
+    minWidth: 180,
+  },
+  familyMembers: {
+    gap: Spacing.two,
+  },
+  userDisclosure: {
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  userSummary: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: Spacing.two,
+    minHeight: 56,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+  },
+  userSummaryPressed: {
+    opacity: 0.72,
+  },
   userName: {
     flex: 1,
+  },
+  userChevron: {
+    alignItems: 'center',
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
+  userDetails: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    gap: Spacing.two,
+    padding: Spacing.three,
+  },
+  userRole: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
   },
   roleBadge: {
     borderRadius: 8,

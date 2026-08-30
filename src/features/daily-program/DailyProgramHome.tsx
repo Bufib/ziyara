@@ -1,86 +1,108 @@
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Section } from '@/components/ui/section';
+import { SymbolIcon } from '@/components/ui/symbol-icon';
 import { Spacing } from '@/constants/theme';
 import { useDailyProgram } from '@/features/daily-program/daily-program-context';
 import {
   localISODate,
   parseLocalISODate,
-  visibleDailyPrograms,
 } from '@/features/daily-program/daily-program-state';
 import { useI18n } from '@/features/i18n/i18n';
+import { dailyProgramRoute } from '@/features/navigation/routes';
 import { supabaseReadFailureTranslationKey } from '@/features/network/supabase-read';
-import { useTheme } from '@/hooks/use-theme';
+
+const heroText = '#FFFFFF';
+const heroTextMuted = '#E4EEE6';
 
 export function DailyProgramHome() {
-  const theme = useTheme();
   const { language, t } = useI18n();
   const { hasSyncError, isLoading, programs, refresh, syncErrorKind } = useDailyProgram();
   const today = localISODate();
-  const visiblePrograms = visibleDailyPrograms(programs, today);
+  const todaysProgram = programs.find((program) => program.program_date === today);
 
   if (isLoading) {
     return (
-      <Section title={t('dailyProgram.homeTitle')}>
-        <Card style={styles.stateCard}>
-          <ActivityIndicator color={theme.accent} />
-          <ThemedText themeColor="textSecondary">{t('dailyProgram.loading')}</ThemedText>
-        </Card>
-      </Section>
+      <View style={styles.state}>
+        <ActivityIndicator color={heroText} />
+        <ThemedText style={styles.mutedText}>{t('dailyProgram.loading')}</ThemedText>
+      </View>
     );
   }
 
   if (hasSyncError) {
     return (
-      <Section title={t('dailyProgram.homeTitle')}>
-        <Card style={[styles.stateCard, { borderColor: theme.warning }]}>
-          <ThemedText type="heading">{t('dailyProgram.syncErrorTitle')}</ThemedText>
-          <ThemedText themeColor="textSecondary">
-            {t(supabaseReadFailureTranslationKey(syncErrorKind ?? 'server'))}
-          </ThemedText>
-          <Button
-            icon="refresh"
-            label={t('dailyProgram.retry')}
-            onPress={() => void refresh()}
-            variant="secondary"
-          />
-        </Card>
-      </Section>
+      <View accessibilityRole="alert" style={styles.state}>
+        <ThemedText style={styles.eyebrow} type="eyebrow">
+          {t('dailyProgram.homeTitle')}
+        </ThemedText>
+        <ThemedText style={styles.heroHeading} type="heading">
+          {t('dailyProgram.syncErrorTitle')}
+        </ThemedText>
+        <ThemedText style={styles.mutedText}>
+          {t(supabaseReadFailureTranslationKey(syncErrorKind ?? 'server'))}
+        </ThemedText>
+        <Button
+          icon="refresh"
+          label={t('dailyProgram.retry')}
+          onPress={() => void refresh()}
+          variant="secondary"
+        />
+      </View>
     );
   }
 
-  if (visiblePrograms.length === 0) return null;
-
   return (
-    <Section title={t('dailyProgram.homeTitle')}>
-      <View style={styles.programList}>
-        {visiblePrograms.map((program) => {
-          const isToday = program.program_date === today;
-          return (
-            <Card
-              key={program.id}
-              style={[
-                styles.programCard,
-                isToday && {
-                  backgroundColor: theme.accentSoft,
-                  borderColor: theme.accent,
-                },
-              ]}>
-              <ThemedText type="smallBold" themeColor={isToday ? 'accent' : 'textSecondary'}>
-                {isToday
-                  ? t('dailyProgram.today')
-                  : formatProgramDate(program.program_date, language)}
-              </ThemedText>
-              {program.title ? <ThemedText type="heading">{program.title}</ThemedText> : null}
-              <ThemedText style={styles.details}>{program.details}</ThemedText>
-            </Card>
-          );
-        })}
+    <Pressable
+      accessibilityHint={t('dailyProgram.openWeekHint')}
+      accessibilityLabel={t('dailyProgram.openWeekAccessibility')}
+      accessibilityRole="button"
+      onPress={() => router.push(dailyProgramRoute())}
+      style={({ pressed }) => [styles.preview, pressed && styles.pressed]}>
+      <View style={styles.headerRow}>
+        <View style={styles.headerText}>
+          <ThemedText style={styles.eyebrow} type="eyebrow">
+            {t('dailyProgram.homeTitle')}
+          </ThemedText>
+          <ThemedText style={styles.dateText} type="small">
+            {formatProgramDate(today, language)}
+          </ThemedText>
+        </View>
+        <View style={styles.todayBadge}>
+          <ThemedText style={styles.todayText} type="tinyBold">
+            {t('dailyProgram.today')}
+          </ThemedText>
+        </View>
       </View>
-    </Section>
+
+      <View style={styles.programText}>
+        {todaysProgram ? (
+          <>
+            {todaysProgram.title ? (
+              <ThemedText style={styles.heroHeading} type="subtitle">
+                {todaysProgram.title}
+              </ThemedText>
+            ) : null}
+            <ThemedText numberOfLines={3} style={styles.details}>
+              {todaysProgram.details}
+            </ThemedText>
+          </>
+        ) : (
+          <ThemedText style={styles.heroHeading} type="heading">
+            {t('dailyProgram.todayEmpty')}
+          </ThemedText>
+        )}
+      </View>
+
+      <View style={styles.openRow}>
+        <ThemedText style={styles.openLabel} type="smallBold">
+          {t('dailyProgram.openWeek')}
+        </ThemedText>
+        <SymbolIcon color={heroText} name="chevron" size={20} />
+      </View>
+    </Pressable>
   );
 }
 
@@ -95,17 +117,66 @@ function formatProgramDate(value: string, language: string) {
 }
 
 const styles = StyleSheet.create({
+  dateText: {
+    color: heroTextMuted,
+  },
   details: {
+    color: heroText,
     lineHeight: 24,
   },
-  programCard: {
+  eyebrow: {
+    color: heroTextMuted,
+  },
+  headerRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: Spacing.three,
+    justifyContent: 'space-between',
+  },
+  headerText: {
+    flex: 1,
     gap: Spacing.one,
   },
-  programList: {
+  heroHeading: {
+    color: heroText,
+  },
+  mutedText: {
+    color: heroTextMuted,
+  },
+  openLabel: {
+    color: heroText,
+    flex: 1,
+  },
+  openRow: {
+    alignItems: 'center',
+    borderTopColor: 'rgba(255,255,255,0.24)',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: Spacing.two,
+    paddingTop: Spacing.three,
+  },
+  pressed: {
+    opacity: 0.76,
+  },
+  preview: {
+    flex: 1,
+    gap: Spacing.three,
+  },
+  programText: {
     gap: Spacing.two,
   },
-  stateCard: {
-    alignItems: 'center',
+  state: {
     gap: Spacing.two,
+  },
+  todayBadge: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderColor: 'rgba(255,255,255,0.34)',
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.one,
+  },
+  todayText: {
+    color: heroText,
   },
 });
