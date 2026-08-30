@@ -13,12 +13,13 @@ import { DailyProgramHome } from "@/features/daily-program/DailyProgramHome";
 import { useI18n } from "@/features/i18n/i18n";
 import { useGroupCheck } from "@/features/group-check/group-check-context";
 import { localizeCityName, localizePlace } from "@/features/i18n/localizedData";
-import { busRoute, cityRoute, guideRoute } from "@/features/navigation/routes";
+import { busRoute, cityRoute, groupRoute, guideRoute } from "@/features/navigation/routes";
 import { supabaseReadFailureTranslationKey } from "@/features/network/supabase-read";
 import { PlaceImageCard } from "@/features/places/PlaceImageCard";
 import { useQuestionRound } from "@/features/question-round/question-round-context";
 import { useTheme } from "@/hooks/use-theme";
 import { useTripGuidance } from "@/features/trip-guidance/trip-guidance-context";
+import { useTripGroups } from "@/features/trip-groups/trip-group-context";
 
 const featuredSlugs = [
   "shrine-imam-hussain",
@@ -37,6 +38,7 @@ export default function HomeScreen() {
   const { profile, session } = useAuth();
   const { activeBoarding, participants: busParticipants } = useBusManagement();
   const { activeCheck } = useGroupCheck();
+  const { groups: tripGroups } = useTripGroups();
   const {
     activeRound,
     hasSyncError: hasQuestionRoundSyncError,
@@ -47,6 +49,11 @@ export default function HomeScreen() {
     activeGuidance,
     participants: guidanceParticipants,
   } = useTripGuidance();
+  const ownTripGroups = tripGroups.filter((group) => group.is_current_user_member);
+  const hasPendingLeaderLocationRequest = ownTripGroups.some(
+    (group) =>
+      group.is_current_user_leader && group.location_request?.status === "pending",
+  );
   const featuredPlaces = featuredSlugs
     .map((slug) => allPlaces.find((place) => place.slug === slug))
     .filter(isPlace)
@@ -118,6 +125,38 @@ export default function HomeScreen() {
             icon="bus"
             label={t("bus.open")}
             onPress={() => router.push(busRoute())}
+          />
+        </View>
+      ) : null}
+
+      {session && ownTripGroups.length > 0 ? (
+        <View
+          style={[
+            styles.notice,
+            hasPendingLeaderLocationRequest
+              ? { backgroundColor: theme.warningSoft, borderColor: theme.warning }
+              : { backgroundColor: theme.accentSoft, borderColor: theme.accent },
+          ]}
+        >
+          <ThemedText type="heading">
+            {t(
+              hasPendingLeaderLocationRequest
+                ? "tripGroups.homeRequestTitle"
+                : "tripGroups.homeTitle",
+            )}
+          </ThemedText>
+          <ThemedText themeColor="textSecondary">
+            {t(
+              hasPendingLeaderLocationRequest
+                ? "tripGroups.homeRequestBody"
+                : "tripGroups.homeBody",
+              { count: ownTripGroups.length },
+            )}
+          </ThemedText>
+          <Button
+            icon="people"
+            label={t("tripGroups.open")}
+            onPress={() => router.push(groupRoute())}
           />
         </View>
       ) : null}

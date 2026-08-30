@@ -18,6 +18,7 @@ import { supabaseReadFailureTranslationKey } from '@/features/network/supabase-r
 import { QuestionRoundProvider } from '@/features/question-round/question-round-context';
 import { AppThemeProvider, useThemeMode } from '@/features/theme/theme-mode';
 import { TripGuidanceProvider } from '@/features/trip-guidance/trip-guidance-context';
+import { TripGroupProvider } from '@/features/trip-groups/trip-group-context';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -28,17 +29,19 @@ export default function RootLayout() {
         <AppThemeProvider>
           <AuthProvider>
             <BusManagementProvider>
-              <DailyProgramProvider>
-                <GeneralAlarmNotificationsProvider>
-                  <TripGuidanceProvider>
-                    <GroupCheckProvider>
-                      <QuestionRoundProvider>
-                        <RootNavigation />
-                      </QuestionRoundProvider>
-                    </GroupCheckProvider>
-                  </TripGuidanceProvider>
-                </GeneralAlarmNotificationsProvider>
-              </DailyProgramProvider>
+              <TripGroupProvider>
+                <DailyProgramProvider>
+                  <GeneralAlarmNotificationsProvider>
+                    <TripGuidanceProvider>
+                      <GroupCheckProvider>
+                        <QuestionRoundProvider>
+                          <RootNavigation />
+                        </QuestionRoundProvider>
+                      </GroupCheckProvider>
+                    </TripGuidanceProvider>
+                  </GeneralAlarmNotificationsProvider>
+                </DailyProgramProvider>
+              </TripGroupProvider>
             </BusManagementProvider>
           </AuthProvider>
         </AppThemeProvider>
@@ -100,6 +103,7 @@ function RootNavigation() {
             <Stack.Screen name="about" options={{ title: t('nav.about') }} />
             <Stack.Screen name="account" options={{ title: t('nav.account') }} />
             <Stack.Screen name="bus" options={{ title: t('bus.navTitle') }} />
+            <Stack.Screen name="group" options={{ title: t('tripGroups.navTitle') }} />
             <Stack.Screen name="guide" options={{ title: t('guide.navTitle') }} />
             <Stack.Screen name="sources" options={{ title: t('nav.sources') }} />
             <Stack.Screen

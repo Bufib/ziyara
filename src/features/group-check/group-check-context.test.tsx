@@ -21,7 +21,9 @@ import { GroupCheckProvider, useGroupCheck } from '@/features/group-check/group-
 const mockProfile: UserProfile = {
   created_at: '2026-08-26T00:00:00.000Z',
   display_name: 'Testprofil',
+  family_id: null,
   id: 7,
+  luggage_count: 0,
   member_type: 'brother',
   party_size: 2,
   role: 'user',

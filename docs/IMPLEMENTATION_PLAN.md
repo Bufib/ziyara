@@ -456,3 +456,68 @@ Tests/checks:
 - Fresh local migration, DB lint and pgTAP tests for token secrecy, grants, escalation, read acknowledgements and idempotent five-minute claims.
 - Web/iOS/Android exports and a new native development build.
 - Real-device push and weak-network test after EAS credentials, Remote migration, Edge Function and scheduler are explicitly deployed.
+
+## Phase 14: Daily program
+
+Files to create or modify:
+
+- `src/features/daily-program/*`
+- `src/app/admin.tsx`
+- `src/app/(tabs)/index.tsx`
+- `src/app/_layout.tsx`
+- `src/domain/database.ts`
+- `src/features/i18n/i18n.tsx`
+- `supabase/migrations/20260828130000_add_daily_program.sql`
+- `supabase/tests/database/daily_program.test.sql`
+- `e2e/phase7-smoke.spec.ts`
+
+Acceptance criteria:
+
+- Admins can publish one day or prepare multiple consecutive days in one form, with an optional heading and a separate organizational program for each date.
+- One row per trip and calendar date is updated atomically through an authenticated admin RPC; direct client writes remain unavailable.
+- Every signed-in account can read the active trip's programs even before a physical participant ID is linked.
+- Home shows today and upcoming programs chronologically, highlights today and preserves line breaks.
+- Realtime, app focus and staggered fallback refreshes retain the last visible data during background read failures.
+- Calendar helpers use local dates and reject invalid ISO dates without shifting a day through UTC conversion.
+- German, English and Arabic UI copy plus loading, empty, validation and sync-error states are present.
+
+Tests/checks:
+
+- Jest context and local-date helper tests plus the public offline-provider test.
+- Local migration, DB lint and pgTAP tests for anonymous denial, authenticated reads, admin-only batch writes and same-date updates.
+- Playwright full-stack smoke for two-day admin publication through the signed-in Home display.
+- TypeScript, lint, Expo Doctor and web export.
+
+## Phase 15: Trip groups and consent-based leader location
+
+Files to create or modify:
+
+- `src/app/group.tsx`
+- `src/app/admin.tsx`
+- `src/app/(tabs)/index.tsx`
+- `src/app/_layout.tsx`
+- `src/features/trip-groups/*`
+- `src/domain/database.ts`
+- `src/features/i18n/i18n.tsx`
+- `src/features/navigation/routes.ts`
+- `supabase/migrations/20260830000000_add_trip_groups_and_location_requests.sql`
+- `supabase/tests/database/trip_groups.test.sql`
+
+Acceptance criteria:
+
+- Admins create, edit and delete named subgroups from existing physical participant IDs. One participant belongs to at most one subgroup.
+- Every subgroup has exactly one leader who is also a member and whose participant ID is linked to an app account.
+- Any app role, including an admin, can be a member or leader through a linked physical participant ID. Admins see only their own assignments on Home and `/group`, while `/admin` retains the complete overview.
+- Admins can issue one current location request to the group leader. Re-requesting clears previously shared coordinates.
+- Only the current leader sees and answers the request. The leader can decline without granting device permission or explicitly share one foreground location.
+- There is no background or continuous tracking. Shared coordinates are readable only by the leader and admins, expire from client access after fifteen minutes, and are removed when the group changes or is deleted.
+- Group members can see their group and its member list but cannot read location requests or coordinates.
+- Home highlights a pending request for the leader, and `/group` remains session-protected with a validated login return route.
+- Realtime, app focus and a staggered fallback keep group state current. German, English and Arabic UI copy covers loading, empty, permission, decline, expiry and error states.
+
+Tests/checks:
+
+- Jest state, route and public offline-provider tests.
+- Fresh local migration, DB lint and pgTAP tests for grants, role boundaries, unique membership, explicit sharing, overwrite and deletion.
+- TypeScript, lint, Expo dependency alignment, Expo Doctor and web export.
+- Manual iOS/Android checks for foreground permission grant/denial, Realtime delivery and fifteen-minute expiry on a signed build.

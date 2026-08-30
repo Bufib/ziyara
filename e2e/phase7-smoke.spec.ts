@@ -198,8 +198,36 @@ test.describe.serial('Phase 7 E2E smoke flows', () => {
       .getByRole('button', { name: /Generalalarm beenden$/u })
       .click();
     await expect(
-      admin.page.getByRole('button', { exact: true, name: 'Generalalarm einschalten' }),
+      admin.page.getByRole('button', { name: /Generalalarm einschalten$/u }),
     ).toBeVisible();
+    await admin.context.close();
+    await member.context.close();
+  });
+
+  test('Tagesprogramm für mehrere Tage bis zur Home-Anzeige', async ({ browser }) => {
+    const admin = await openAuthenticatedPage(browser, adminEmail, adminPassword);
+    const member = await openAuthenticatedPage(browser, memberEmail, memberResetPassword);
+
+    await admin.page.goto('/admin');
+    await admin.page.getByRole('button', { name: /Tagesprogramm/u }).click();
+    await admin.page.getByRole('radio', { name: '2 Tage' }).click();
+
+    const titles = admin.page.getByLabel('Überschrift (optional)');
+    const programs = admin.page.getByLabel('Programm');
+    await expect(titles).toHaveCount(2);
+    await titles.nth(0).fill('E2E Heute');
+    await programs.nth(0).fill('08:00 Frühstück\n09:00 Abfahrt');
+    await titles.nth(1).fill('E2E Morgen');
+    await programs.nth(1).fill('10:00 Treffpunkt\n11:00 Weiterfahrt');
+    await admin.page.getByRole('button', { name: '2 Tagesprogramme speichern' }).click();
+    await expect(admin.page.getByText('Das Tagesprogramm wurde veröffentlicht.')).toBeVisible();
+
+    await member.page.goto('/');
+    await expect(member.page.getByText('Tagesprogramm', { exact: true })).toBeVisible();
+    await expect(member.page.getByText('Heute', { exact: true })).toBeVisible();
+    await expect(member.page.getByText('E2E Heute', { exact: true })).toBeVisible();
+    await expect(member.page.getByText('E2E Morgen', { exact: true })).toBeVisible();
+
     await admin.context.close();
     await member.context.close();
   });
@@ -233,7 +261,7 @@ test.describe.serial('Phase 7 E2E smoke flows', () => {
     await expect(member.page.getByText('Aktueller Programmpunkt')).toBeVisible();
     await member.page.getByRole('button', { name: 'Programmpunkt öffnen' }).click();
     await expect(member.page.getByText('E2E Besuchsort', { exact: true })).toBeVisible();
-    await expect(member.page.getByText('E2E Tor 3', { exact: true })).toBeVisible();
+    await expect(member.page.getByText('E2E Tor 3', { exact: true }).last()).toBeVisible();
 
     await admin.page.getByLabel('Treffpunkt', { exact: true }).fill('E2E Tor 4');
     await admin.page.getByRole('button', { name: 'Änderungen live speichern' }).click();

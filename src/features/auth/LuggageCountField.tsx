@@ -1,0 +1,169 @@
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+
+import { ThemedText } from '@/components/themed-text';
+import { SymbolIcon } from '@/components/ui/symbol-icon';
+import { Spacing } from '@/constants/theme';
+import {
+  getLuggageCount,
+  maximumLuggageCount,
+  minimumLuggageCount,
+} from '@/features/auth/luggage-count';
+import { useI18n } from '@/features/i18n/i18n';
+import { useTheme } from '@/hooks/use-theme';
+
+export function LuggageCountField({
+  disabled = false,
+  onChange,
+  value,
+}: {
+  disabled?: boolean;
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  const theme = useTheme();
+  const { t } = useI18n();
+  const parsedValue = getLuggageCount(value);
+  const displayedValue = parsedValue ?? minimumLuggageCount;
+
+  const changeBy = (difference: number) => {
+    const nextValue = Math.min(
+      maximumLuggageCount,
+      Math.max(minimumLuggageCount, displayedValue + difference),
+    );
+    onChange(String(nextValue));
+  };
+
+  const changeText = (nextValue: string) => {
+    const digits = nextValue.replace(/\D/g, '').slice(0, 2);
+
+    if (!digits) {
+      onChange('');
+      return;
+    }
+
+    onChange(String(Math.min(Number(digits), maximumLuggageCount)));
+  };
+
+  return (
+    <View style={styles.field}>
+      <ThemedText type="smallBold">{t('luggage.count')}</ThemedText>
+      <ThemedText type="small" themeColor="textSecondary">
+        {t('luggage.countBody')}
+      </ThemedText>
+
+      <View style={styles.controls}>
+        <LuggageCountButton
+          disabled={disabled || displayedValue <= minimumLuggageCount}
+          label={t('luggage.decrease')}
+          name="minus"
+          onPress={() => changeBy(-1)}
+        />
+        <TextInput
+          accessibilityLabel={t('luggage.count')}
+          editable={!disabled}
+          inputMode="numeric"
+          keyboardType="number-pad"
+          maxLength={2}
+          onBlur={() => {
+            if (parsedValue === null) {
+              onChange(String(minimumLuggageCount));
+            }
+          }}
+          onChangeText={changeText}
+          selectTextOnFocus
+          style={[
+            styles.input,
+            {
+              backgroundColor: theme.background,
+              borderColor: theme.border,
+              color: theme.text,
+            },
+          ]}
+          value={value}
+        />
+        <LuggageCountButton
+          disabled={disabled || displayedValue >= maximumLuggageCount}
+          label={t('luggage.increase')}
+          name="plus"
+          onPress={() => changeBy(1)}
+        />
+      </View>
+
+      <ThemedText type="small" themeColor="textSecondary">
+        {t('luggage.countLimit', {
+          maximum: maximumLuggageCount,
+          minimum: minimumLuggageCount,
+        })}
+      </ThemedText>
+    </View>
+  );
+}
+
+function LuggageCountButton({
+  disabled,
+  label,
+  name,
+  onPress,
+}: {
+  disabled: boolean;
+  label: string;
+  name: 'minus' | 'plus';
+  onPress: () => void;
+}) {
+  const theme = useTheme();
+
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.stepButton,
+        { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+        pressed && styles.pressed,
+        disabled && styles.disabled,
+      ]}>
+      <SymbolIcon color={theme.text} name={name} size={22} />
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  field: {
+    gap: Spacing.two,
+    minWidth: 0,
+  },
+  controls: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  input: {
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    flex: 1,
+    fontSize: 22,
+    fontWeight: '700',
+    minHeight: 52,
+    minWidth: 72,
+    paddingHorizontal: Spacing.two,
+    textAlign: 'center',
+    writingDirection: 'ltr',
+  },
+  stepButton: {
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    height: 52,
+    justifyContent: 'center',
+    width: 52,
+  },
+  pressed: {
+    opacity: 0.72,
+  },
+  disabled: {
+    opacity: 0.45,
+  },
+});

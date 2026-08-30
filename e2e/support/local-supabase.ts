@@ -38,18 +38,22 @@ function findFile(directory: string, filename: string): string | null {
 
 function readLocalSupabaseEnv() {
   const dockerEnvPath = findFile('supabase/.temp/start-secrets', 'docker.env');
-
-  if (!dockerEnvPath) {
-    throw new Error('Lokale Supabase-Konfiguration fehlt. Starte zuerst `npx supabase start`.');
-  }
+  const contents = dockerEnvPath
+    ? readFileSync(dockerEnvPath, 'utf8')
+    : execFileSync('npx', ['supabase', 'status', '-o', 'env'], {
+        encoding: 'utf8',
+        env: { ...process.env, SUPABASE_TELEMETRY_DISABLED: '1' },
+      });
 
   return Object.fromEntries(
-    readFileSync(dockerEnvPath, 'utf8')
+    contents
       .split(/\r?\n/u)
       .filter(Boolean)
       .map((line) => {
         const separator = line.indexOf('=');
-        return [line.slice(0, separator), line.slice(separator + 1)];
+        const rawValue = line.slice(separator + 1).trim();
+        const value = rawValue.startsWith('"') ? JSON.parse(rawValue) : rawValue;
+        return [line.slice(0, separator), value];
       }),
   );
 }
@@ -57,8 +61,12 @@ function readLocalSupabaseEnv() {
 const localSupabaseEnv = readLocalSupabaseEnv();
 const localSupabaseUrl = 'http://127.0.0.1:54321';
 const publishableKey =
-  localSupabaseEnv.SUPABASE_INTERNAL_PUBLISHABLE_KEY ?? localSupabaseEnv.SUPABASE_ANON_KEY;
-const serviceRoleKey = localSupabaseEnv.SUPABASE_SERVICE_ROLE_KEY;
+  localSupabaseEnv.SUPABASE_INTERNAL_PUBLISHABLE_KEY ??
+  localSupabaseEnv.SUPABASE_ANON_KEY ??
+  localSupabaseEnv.PUBLISHABLE_KEY ??
+  localSupabaseEnv.ANON_KEY;
+const serviceRoleKey =
+  localSupabaseEnv.SUPABASE_SERVICE_ROLE_KEY ?? localSupabaseEnv.SERVICE_ROLE_KEY;
 
 if (!publishableKey || !serviceRoleKey) {
   throw new Error('Die lokalen Supabase-Testschlüssel konnten nicht gelesen werden.');

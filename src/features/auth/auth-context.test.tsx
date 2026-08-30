@@ -161,7 +161,9 @@ function createProfile(
   return {
     created_at: '2026-08-26T00:00:00.000Z',
     display_name: `Profil ${userId}`,
+    family_id: null,
     id: userId === 'user-a' ? 1 : 2,
+    luggage_count: 0,
     member_type: 'brother',
     party_size: 1,
     role: 'user',
@@ -330,9 +332,14 @@ describe('AuthProvider profile synchronization', () => {
       query.eq.mockReturnValue(query);
       query.abortSignal.mockReturnValue(query);
       query.update.mockImplementation((value: unknown) => {
-        const { party_size } = value as { party_size: number };
+        const profileUpdate = value as Partial<
+          Pick<UserProfile, 'luggage_count' | 'party_size'>
+        >;
         query.single.mockResolvedValue({
-          data: createProfile('user-a', { party_size }),
+          data: createProfile('user-a', {
+            ...(currentAuthValue?.profile ?? {}),
+            ...profileUpdate,
+          }),
           error: null,
         } as never);
         return query;
@@ -761,13 +768,25 @@ describe('AuthProvider profile synchronization', () => {
 
     await act(async () => {
       await expect(
-        getAuthValue().signUp('Testprofil', 'new@example.com', 'Passwort123', 'sister', 3),
+        getAuthValue().signUp(
+          'Testprofil',
+          'new@example.com',
+          'Passwort123',
+          'sister',
+          3,
+          4,
+        ),
       ).resolves.toEqual({ error: null, requiresEmailConfirmation: true });
     });
     expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({
       email: 'new@example.com',
       options: {
-        data: { display_name: 'Testprofil', member_type: 'sister', party_size: 3 },
+        data: {
+          display_name: 'Testprofil',
+          luggage_count: 4,
+          member_type: 'sister',
+          party_size: 3,
+        },
       },
       password: 'Passwort123',
     });
@@ -783,6 +802,12 @@ describe('AuthProvider profile synchronization', () => {
       await expect(getAuthValue().updatePartySize(4)).resolves.toEqual({ error: null });
     });
 
+    expect(getAuthValue().profile?.party_size).toBe(4);
+
+    await act(async () => {
+      await expect(getAuthValue().updateLuggageCount(5)).resolves.toEqual({ error: null });
+    });
+
     expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
       email: 'user-a@example.com',
       password: 'Alt12345',
@@ -790,6 +815,7 @@ describe('AuthProvider profile synchronization', () => {
     expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({ email: 'neu@example.com' });
     expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({ password: 'Neu12345' });
     expect(getAuthValue().profile?.party_size).toBe(4);
+    expect(getAuthValue().profile?.luggage_count).toBe(5);
   });
 
   it('lehnt kontoabhängige Aktionen ohne Session lokal ab', async () => {
@@ -805,6 +831,9 @@ describe('AuthProvider profile synchronization', () => {
       'Es ist keine gültige Recovery-Session aktiv.',
     );
     await expect(getAuthValue().updatePartySize(2)).rejects.toThrow(
+      'Für die Änderung ist eine Anmeldung erforderlich.',
+    );
+    await expect(getAuthValue().updateLuggageCount(2)).rejects.toThrow(
       'Für die Änderung ist eine Anmeldung erforderlich.',
     );
     await expect(getAuthValue().deleteAccount()).resolves.toMatchObject({

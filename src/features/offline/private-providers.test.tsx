@@ -16,6 +16,14 @@ import {
   TripGuidanceProvider,
   useTripGuidance,
 } from '@/features/trip-guidance/trip-guidance-context';
+import {
+  BusManagementProvider,
+  useBusManagement,
+} from '@/features/bus-management/bus-management-context';
+import {
+  TripGroupProvider,
+  useTripGroups,
+} from '@/features/trip-groups/trip-group-context';
 
 jest.mock('@/features/auth/auth-context', () => ({
   useAuth: () => ({
@@ -46,25 +54,38 @@ const originalActEnvironment = actEnvironmentGlobal.IS_REACT_ACT_ENVIRONMENT;
 let renderer: ReactTestRenderer | null;
 let providerState: {
   groupLoading: boolean;
+  busLoading: boolean;
   dailyProgramLoading: boolean;
   guidanceLoading: boolean;
   questionLoading: boolean;
+  tripGroupsLoading: boolean;
 } | null;
 
 function ProviderProbe() {
   const group = useGroupCheck();
+  const bus = useBusManagement();
   const dailyProgram = useDailyProgram();
   const questions = useQuestionRound();
   const guidance = useTripGuidance();
+  const tripGroups = useTripGroups();
 
   useEffect(() => {
     providerState = {
       groupLoading: group.isLoading,
+      busLoading: bus.isLoading,
       dailyProgramLoading: dailyProgram.isLoading,
       guidanceLoading: guidance.isLoading,
       questionLoading: questions.isLoading,
+      tripGroupsLoading: tripGroups.isLoading,
     };
-  }, [dailyProgram.isLoading, group.isLoading, guidance.isLoading, questions.isLoading]);
+  }, [
+    bus.isLoading,
+    dailyProgram.isLoading,
+    group.isLoading,
+    guidance.isLoading,
+    questions.isLoading,
+    tripGroups.isLoading,
+  ]);
 
   return null;
 }
@@ -93,15 +114,19 @@ describe('private providers without a session', () => {
   it('führt für den öffentlichen Offline-Start keine Supabase-Abfrage aus', async () => {
     await act(async () => {
       renderer = create(
-        <DailyProgramProvider>
-          <TripGuidanceProvider>
-            <GroupCheckProvider>
-              <QuestionRoundProvider>
-                <ProviderProbe />
-              </QuestionRoundProvider>
-            </GroupCheckProvider>
-          </TripGuidanceProvider>
-        </DailyProgramProvider>,
+        <BusManagementProvider>
+          <TripGroupProvider>
+            <DailyProgramProvider>
+              <TripGuidanceProvider>
+                <GroupCheckProvider>
+                  <QuestionRoundProvider>
+                    <ProviderProbe />
+                  </QuestionRoundProvider>
+                </GroupCheckProvider>
+              </TripGuidanceProvider>
+            </DailyProgramProvider>
+          </TripGroupProvider>
+        </BusManagementProvider>,
       );
     });
 
@@ -112,10 +137,12 @@ describe('private providers without a session', () => {
     expect(mockSupabase.from).not.toHaveBeenCalled();
     expect(mockSupabase.channel).not.toHaveBeenCalled();
     expect(providerState).toEqual({
+      busLoading: false,
       dailyProgramLoading: false,
       groupLoading: false,
       guidanceLoading: false,
       questionLoading: false,
+      tripGroupsLoading: false,
     });
   });
 });

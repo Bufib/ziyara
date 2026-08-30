@@ -196,6 +196,8 @@ export function AdminDailyProgramPanel() {
                 backgroundColor: theme.backgroundElement,
                 borderColor: startDateValid ? theme.border : theme.danger,
                 color: theme.text,
+                textAlign: 'left',
+                writingDirection: 'ltr',
               },
             ]}
             value={startDate}
@@ -213,7 +215,10 @@ export function AdminDailyProgramPanel() {
             {dayCountOptions.map((count) => (
               <DayCountChip
                 key={count}
-                label={t('dailyProgram.admin.days', { count })}
+                label={t(
+                  count === 1 ? 'dailyProgram.admin.day' : 'dailyProgram.admin.days',
+                  { count },
+                )}
                 onPress={() => changeRange(startDate, count)}
                 selected={dayCount === count}
               />

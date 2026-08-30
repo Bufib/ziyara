@@ -1,8 +1,8 @@
 # Shia Ziyarah Iraq
 
-Produktionsorientierte Expo-SDK-57-App für eine schiitische Ziyarah-Reise im Irak. Stand dieser Dokumentation: 27. August 2026.
+Produktionsorientierte Expo-SDK-57-App für eine schiitische Ziyarah-Reise im Irak. Stand dieser Dokumentation: 30. August 2026.
 
-Der Guide ist mit seinen Orts-, Stadt-, Karten-, Such-, Lesezeichen-, Reader-, Einstellungs-, About-, Disclaimer- und Quelleninhalten lokal gebündelt und startet ohne Anmeldung sowie ohne Supabase-Verbindung. Konto-, Bus-, Generalalarm-, Reiseführungs-, Gruppencheck-, Fragerunden- und Administrationsfunktionen bleiben durch Supabase Auth, Row Level Security und serverseitig geprüfte RPCs geschützt.
+Der Guide ist mit seinen Orts-, Stadt-, Karten-, Such-, Lesezeichen-, Reader-, Einstellungs-, About-, Disclaimer- und Quelleninhalten lokal gebündelt und startet ohne Anmeldung sowie ohne Supabase-Verbindung. Konto-, Tagesprogramm-, Bus-, Reisegruppen-, Generalalarm-, Reiseführungs-, Gruppencheck-, Fragerunden- und Administrationsfunktionen bleiben durch Supabase Auth, Row Level Security und serverseitig geprüfte RPCs geschützt.
 
 ## Dokumentation
 
@@ -23,7 +23,8 @@ Der Guide ist mit seinen Orts-, Stadt-, Karten-, Such-, Lesezeichen-, Reader-, E
 ### Authentifizierung und Konten
 
 - Der AuthContext trennt initiales Session-/Profil-Laden von Hintergrundrefreshes. App-Resume und Realtime-Rollenänderungen erhalten bestehendes Profil, Navigation und Screen-State; Logout oder ein echter Benutzerwechsel entfernt alte Profildaten sofort.
-- Registrierung, Login und Kontoverwaltung unterstützen Anzeigename, `member_type`, `party_size`, E-Mail und Passwort. Profile können die Rollen `user`, `medical_staff`, `organization_team` und `admin` besitzen.
+- Registrierung, Login und Kontoverwaltung unterstützen Anzeigename, `member_type`, `party_size`, Kofferanzahl, E-Mail und Passwort. Die Kofferanzahl gilt für alle durch das Konto vertretenen Personen, kann bei der Registrierung `0` bis `50` betragen und später über die Kontoseite in den Einstellungen geändert werden. Profile können die Rollen `user`, `medical_staff`, `organization_team` und `admin` besitzen.
+- Admins können eigenständige Benutzerkonten im neuen Punkt **Familien** zu benannten Familien zusammenfassen. Ein Konto gehört höchstens einer Familie; eine neue Zuordnung verschiebt es atomar aus der bisherigen Familie. Diese Kontofamilien bleiben von `party_size`, physischen Teilnehmer-IDs und Reisegruppen getrennt.
 - „Passwort vergessen“ und der vollständige Recovery-Deep-Link laufen ausschließlich über `/reset-password` beziehungsweise `ziyara:///reset-password`. Normale Login-/Signup-Links werden nicht als Recovery-Link behandelt; nach erfolgreicher Passwortänderung wird die lokale Session entfernt.
 - Nutzer können ausschließlich das eigene Konto über `supabase/functions/delete-account` löschen. Die Function nimmt keine Ziel-User-ID an, prüft den Bearer-Token selbst, schützt den letzten Admin und hält Service-Role-Zugangsdaten vollständig aus dem Client.
 
@@ -42,6 +43,14 @@ Der Guide ist mit seinen Orts-, Stadt-, Karten-, Such-, Lesezeichen-, Reader-, E
 - Realtime, App-Fokus und ein gestaffelter Fallback-Refresh halten die Übersicht aktuell. Monotone Request-Versionen verhindern, dass ältere Reads einen gespeicherten Status zurücksetzen. Antwort und Schließen sperren dieselbe Boarding-Zeile und bleiben dadurch transaktional geordnet.
 - Bei einer abgelaufenen oder fehlenden Auth-Session erneuert der Client die Sitzung und wiederholt eine Teilnehmer- oder Admin-Statusmutation genau einmal für dieselbe User-ID. Endgültige Fehler laden den autoritativen Stand und unterscheiden Auth-, geschlossenes Boarding-, geänderte Zuordnungs-, Offline- und Serverzustände.
 
+### Reisegruppen und Anführerstandort
+
+- Admins bilden im eigenen Punkt **Reisegruppen** Untergruppen aus vorhandenen physischen Teilnehmer-IDs. Jede ID gehört höchstens einer Gruppe; ein Teilnehmer mit verknüpftem App-Konto wird als Anführer festgelegt und ist automatisch Mitglied.
+- Auch ein Admin kann über seine verknüpfte physische Teilnehmer-ID Mitglied oder Anführer sein. Auf Home und unter `/group` sieht er nur seine eigenen Gruppenzuordnungen; die vollständige Gruppenverwaltung bleibt im Adminbereich.
+- Der Admin kann den Anführer in der App nach seinem Standort fragen. Der Anführer sieht die Anfrage auf Home und entscheidet ausdrücklich zwischen einer einmaligen Freigabe und Ablehnung; erst nach Zustimmung wird die Vordergrund-Standortberechtigung angefragt.
+- Es gibt kein Live- oder Hintergrundtracking. Geteilte Koordinaten sind per RLS nur für Anführer und Admins und höchstens 15 Minuten lesbar; erneute Anfragen sowie Gruppenänderung oder -löschung entfernen die zuvor gespeicherte Position.
+- Gruppen, Mitgliedschaften und Standortanfragen werden per Realtime, App-Fokus und gestaffeltem Fallback aktualisiert. Alle Mutationen laufen über serverseitig authentifizierte RPCs.
+
 ### Generalalarm
 
 - Der Admin öffnet den eigenen Punkt **Generalalarm**, legt Alarmmeldung und Abfahrt fest und schaltet den Alarm ausdrücklich ein. Der Punkt zeigt jederzeit **Eingeschaltet** oder **Ausgeschaltet** und bietet bei aktivem Alarm eine Beenden-Aktion.
@@ -49,6 +58,13 @@ Der Guide ist mit seinen Orts-, Stadt-, Karten-, Such-, Lesezeichen-, Reader-, E
 - Nach fünf Minuten ohne nächste Stufe werden native lokale Erinnerungen geplant. Ein geschützter Dispatcher beansprucht zusätzlich höchstens einen Expo-Push-Versuch je Gerät, Teilnehmer, Stufe und Fünf-Minuten-Fenster.
 - Das separate Generalalarm-Panel zeigt bestätigte und fehlende Teilnehmer, alle ausstehenden IDs, die Schließbereitschaft jedes Busses und eine ausdrücklich protokollierte manuelle Eskalation.
 - Push-Tokens und Versandversuche sind nicht clientlesbar. Ein Expo-Ticket gilt nur als Annahme durch den Push-Dienst, nie als garantierte Zustellung oder garantiertes Aufwecken.
+
+### Tagesprogramm
+
+- Admins wählen im eigenen Punkt **Tagesprogramm** einen Starttag und planen wahlweise einen, zwei, drei, fünf oder sieben aufeinanderfolgende Tage in einem Formular.
+- Jeder Tag erhält eine optionale Überschrift und einen freien organisatorischen Ablauf. Alle ausgewählten Tage werden atomar gespeichert; ein bereits veröffentlichter Tag kann später geändert werden.
+- Angemeldete Nutzer sehen das heutige und die kommenden Programme direkt auf Home. Der aktuelle Tag ist hervorgehoben; Realtime, App-Fokus und ein gestaffelter Fallback-Refresh halten die Anzeige aktuell.
+- RLS gibt das Programm der aktiven Reise allen angemeldeten Konten frei, auch wenn noch keine physische Teilnehmer-ID verknüpft ist. Veröffentlichen ist ausschließlich über die serverseitig geprüfte Admin-RPC möglich.
 
 ### Reiseführung und „Wo sind wir?“
 
@@ -65,7 +81,7 @@ Der Guide ist mit seinen Orts-, Stadt-, Karten-, Such-, Lesezeichen-, Reader-, E
 ## Stack
 
 - Node `22.13.0` aus `.nvmrc`
-- Expo SDK `57` (`expo ~57.0.17`)
+- Expo SDK `57` (`expo ~57.0.18`)
 - React Native `0.86.3`, React `19.2.3`, TypeScript `~6.0.3` im Strict Mode
 - Expo Router mit typed routes und nativen Tabs
 - Supabase JS `^2.112.3` für Auth, Postgres, RPC und Realtime
@@ -105,15 +121,15 @@ npm audit
 
 `npm run validate` umfasst TypeScript, Lint, Jest mit Coverage-Gates und den Expo-Abhängigkeitscheck. Die Gates verlangen mindestens 50 % globale Line Coverage sowie jeweils 80 % für Auth-, Busmanagement-, Reiseführungs-, Gruppencheck- und Fragerunden-Kontext.
 
-Letzter vollständig ausgeführter Stand vom 27. August 2026:
+Letzter vollständig ausgeführter Stand vom 30. August 2026:
 
-- `npm run validate`: bestanden; 116 Jest-Tests in 22 Suites
-- Line Coverage: global 88,01 %, AuthContext 90,82 %, BusManagementContext 92,90 %, TripGuidanceContext 87,56 %, GroupCheckContext 95,31 %, QuestionRoundContext 95,65 %
+- `npm run validate`: bestanden; 129 Jest-Tests in 26 Suites
+- Line Coverage: global 84,84 %, AuthContext 91,21 %, BusManagementContext 92,90 %, DailyProgramContext 89,87 %, TripGuidanceContext 87,24 %, GroupCheckContext 95,31 %, QuestionRoundContext 95,65 %
 - Expo Doctor: 21/21 Checks bestanden
-- Web-, iOS- und Android-JavaScript-Export: bestanden
+- Web-JavaScript-Export: bestanden; iOS-/Android-Export für diesen Änderungssatz nicht erneut ausgeführt
 - Supabase DB-Lint: keine Schemafehler
-- pgTAP: 143 Assertions in acht SQL-Testdateien bestanden
-- Playwright: acht lokale Vollstack-Smokes bestanden, einschließlich Recovery, Offline-Start, Busmanagement und Reiseführung
+- pgTAP: 224 Assertions in elf SQL-Testdateien bestanden, einschließlich Familienzuordnung, Kofferzahl, Reisegruppen-, Adminmitgliedschafts- und Standort-RLS
+- Playwright: neun lokale Vollstack-Smokes bestanden, einschließlich Recovery, Offline-Start, Busmanagement, Mehrtagesprogramm auf Home und Reiseführung
 - `npm audit`: 0 Critical, 4 High, 11 Moderate
 
 Die High-/Moderate-Auditmeldungen liegen in transitiven Expo-/Metro-Buildabhängigkeiten, insbesondere `image-size`, `metro`, Expo Config und `xcode`/`uuid`. Die von npm angebotenen vollständigen Fixes würden auf inkompatible Expo-Versionen wechseln. Auf SDK-kompatible Upstream-Patches warten.
@@ -134,7 +150,7 @@ npm run test:e2e
 
 ## Remote-Backend-Stand
 
-Nach ausdrücklicher Freigabe wurden am 27. August 2026 die Migrationen `20260826000000` bis `20260826021000` sowie `20260827000000_add_bus_management.sql` auf das verknüpfte Supabase-Projekt ausgerollt. Am 28. August 2026 folgten `20260827120000_add_trip_guidance.sql`, `20260827130000_add_bus_boarding_read_status.sql`, `20260827140000_add_general_alarm.sql` und `20260827150000_enforce_general_alarm_status_order.sql`. Die neue additive Mehrzielmigration `20260828120000_add_trip_navigation_destinations.sql` liegt derzeit nur lokal vor und muss vor Nutzung des neuen Admin- und Kartenablaufs ausdrücklich remote angewandt werden. Keine bestehende Migration wurde verändert, gelöscht oder zusammengefasst.
+Nach ausdrücklicher Freigabe wurden am 27. August 2026 die Migrationen `20260826000000` bis `20260826021000` sowie `20260827000000_add_bus_management.sql` auf das verknüpfte Supabase-Projekt ausgerollt. Am 28. August 2026 folgten `20260827120000_add_trip_guidance.sql`, `20260827130000_add_bus_boarding_read_status.sql`, `20260827140000_add_general_alarm.sql` und `20260827150000_enforce_general_alarm_status_order.sql`. Die Mehrzielmigration `20260828120000_add_trip_navigation_destinations.sql` ist ebenfalls remote angewandt; am 30. August 2026 wurden die zuvor fehlende Migration `20260828130000_add_daily_program.sql` und anschließend `20260830000000_add_trip_groups_and_location_requests.sql` ausgerollt. Bis dahin zeigte die Migrationsliste lokal und remote denselben Stand. Die neue additive Migration `20260830010000_add_account_families_and_luggage.sql` ist nur lokal angewandt und noch nicht remote ausgerollt. Keine bestehende Migration wurde verändert, gelöscht oder zusammengefasst.
 
 Die Edge Function `delete-account` ist remote als aktive Version 1 mit `verify_jwt = false` bereitgestellt. Das schaltet nur die vorgeschaltete Legacy-JWT-Prüfung aus; die Function verlangt weiterhin einen Bearer-Token und validiert ihn über Supabase Auth. Ein anonymer Remote-Aufruf wurde erwartungsgemäß mit HTTP 401 abgewiesen. Es wurde kein reales Konto testweise gelöscht.
 
@@ -156,6 +172,9 @@ Die Kernarchitektur und die automatisierten lokalen Prüfungen sind stabil, die 
 - native Karte, RTL, dynamische Schrift und alle drei Sprachen auf Zielgeräten prüfen
 - realen Last-/Mobilfunktest für Bus-, Realtime- und Gruppenfunktionen mit der erwarteten Reisegruppengröße durchführen
 - Reiseführung mit neuem Client-Build sowie Realtime/Offline-Warteschlange unter realen Mobilfunkbedingungen prüfen
+- aktualisierten Client verteilen und Tagesprogramm-Realtime/Zeitzone auf kleinen Zielgeräten prüfen
+- Migration `20260830010000_add_account_families_and_luggage.sql` nach ausdrücklicher Freigabe remote ausrollen, den aktualisierten Client verteilen und Registrierung, Kofferänderung sowie Familienverwaltung mit mehreren Testkonten prüfen
+- Wegen der angepassten iOS-Berechtigungsbeschreibung einen neuen nativen Build erstellen und Reisegruppen einschließlich Adminmitgliedschaft, Anfrage, Ablehnung, einmaliger Standortfreigabe sowie 15-Minuten-Ablauf auf echten iOS-/Android-Geräten prüfen
 - Generalalarm-Dispatcher nach ausdrücklicher Freigabe remote ausrollen, EAS-Projekt-ID/Push-Credentials und minutenweisen Scheduler einrichten, neuen nativen Build verteilen und den Ablauf auf echten Geräten prüfen
 - SDK-kompatible Fixes für die verbleibenden High-/Moderate-Auditmeldungen übernehmen, sobald Expo/Metro sie bereitstellt
 

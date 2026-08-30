@@ -15,7 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { SymbolIcon } from '@/components/ui/symbol-icon';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
-import type { AdminUserSummary, AppRole } from '@/domain/database';
+import type { AccountFamily, AdminUserSummary, AppRole } from '@/domain/database';
+import { AdminAccountFamilyPanel } from '@/features/account-families/AdminAccountFamilyPanel';
 import { AdminSectionHeader } from '@/features/admin/AdminSectionHeader';
 import { useAuth } from '@/features/auth/auth-context';
 import { RequireAuth } from '@/features/auth/RequireAuth';
@@ -24,6 +25,7 @@ import { AdminBusManagementPanel } from '@/features/bus-management/AdminBusManag
 import { useBusManagement } from '@/features/bus-management/bus-management-context';
 import { AdminDailyProgramPanel } from '@/features/daily-program/AdminDailyProgramPanel';
 import { useDailyProgram } from '@/features/daily-program/daily-program-context';
+import { localISODate, visibleDailyPrograms } from '@/features/daily-program/daily-program-state';
 import { AdminGeneralAlarmPanel } from '@/features/general-alarm/AdminGeneralAlarmPanel';
 import { AdminGroupCheckPanel } from '@/features/group-check/AdminGroupCheckPanel';
 import { useGroupCheck } from '@/features/group-check/group-check-context';
@@ -40,6 +42,8 @@ import { AdminMeetingPointPanel } from '@/features/trip-guidance/AdminMeetingPoi
 import { AdminTripGuidancePanel } from '@/features/trip-guidance/AdminTripGuidancePanel';
 import { useTripGuidance } from '@/features/trip-guidance/trip-guidance-context';
 import { useTheme } from '@/hooks/use-theme';
+import { AdminTripGroupPanel } from '@/features/trip-groups/AdminTripGroupPanel';
+import { useTripGroups } from '@/features/trip-groups/trip-group-context';
 
 const adminPageSize = 200;
 const assignableRoles: AppRole[] = ['user', 'medical_staff', 'organization_team', 'admin'];
@@ -47,7 +51,9 @@ const assignableRoles: AppRole[] = ['user', 'medical_staff', 'organization_team'
 type AdminSection =
   | 'alarm'
   | 'bus'
+  | 'families'
   | 'guidance'
+  | 'groups'
   | 'navigation'
   | 'program'
   | 'questions'
@@ -82,6 +88,18 @@ async function fetchAllAdminUsers() {
   }
 }
 
+async function fetchAdminFamilies() {
+  const { data, error } = await withSupabaseReadTimeout((signal) =>
+    supabase.rpc('admin_list_account_families').abortSignal(signal),
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  return data ?? [];
+}
+
 export default function AdminScreen() {
   return (
     <RequireAuth admin returnTo="/admin">
@@ -99,7 +117,15 @@ function AdminContent() {
     hasSyncError: hasDailyProgramSyncError,
     programs: dailyPrograms,
   } = useDailyProgram();
+  const upcomingDailyProgramCount = visibleDailyPrograms(
+    dailyPrograms,
+    localISODate(),
+  ).length;
   const { activeCheck, hasSyncError: hasGroupCheckSyncError } = useGroupCheck();
+  const {
+    groups: tripGroups,
+    hasSyncError: hasTripGroupSyncError,
+  } = useTripGroups();
   const { activeRound, hasSyncError: hasQuestionRoundSyncError } = useQuestionRound();
   const {
     activeGuidance,
@@ -108,6 +134,7 @@ function AdminContent() {
   } = useTripGuidance();
   const hasNavigationTarget = navigationDestinations.length > 0;
   const [users, setUsers] = useState<AdminUserSummary[]>([]);
+  const [families, setFamilies] = useState<AccountFamily[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [readErrorKind, setReadErrorKind] = useState<SupabaseReadFailureKind | null>(null);
@@ -120,7 +147,9 @@ function AdminContent() {
   const [expandedSections, setExpandedSections] = useState<Record<AdminSection, boolean>>({
     alarm: false,
     bus: false,
+    families: false,
     guidance: false,
+    groups: false,
     navigation: false,
     program: false,
     questions: false,
@@ -150,10 +179,14 @@ function AdminContent() {
     setIsLoading(true);
 
     try {
-      const nextUsers = await fetchAllAdminUsers();
+      const [nextUsers, nextFamilies] = await Promise.all([
+        fetchAllAdminUsers(),
+        fetchAdminFamilies(),
+      ]);
 
       if (requestSequence === usersRequestSequence.current) {
         setUsers(nextUsers);
+        setFamilies(nextFamilies);
       }
     } catch (error) {
       if (requestSequence === usersRequestSequence.current) {
@@ -261,6 +294,32 @@ function AdminContent() {
 
               <View style={styles.section}>
                 <AdminSectionHeader
+                  description={t('admin.section.groups.description')}
+                  expanded={expandedSections.groups}
+                  icon="people"
+                  onToggle={() => toggleSection('groups')}
+                  status={t(
+                    hasTripGroupSyncError
+                      ? 'admin.section.groups.error'
+                      : tripGroups.length > 0
+                        ? 'admin.section.groups.active'
+                        : 'admin.section.groups.inactive',
+                    { count: tripGroups.length },
+                  )}
+                  statusColor={
+                    hasTripGroupSyncError
+                      ? 'danger'
+                      : tripGroups.length > 0
+                        ? 'success'
+                        : 'textSecondary'
+                  }
+                  title={t('admin.section.groups.title')}
+                />
+                {expandedSections.groups ? <AdminTripGroupPanel /> : null}
+              </View>
+
+              <View style={styles.section}>
+                <AdminSectionHeader
                   description={t('admin.section.alarm.description')}
                   expanded={expandedSections.alarm}
                   icon="warning"
@@ -289,15 +348,15 @@ function AdminContent() {
                   status={t(
                     hasDailyProgramSyncError
                       ? 'admin.section.program.error'
-                      : dailyPrograms.length > 0
+                      : upcomingDailyProgramCount > 0
                         ? 'admin.section.program.active'
                         : 'admin.section.program.inactive',
-                    { count: dailyPrograms.length },
+                    { count: upcomingDailyProgramCount },
                   )}
                   statusColor={
                     hasDailyProgramSyncError
                       ? 'danger'
-                      : dailyPrograms.length > 0
+                      : upcomingDailyProgramCount > 0
                         ? 'success'
                         : 'textSecondary'
                   }
@@ -401,6 +460,54 @@ function AdminContent() {
                   title={t('admin.section.questions.title')}
                 />
                 {expandedSections.questions ? <AdminQuestionRoundPanel /> : null}
+              </View>
+
+              <View style={styles.section}>
+                <AdminSectionHeader
+                  description={t('admin.section.families.description')}
+                  expanded={expandedSections.families}
+                  icon="people"
+                  onToggle={() => toggleSection('families')}
+                  status={
+                    hasError
+                      ? t('admin.section.families.error')
+                      : !hasLoaded
+                        ? t('admin.section.families.loading')
+                        : t('admin.section.families.count', {
+                            count: families.length,
+                          })
+                  }
+                  statusColor={hasError ? 'danger' : 'accent'}
+                  title={t('admin.section.families.title')}
+                />
+                {expandedSections.families ? (
+                  isLoading && !hasLoaded ? (
+                    <Card style={styles.state}>
+                      <ActivityIndicator color={theme.accent} size="large" />
+                      <ThemedText themeColor="textSecondary">
+                        {t('accountFamilies.loading')}
+                      </ThemedText>
+                    </Card>
+                  ) : hasError ? (
+                    <Card style={styles.state}>
+                      <ThemedText type="heading">{t('admin.errorTitle')}</ThemedText>
+                      <ThemedText themeColor="textSecondary">
+                        {t(supabaseReadFailureTranslationKey(readErrorKind ?? 'server'))}
+                      </ThemedText>
+                      <Button
+                        icon="refresh"
+                        label={t('admin.retry')}
+                        onPress={() => void loadUsers()}
+                      />
+                    </Card>
+                  ) : (
+                    <AdminAccountFamilyPanel
+                      families={families}
+                      onChanged={loadUsers}
+                      users={users}
+                    />
+                  )
+                ) : null}
               </View>
 
               <View style={styles.section}>
@@ -517,6 +624,14 @@ function AdminContent() {
             </View>
             <ThemedText type="small" themeColor="textSecondary">
               {t('admin.partySize', { count: item.party_size })}
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('admin.luggageCount', { count: item.luggage_count })}
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {item.family_name
+                ? t('admin.accountFamily', { name: item.family_name })
+                : t('admin.accountFamilyUnassigned')}
             </ThemedText>
 
             <Button

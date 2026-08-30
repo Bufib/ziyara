@@ -5,6 +5,7 @@ import {
   busRoute,
   guideRoute,
   getProtectedReturnRoute,
+  groupRoute,
   loginRoute,
   protectedRoutePaths,
 } from '@/features/navigation/routes';
@@ -67,6 +68,15 @@ describe('protected navigation', () => {
     expect(protectedRoutePaths).toContain('/guide');
     expect(loginRoute(guideRoute())).toEqual({
       params: { returnTo: '/guide' },
+      pathname: '/login',
+    });
+  });
+
+  it('führt die Reisegruppe als geschützte interne Route', () => {
+    expect(groupRoute()).toBe('/group');
+    expect(protectedRoutePaths).toContain('/group');
+    expect(loginRoute(groupRoute())).toEqual({
+      params: { returnTo: '/group' },
       pathname: '/login',
     });
   });

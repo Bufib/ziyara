@@ -20,6 +20,8 @@ import {
   getAuthErrorTranslationKey,
   useAuth,
 } from "@/features/auth/auth-context";
+import { LuggageCountField } from "@/features/auth/LuggageCountField";
+import { getLuggageCount } from "@/features/auth/luggage-count";
 import { RequireAuth } from "@/features/auth/RequireAuth";
 import {
   getPartySize,
@@ -62,6 +64,7 @@ function AccountContent() {
     changePassword,
     deleteAccount,
     profile,
+    updateLuggageCount,
     updatePartySize,
     user,
   } = useAuth();
@@ -70,6 +73,11 @@ function AccountContent() {
   );
   const [partyFeedback, setPartyFeedback] = useState<FeedbackState>(null);
   const [isChangingPartySize, setIsChangingPartySize] = useState(false);
+  const [luggageCount, setLuggageCount] = useState(
+    String(profile?.luggage_count ?? 0),
+  );
+  const [luggageFeedback, setLuggageFeedback] = useState<FeedbackState>(null);
+  const [isChangingLuggageCount, setIsChangingLuggageCount] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [emailPassword, setEmailPassword] = useState("");
   const [emailFeedback, setEmailFeedback] = useState<FeedbackState>(null);
@@ -128,6 +136,45 @@ function AccountContent() {
       });
     } finally {
       setIsChangingPartySize(false);
+    }
+  };
+
+  const submitLuggageCountChange = async () => {
+    setLuggageFeedback(null);
+    const normalizedLuggageCount = getLuggageCount(luggageCount);
+
+    if (normalizedLuggageCount === null) {
+      setLuggageFeedback({
+        isError: true,
+        message: t("luggage.validation.count"),
+      });
+      return;
+    }
+
+    setIsChangingLuggageCount(true);
+
+    try {
+      const { error } = await updateLuggageCount(normalizedLuggageCount);
+
+      if (error) {
+        setLuggageFeedback({
+          isError: true,
+          message: t("account.luggageError"),
+        });
+      } else {
+        setLuggageCount(String(normalizedLuggageCount));
+        setLuggageFeedback({
+          isError: false,
+          message: t("account.luggageSuccess"),
+        });
+      }
+    } catch {
+      setLuggageFeedback({
+        isError: true,
+        message: t("account.luggageError"),
+      });
+    } finally {
+      setIsChangingLuggageCount(false);
     }
   };
 
@@ -310,6 +357,28 @@ function AccountContent() {
               isLoading={isChangingPartySize}
               label={t("account.partySizeSave")}
               onPress={() => void submitPartySizeChange()}
+            />
+          </ThemedView>
+        </Section>
+
+        <Section title={t("account.luggageTitle")}>
+          <ThemedView
+            type="surface"
+            style={[styles.panel, { borderColor: theme.border }]}
+          >
+            <ThemedText type="small" themeColor="textSecondary">
+              {t("account.luggageBody")}
+            </ThemedText>
+            <LuggageCountField
+              disabled={isChangingLuggageCount}
+              onChange={setLuggageCount}
+              value={luggageCount}
+            />
+            <Feedback feedback={luggageFeedback} />
+            <SubmitButton
+              isLoading={isChangingLuggageCount}
+              label={t("account.luggageSave")}
+              onPress={() => void submitLuggageCountChange()}
             />
           </ThemedView>
         </Section>

@@ -1,6 +1,7 @@
 export type AppRole = 'admin' | 'medical_staff' | 'organization_team' | 'user';
 export type BusBoardingStatus = 'boarded' | 'on_way' | 'problem' | 'read';
 export type MemberType = 'brother' | 'sister';
+export type TripGroupLocationStatus = 'declined' | 'pending' | 'shared';
 export type TripGuidanceStatus =
   | 'almost_there'
   | 'at_meeting_point'
@@ -12,7 +13,9 @@ export type TripGuidanceStatus =
 export type UserProfile = {
   created_at: string;
   display_name: string;
+  family_id: number | null;
   id: number;
+  luggage_count: number;
   member_type: MemberType | null;
   party_size: number;
   role: AppRole;
@@ -22,9 +25,20 @@ export type UserProfile = {
 
 export type AdminUserSummary = {
   display_name: string;
+  family_id: number | null;
+  family_name: string | null;
+  luggage_count: number;
   party_size: number;
   role: AppRole;
   user_id: string;
+};
+
+export type AccountFamily = {
+  created_at: string;
+  created_by_profile_id: number | null;
+  id: number;
+  name: string;
+  updated_at: string;
 };
 
 export type GroupCheck = {
@@ -122,6 +136,46 @@ export type TripParticipant = {
   profile_id: number | null;
   trip_id: number;
   updated_at: string;
+};
+
+export type TripGroup = {
+  created_at: string;
+  created_by_profile_id: number | null;
+  id: number;
+  leader_participant_id: number;
+  name: string;
+  trip_id: number;
+  updated_at: string;
+};
+
+export type TripGroupMember = {
+  created_at: string;
+  group_id: number;
+  participant_id: number;
+  trip_id: number;
+};
+
+export type TripGroupMemberSummary = {
+  display_name: string;
+  group_id: number;
+  is_leader: boolean;
+  participant_code: string;
+  participant_id: number;
+  trip_id: number;
+};
+
+export type TripGroupLocationRequest = {
+  accuracy_meters: number | null;
+  group_id: number;
+  id: number;
+  latitude: number | null;
+  location_expires_at: string | null;
+  longitude: number | null;
+  requested_at: string;
+  requested_by_profile_id: number | null;
+  responded_at: string | null;
+  status: TripGroupLocationStatus;
+  trip_id: number;
 };
 
 export type TripNavigationDestination = {
@@ -245,6 +299,21 @@ export type TripGuidanceResponse = {
 export type Database = {
   public: {
     Tables: {
+      account_families: {
+        Insert: {
+          created_at?: string;
+          created_by_profile_id?: number | null;
+          id?: never;
+          name: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+        Row: AccountFamily;
+        Update: {
+          name?: string;
+          updated_at?: string;
+        };
+      };
       anonymous_questions: {
         Insert: {
           checked_at?: string | null;
@@ -373,7 +442,9 @@ export type Database = {
         Insert: {
           created_at?: string;
           display_name: string;
+          family_id?: number | null;
           id?: never;
+          luggage_count?: number;
           member_type?: MemberType | null;
           party_size?: number;
           role?: AppRole;
@@ -384,6 +455,8 @@ export type Database = {
         Row: UserProfile;
         Update: {
           display_name?: string;
+          family_id?: number | null;
+          luggage_count?: number;
           member_type?: MemberType | null;
           party_size?: number;
           role?: AppRole;
@@ -460,6 +533,62 @@ export type Database = {
         Update: {
           name?: string;
           sort_order?: number;
+        };
+      };
+      trip_group_location_requests: {
+        Insert: {
+          accuracy_meters?: number | null;
+          group_id: number;
+          id?: never;
+          latitude?: number | null;
+          location_expires_at?: string | null;
+          longitude?: number | null;
+          requested_at?: string;
+          requested_by_profile_id?: number | null;
+          responded_at?: string | null;
+          status?: TripGroupLocationStatus;
+          trip_id: number;
+        };
+        Relationships: [];
+        Row: TripGroupLocationRequest;
+        Update: {
+          accuracy_meters?: number | null;
+          latitude?: number | null;
+          location_expires_at?: string | null;
+          longitude?: number | null;
+          requested_at?: string;
+          requested_by_profile_id?: number | null;
+          responded_at?: string | null;
+          status?: TripGroupLocationStatus;
+        };
+      };
+      trip_group_members: {
+        Insert: {
+          created_at?: string;
+          group_id: number;
+          participant_id: number;
+          trip_id: number;
+        };
+        Relationships: [];
+        Row: TripGroupMember;
+        Update: never;
+      };
+      trip_groups: {
+        Insert: {
+          created_at?: string;
+          created_by_profile_id?: number | null;
+          id?: never;
+          leader_participant_id: number;
+          name: string;
+          trip_id: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+        Row: TripGroup;
+        Update: {
+          leader_participant_id?: number;
+          name?: string;
+          updated_at?: string;
         };
       };
       trip_daily_programs: {
@@ -613,6 +742,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      admin_delete_account_family: {
+        Args: { p_family_id: number };
+        Returns: AccountFamily;
+      };
       admin_archive_trip: {
         Args: { p_trip_id: number };
         Returns: Trip;
@@ -633,9 +766,27 @@ export type Database = {
         Args: { p_name: string; p_trip_id: number };
         Returns: TripBus;
       };
+      admin_delete_trip_group: {
+        Args: { p_group_id: number };
+        Returns: TripGroup;
+      };
+      admin_request_trip_group_location: {
+        Args: { p_group_id: number };
+        Returns: TripGroupLocationRequest;
+      };
       admin_upsert_trip_daily_programs: {
         Args: { p_programs: TripDailyProgramInput[]; p_trip_id: number };
         Returns: TripDailyProgram[];
+      };
+      admin_upsert_trip_group: {
+        Args: {
+          p_group_id?: number | null;
+          p_leader_participant_id: number;
+          p_member_participant_ids: number[];
+          p_name: string;
+          p_trip_id: number;
+        };
+        Returns: TripGroup;
       };
       can_read_current_trip_daily_program: {
         Args: { p_trip_id: number };
@@ -706,6 +857,10 @@ export type Database = {
         Args: never;
         Returns: AdminUserSummary[];
       };
+      admin_list_account_families: {
+        Args: never;
+        Returns: AccountFamily[];
+      };
       admin_set_user_role: {
         Args: { p_role: AppRole; p_user_id: string };
         Returns: UserProfile;
@@ -732,6 +887,14 @@ export type Database = {
         };
         Returns: TripParticipant;
       };
+      admin_upsert_account_family: {
+        Args: {
+          p_family_id?: number | null;
+          p_member_user_ids: string[];
+          p_name: string;
+        };
+        Returns: AccountFamily;
+      };
       can_delete_account: {
         Args: { p_user_id: string };
         Returns: boolean;
@@ -743,6 +906,10 @@ export type Database = {
       claim_due_general_alarm_notifications: {
         Args: never;
         Returns: GeneralAlarmNotificationClaim[];
+      };
+      get_trip_group_member_summaries: {
+        Args: never;
+        Returns: TripGroupMemberSummary[];
       };
       complete_general_alarm_notification_attempts: {
         Args: {
@@ -775,6 +942,16 @@ export type Database = {
       respond_to_group_check: {
         Args: { p_answer: boolean; p_check_id: number };
         Returns: GroupCheckResponse;
+      };
+      respond_to_trip_group_location: {
+        Args: {
+          p_accuracy_meters?: number | null;
+          p_latitude?: number | null;
+          p_longitude?: number | null;
+          p_request_id: number;
+          p_share: boolean;
+        };
+        Returns: TripGroupLocationRequest;
       };
       respond_to_trip_guidance: {
         Args: {
@@ -821,6 +998,7 @@ export type Database = {
       app_role: AppRole;
       bus_boarding_status: BusBoardingStatus;
       member_type: MemberType;
+      trip_group_location_status: TripGroupLocationStatus;
       trip_guidance_status: TripGuidanceStatus;
     };
     CompositeTypes: Record<string, never>;
