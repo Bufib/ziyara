@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Screen } from "@/components/ui/screen";
 import { Section } from "@/components/ui/section";
@@ -13,13 +13,19 @@ import { DailyProgramHome } from "@/features/daily-program/DailyProgramHome";
 import { useI18n } from "@/features/i18n/i18n";
 import { useGroupCheck } from "@/features/group-check/group-check-context";
 import { localizeCityName, localizePlace } from "@/features/i18n/localizedData";
-import { busRoute, cityRoute, groupRoute, guideRoute } from "@/features/navigation/routes";
+import {
+  busRoute,
+  cityRoute,
+  groupRoute,
+  guideRoute,
+} from "@/features/navigation/routes";
 import { supabaseReadFailureTranslationKey } from "@/features/network/supabase-read";
 import { PlaceImageCard } from "@/features/places/PlaceImageCard";
 import { useQuestionRound } from "@/features/question-round/question-round-context";
 import { useTheme } from "@/hooks/use-theme";
 import { useTripGuidance } from "@/features/trip-guidance/trip-guidance-context";
 import { useTripGroups } from "@/features/trip-groups/trip-group-context";
+import { Image } from "expo-image";
 
 const featuredSlugs = [
   "shrine-imam-hussain",
@@ -45,14 +51,15 @@ export default function HomeScreen() {
     refresh: refreshQuestionRound,
     syncErrorKind: questionRoundSyncErrorKind,
   } = useQuestionRound();
-  const {
-    activeGuidance,
-    participants: guidanceParticipants,
-  } = useTripGuidance();
-  const ownTripGroups = tripGroups.filter((group) => group.is_current_user_member);
+  const { activeGuidance, participants: guidanceParticipants } =
+    useTripGuidance();
+  const ownTripGroups = tripGroups.filter(
+    (group) => group.is_current_user_member,
+  );
   const hasPendingLeaderLocationRequest = ownTripGroups.some(
     (group) =>
-      group.is_current_user_leader && group.location_request?.status === "pending",
+      group.is_current_user_leader &&
+      group.location_request?.status === "pending",
   );
   const featuredPlaces = featuredSlugs
     .map((slug) => allPlaces.find((place) => place.slug === slug))
@@ -62,34 +69,26 @@ export default function HomeScreen() {
 
   return (
     <Screen>
-      <View style={[styles.hero, { backgroundColor: theme.surface }]}>
-        <View style={styles.heroText}>
-          <ThemedText type="eyebrow" themeColor="accent">
-            Ziyarah
-          </ThemedText>
-          <ThemedText type="title" style={styles.title}>
-            {t("home.heroTitle")}
-          </ThemedText>
-          <ThemedText themeColor="textSecondary">
-            {t("home.heroBody")}
-          </ThemedText>
-        </View>
-
-        <View style={styles.actions}>
-          <Button
-            icon="map"
-            label={t("common.openMap")}
-            onPress={() => router.push("/map")}
-            style={{ flex: 1 }}
-          />
-          <Button
-            icon="search"
-            label={t("common.search")}
-            variant="secondary"
-            onPress={() => router.push("/search")}
-            style={{ flex: 1 }}
-          />
-        </View>
+      <View
+        style={[
+          styles.hero,
+          {
+            backgroundColor: "#618764",
+            flex: 1,
+            flexDirection: "row",
+            justifyContent: "flex-start",
+          },
+        ]}
+      >
+        <Image
+          source={require("@/assets/images/logo.png")}
+          style={{
+            width: 120,
+            height: 120,
+            aspectRatio: 1,
+          }}
+          contentFit="contain"
+        />
       </View>
 
       {session && activeCheck ? (
@@ -116,7 +115,8 @@ export default function HomeScreen() {
           style={[
             styles.notice,
             { backgroundColor: theme.accentSoft, borderColor: theme.accent },
-          ]}>
+          ]}
+        >
           <ThemedText type="heading">{t("bus.homeTitle")}</ThemedText>
           <ThemedText themeColor="textSecondary">
             {t("bus.homeBody", { count: busParticipants.length })}
@@ -134,8 +134,14 @@ export default function HomeScreen() {
           style={[
             styles.notice,
             hasPendingLeaderLocationRequest
-              ? { backgroundColor: theme.warningSoft, borderColor: theme.warning }
-              : { backgroundColor: theme.accentSoft, borderColor: theme.accent },
+              ? {
+                  backgroundColor: theme.warningSoft,
+                  borderColor: theme.warning,
+                }
+              : {
+                  backgroundColor: theme.accentSoft,
+                  borderColor: theme.accent,
+                },
           ]}
         >
           <ThemedText type="heading">
@@ -208,10 +214,17 @@ export default function HomeScreen() {
           style={[
             styles.notice,
             { backgroundColor: theme.warningSoft, borderColor: theme.warning },
-          ]}>
-          <ThemedText type="heading">{t("questionRound.syncErrorTitle")}</ThemedText>
+          ]}
+        >
+          <ThemedText type="heading">
+            {t("questionRound.syncErrorTitle")}
+          </ThemedText>
           <ThemedText themeColor="textSecondary">
-            {t(supabaseReadFailureTranslationKey(questionRoundSyncErrorKind ?? "server"))}
+            {t(
+              supabaseReadFailureTranslationKey(
+                questionRoundSyncErrorKind ?? "server",
+              ),
+            )}
           </ThemedText>
           <Button
             icon="refresh"
@@ -268,7 +281,8 @@ const styles = StyleSheet.create({
   hero: {
     borderRadius: 8,
     gap: Spacing.four,
-    padding: Spacing.four,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.four,
     borderWidth: 0.2,
   },
   heroText: {

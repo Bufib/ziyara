@@ -70,7 +70,7 @@ Der Guide ist mit seinen Orts-, Stadt-, Karten-, Such-, Lesezeichen-, Reader-, E
 
 - Admins veröffentlichen in **Reiseführung** den aktuellen Besuchsort, nächsten Programmpunkt, Abfahrt, Treffpunkt, relevante Tür, Entfernungshinweis, Beschreibung und Handlungen. Im davon getrennten Punkt **Reiseziele & Navigation** legen sie unabhängig davon mehrere benannte Ziele an, setzen deren Standort per Karte, verschiebbarem Marker oder aktuellem Gerätestandort und bearbeiten oder entfernen sie später.
 - Teilnehmer melden je eigener physischer ID „Noch unterwegs“, „Bin gleich da“, „Beim Treffpunkt“, „Problem“, „Verloren“ oder „Medizinische Hilfe benötigt“. Problemfälle werden ausdrücklich von einem Admin übernommen; der meldende Teilnehmer sieht dessen Anzeigenamen.
-- Alle aktiven Reiseziele erscheinen angemeldeten Teilnehmern als rote Marker auf der nativen und der Webkarte und sind einzeln über externe Navigation erreichbar. Verknüpfte Katalogorte bleiben separat sichtbar. Die Entfernung zum aktuellen Programmtreffpunkt wird nur nach einem Klick einmalig bestimmt; es gibt kein permanentes Tracking und keine Speicherung der Geräteposition im Backend.
+- Alle aktiven Reiseziele erscheinen angemeldeten Teilnehmern als rote Marker auf der nativen und der Webkarte und sind einzeln über externe Navigation erreichbar. Verknüpfte Katalogorte bleiben separat sichtbar. Ein validierter, benutzergebundener AsyncStorage-Cache hält den letzten erfolgreichen Reisezielstand über App-Neustarts hinweg sichtbar, falls der erste Serverabruf fehlschlägt; ein erfolgreicher Supabase-Abruf bleibt maßgeblich und entfernt überholte Ziele. Die Entfernung zum aktuellen Programmtreffpunkt wird nur nach einem Klick einmalig bestimmt; es gibt kein permanentes Tracking und keine Speicherung der Geräteposition im Backend.
 - Eindeutige Offlinefehler werden in einer validierten, benutzerspezifischen AsyncStorage-Warteschlange vorgemerkt. Die UI sagt ausdrücklich, dass diese Meldung noch nicht beim Reiseleiter angekommen ist.
 
 ### Fehlerbehandlung und Monitoring
@@ -123,8 +123,8 @@ npm audit
 
 Letzter vollständig ausgeführter Stand vom 30. August 2026:
 
-- `npm run validate`: bestanden; 129 Jest-Tests in 26 Suites
-- Line Coverage: global 84,84 %, AuthContext 91,21 %, BusManagementContext 92,90 %, DailyProgramContext 89,87 %, TripGuidanceContext 87,24 %, GroupCheckContext 95,31 %, QuestionRoundContext 95,65 %
+- `npm run validate`: bestanden; 140 Jest-Tests in 27 Suites
+- Line Coverage: global 85,27 %, AuthContext 91,21 %, BusManagementContext 92,90 %, DailyProgramContext 89,87 %, TripGuidanceContext 87,86 %, GroupCheckContext 95,31 %, QuestionRoundContext 95,65 %
 - Expo Doctor: 21/21 Checks bestanden
 - Web-JavaScript-Export: bestanden; iOS-/Android-Export für diesen Änderungssatz nicht erneut ausgeführt
 - Supabase DB-Lint: keine Schemafehler

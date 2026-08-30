@@ -27,6 +27,7 @@ import {
   withSupabaseReadTimeout,
 } from '@/features/network/supabase-read';
 import { useTripGuidanceOutbox } from '@/features/trip-guidance/trip-guidance-outbox';
+import { useTripNavigationCache } from '@/features/trip-guidance/trip-navigation-cache';
 import {
   buildTripGuidanceParticipantStates,
   getTripGuidanceSubmitFailureKind,
@@ -88,15 +89,25 @@ export function TripGuidanceProvider({ children }: PropsWithChildren) {
   const previousUserIdRef = useRef(userId);
   const syncedUserIdRef = useRef<string | null>(null);
   const activeGuidanceRef = useRef<TripGuidanceUpdate | null>(null);
+  const navigationDestinationsRef = useRef<TripNavigationDestination[]>([]);
   const outboxRef = useRef<PendingTripGuidanceStatus[]>([]);
   const flushInProgressRef = useRef(false);
   const attemptedOutboxEntriesRef = useRef(new Set<string>());
   const [outbox, setOutbox, outboxLoaded] = useTripGuidanceOutbox();
+  const [navigationCache, setNavigationCache] = useTripNavigationCache();
   const [snapshot, setSnapshot] = useState<Snapshot>(emptySnapshot);
   const [syncedUserId, setSyncedUserId] = useState<string | null>(null);
   const [syncState, setSyncState] = useState<SyncState>('loading');
   const [syncErrorKind, setSyncErrorKind] = useState<SupabaseReadFailureKind | null>(null);
   const stateVersion = useRef(0);
+  const cachedNavigationDestinations =
+    userId && navigationCache?.userId === userId
+      ? navigationCache.destinations
+      : emptySnapshot.navigationDestinations;
+  const visibleNavigationDestinations =
+    syncedUserId === userId && syncState !== 'error'
+      ? snapshot.navigationDestinations
+      : cachedNavigationDestinations;
 
   useEffect(() => {
     userIdRef.current = userId;
@@ -105,6 +116,10 @@ export function TripGuidanceProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     activeGuidanceRef.current = snapshot.activeGuidance;
   }, [snapshot.activeGuidance]);
+
+  useEffect(() => {
+    navigationDestinationsRef.current = visibleNavigationDestinations;
+  }, [visibleNavigationDestinations]);
 
   useEffect(() => {
     outboxRef.current = outbox;
@@ -151,6 +166,7 @@ export function TripGuidanceProvider({ children }: PropsWithChildren) {
       if (!activeTrip) {
         if (requestVersion === stateVersion.current) {
           setSnapshot(emptySnapshot);
+          setNavigationCache(null);
           syncedUserIdRef.current = userId;
           setSyncedUserId(userId);
           setSyncErrorKind(null);
@@ -217,12 +233,22 @@ export function TripGuidanceProvider({ children }: PropsWithChildren) {
       }
 
       if (requestVersion === stateVersion.current) {
+        const navigationDestinations = destinationsResult.error
+          ? navigationDestinationsRef.current
+          : (destinationsResult.data ?? []);
+
+        if (!destinationsResult.error) {
+          setNavigationCache({
+            destinations: navigationDestinations,
+            tripId: activeTrip.id,
+            userId,
+          });
+        }
+
         setSnapshot({
           activeGuidance,
           activeTrip,
-          navigationDestinations: destinationsResult.error
-            ? []
-            : (destinationsResult.data ?? []),
+          navigationDestinations,
           participants: participantsResult.data ?? [],
           responses,
         });
@@ -239,7 +265,7 @@ export function TripGuidanceProvider({ children }: PropsWithChildren) {
         setSyncState('error');
       }
     }
-  }, [userId]);
+  }, [setNavigationCache, userId]);
 
   const submitStatusRpc = useCallback(
     async (guidanceId: number, participantId: number, status: TripGuidanceStatus) => {
@@ -488,7 +514,7 @@ export function TripGuidanceProvider({ children }: PropsWithChildren) {
       hasSyncError: syncState === 'error',
       isLoading: syncState === 'loading' || syncedUserId !== userId,
       isRefreshing: syncState === 'refreshing',
-      navigationDestinations: snapshot.navigationDestinations,
+      navigationDestinations: visibleNavigationDestinations,
       participants,
       pendingCount: applicableOutbox.length,
       refresh,
@@ -496,7 +522,7 @@ export function TripGuidanceProvider({ children }: PropsWithChildren) {
       setStatus,
       syncErrorKind,
     }),
-    [acknowledgeProblem, applicableOutbox.length, participants, refresh, retryPending, setStatus, snapshot.activeGuidance, snapshot.activeTrip, snapshot.navigationDestinations, syncErrorKind, syncState, syncedUserId, userId],
+    [acknowledgeProblem, applicableOutbox.length, participants, refresh, retryPending, setStatus, snapshot.activeGuidance, snapshot.activeTrip, syncErrorKind, syncState, syncedUserId, userId, visibleNavigationDestinations],
   );
 
   return <TripGuidanceContext.Provider value={value}>{children}</TripGuidanceContext.Provider>;

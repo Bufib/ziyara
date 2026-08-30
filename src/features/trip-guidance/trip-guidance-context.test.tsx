@@ -9,6 +9,7 @@ import type {
   Trip,
   TripGuidanceResponse,
   TripGuidanceUpdate,
+  TripNavigationDestination,
   TripParticipant,
 } from '@/domain/database';
 import { supabase } from '@/features/auth/supabase';
@@ -16,6 +17,7 @@ import {
   TripGuidanceProvider,
   useTripGuidance,
 } from '@/features/trip-guidance/trip-guidance-context';
+import type { TripNavigationCache } from '@/features/trip-guidance/trip-navigation-cache';
 
 const session = { user: { id: 'guidance-user' } } as Session;
 const mockAuthState: { isLoading: boolean; session: Session | null } = {
@@ -37,7 +39,25 @@ jest.mock('@/features/auth/supabase', () => ({
   },
 }));
 
-type QueryResult<T> = { data: T; error: null };
+const mockNavigationCacheState: {
+  loaded: boolean;
+  setValue: ReturnType<typeof jest.fn>;
+  value: TripNavigationCache | null;
+} = {
+  loaded: true,
+  setValue: jest.fn(),
+  value: null,
+};
+
+jest.mock('@/features/trip-guidance/trip-navigation-cache', () => ({
+  useTripNavigationCache: () => [
+    mockNavigationCacheState.value,
+    mockNavigationCacheState.setValue,
+    mockNavigationCacheState.loaded,
+  ],
+}));
+
+type QueryResult<T> = { data: T; error: unknown | null };
 type MockFunction = Mock<(...args: never[]) => unknown>;
 type MockChannel = { on: MockFunction; subscribe: MockFunction };
 type MockSupabase = {
@@ -64,6 +84,19 @@ const participant: TripParticipant = {
   profile_id: 7,
   trip_id: activeTrip.id,
   updated_at: '2026-08-27T08:02:00Z',
+};
+const navigationDestination: TripNavigationDestination = {
+  archived_at: null,
+  created_at: '2026-08-27T08:10:00Z',
+  created_by_profile_id: 1,
+  details: 'Neben dem Haupteingang',
+  id: 35,
+  latitude: 32.618,
+  longitude: 44.034,
+  name: 'Hotel',
+  sort_order: 0,
+  trip_id: activeTrip.id,
+  updated_at: '2026-08-27T08:10:00Z',
 };
 const guidance: TripGuidanceUpdate = {
   acts: null,
@@ -120,11 +153,14 @@ function dequeue(table: string) {
   return result;
 }
 
-function queueSnapshot(serverResponses: TripGuidanceResponse[] = []) {
+function queueSnapshot(
+  serverResponses: TripGuidanceResponse[] = [],
+  destinations: TripNavigationDestination[] = [],
+) {
   enqueue('trips', { data: activeTrip, error: null });
   enqueue('trip_participants', { data: [participant], error: null });
   enqueue('trip_guidance_updates', { data: guidance, error: null });
-  enqueue('trip_navigation_destinations', { data: [], error: null });
+  enqueue('trip_navigation_destinations', { data: destinations, error: null });
   enqueue('trip_guidance_responses', { data: serverResponses, error: null });
 }
 
@@ -165,6 +201,9 @@ describe('TripGuidanceProvider', () => {
     jest.clearAllMocks();
     mockAuthState.isLoading = false;
     mockAuthState.session = session;
+    mockNavigationCacheState.loaded = true;
+    mockNavigationCacheState.setValue.mockReset();
+    mockNavigationCacheState.value = null;
     jest.spyOn(AppState, 'addEventListener').mockImplementation(
       () => ({ remove: jest.fn() }) as NativeEventSubscription,
     );
@@ -314,5 +353,89 @@ describe('TripGuidanceProvider', () => {
       participants: [],
     });
     expect(mockSupabase.from).toHaveBeenCalledTimes(1);
+  });
+
+  it('speichert geladene Kartenorte für den nächsten App-Start', async () => {
+    queueSnapshot([], [navigationDestination]);
+
+    await act(async () => {
+      renderer = create(
+        <TripGuidanceProvider>
+          <Probe />
+        </TripGuidanceProvider>,
+      );
+    });
+    await waitFor(() => !context().isLoading && context().navigationDestinations.length === 1);
+
+    expect(mockNavigationCacheState.setValue).toHaveBeenCalledWith({
+      destinations: [navigationDestination],
+      tripId: activeTrip.id,
+      userId: session.user.id,
+    });
+  });
+
+  it('zeigt gespeicherte Kartenorte nach einem Neustart trotz erstem Lesefehler', async () => {
+    mockNavigationCacheState.value = {
+      destinations: [navigationDestination],
+      tripId: activeTrip.id,
+      userId: session.user.id,
+    };
+    enqueue('trips', { data: null, error: new TypeError('Failed to fetch') });
+
+    await act(async () => {
+      renderer = create(
+        <TripGuidanceProvider>
+          <Probe />
+        </TripGuidanceProvider>,
+      );
+    });
+    await waitFor(() => context().hasSyncError);
+
+    expect(context().navigationDestinations).toEqual([navigationDestination]);
+  });
+
+  it('ersetzt den Cache mit einer erfolgreichen leeren Serverantwort', async () => {
+    mockNavigationCacheState.value = {
+      destinations: [navigationDestination],
+      tripId: activeTrip.id,
+      userId: session.user.id,
+    };
+    queueSnapshot();
+
+    await act(async () => {
+      renderer = create(
+        <TripGuidanceProvider>
+          <Probe />
+        </TripGuidanceProvider>,
+      );
+    });
+    await waitFor(() => !context().isLoading);
+
+    expect(context().navigationDestinations).toEqual([]);
+    expect(mockNavigationCacheState.setValue).toHaveBeenCalledWith({
+      destinations: [],
+      tripId: activeTrip.id,
+      userId: session.user.id,
+    });
+  });
+
+  it('zeigt den Cache eines anderen Kontos nicht an', async () => {
+    mockNavigationCacheState.value = {
+      destinations: [navigationDestination],
+      tripId: activeTrip.id,
+      userId: 'anderes-konto',
+    };
+    enqueue('trips', { data: null, error: new TypeError('Failed to fetch') });
+
+    await act(async () => {
+      renderer = create(
+        <TripGuidanceProvider>
+          <Probe />
+        </TripGuidanceProvider>,
+      );
+    });
+    await waitFor(() => context().hasSyncError);
+
+    expect(context().navigationDestinations).toEqual([]);
   });
 });

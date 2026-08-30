@@ -413,13 +413,14 @@ Acceptance criteria:
 - Place links, external meeting-point navigation and a one-shot distance check work without continuous tracking or backend location storage.
 - The admin dashboard exposes trip destinations and navigation as its own section, separate from trip-guidance editing. Admins can create and edit multiple named destinations, place each on a platform-specific map, drag the native marker or use their current location, preview navigation and archive obsolete entries.
 - Signed-in trip members see every active destination as a distinct marker on the native and web maps; web also exposes a destination list, and every destination opens external navigation.
+- The last successful destination list is cached locally with strict validation and a user ID. It remains visible after an app restart when the initial read fails, while a successful server response, including an empty list, replaces the cache authoritatively.
 - Realtime, app focus and staggered fallback refreshes keep guidance and reports current.
 - Clear network failures queue reports in a validated, user-scoped AsyncStorage outbox. Pending UI never claims the leader received the report, and retries remain idempotent.
 - RLS exposes only the active trip to members, only linked participant reports to normal accounts and the complete overview to admins. All writes use authenticated RPCs.
 
 Tests/checks:
 
-- Jest state, outbox parsing, distance and protected-route tests.
+- Jest state, outbox parsing, destination-cache restart, distance and protected-route tests.
 - Fresh local migration, database lint and pgTAP RLS/RPC lifecycle tests.
 - Playwright full-stack smoke from publication through a Realtime meeting-point edit and explicit problem acceptance.
 - Web, iOS and Android JavaScript exports plus manual native location-permission review.
@@ -521,3 +522,33 @@ Tests/checks:
 - Fresh local migration, DB lint and pgTAP tests for grants, role boundaries, unique membership, explicit sharing, overwrite and deletion.
 - TypeScript, lint, Expo dependency alignment, Expo Doctor and web export.
 - Manual iOS/Android checks for foreground permission grant/denial, Realtime delivery and fifteen-minute expiry on a signed build.
+
+## Phase 16: Account families and luggage count
+
+Files to create or modify:
+
+- `src/features/account-families/*`
+- `src/features/auth/*`
+- `src/app/account.tsx`
+- `src/app/admin.tsx`
+- `src/domain/database.ts`
+- `src/features/i18n/i18n.tsx`
+- `supabase/migrations/20260830010000_add_account_families_and_luggage.sql`
+- `supabase/tests/database/account_families_and_luggage.test.sql`
+
+Acceptance criteria:
+
+- Registration requires a luggage count from `0` to `50`; the value covers every person represented by the account. Existing accounts default to `0`.
+- Signed-in users can update only their own luggage count from the account page reached through Settings.
+- Admins can create, rename and delete named account families and assign registered user accounts to them.
+- One account belongs to at most one account family. Assigning it elsewhere moves it atomically, while deleting a family preserves the accounts and clears their assignment.
+- Account families remain separate from `party_size`, physical participants and trip groups.
+- Direct family writes remain unavailable to clients. Minimal authenticated admin RPCs handle management, and RLS lets members read only their own family name without exposing other memberships.
+- German, English and Arabic UI copy includes loading, validation, empty, move, success and error states.
+
+Tests/checks:
+
+- Jest tests for luggage parsing, registration metadata and own-account updates.
+- Additive local migration, DB lint and pgTAP tests for grants, RLS, admin-only family management, atomic moves and deletion.
+- TypeScript, lint, coverage validation, Expo Doctor and web export.
+- Manual iOS/Android/Web checks for registration, account updates, family moves, small widths, themes, languages and dynamic text.
