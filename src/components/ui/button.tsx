@@ -1,4 +1,10 @@
-import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  type AccessibilityState,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { SymbolIcon, type SymbolIconName } from '@/components/ui/symbol-icon';
 import { ThemedText } from '@/components/themed-text';
@@ -9,6 +15,7 @@ import { useTheme } from '@/hooks/use-theme';
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 
 export type ButtonProps = {
+  accessibilityState?: AccessibilityState;
   disabled?: boolean;
   icon: SymbolIconName;
   label: string;
@@ -18,6 +25,7 @@ export type ButtonProps = {
 };
 
 export function Button({
+  accessibilityState,
   disabled = false,
   icon,
   label,
@@ -38,7 +46,7 @@ export function Button({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ disabled }}
+      accessibilityState={{ ...accessibilityState, disabled }}
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [

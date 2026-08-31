@@ -412,7 +412,7 @@ Acceptance criteria:
 - An admin explicitly accepts a problem report, and the participant sees the accepting leader’s captured display name.
 - Place links, external meeting-point navigation and a one-shot distance check work without continuous tracking or backend location storage.
 - The admin dashboard exposes trip destinations and navigation as its own section, separate from trip-guidance editing. Admins can create and edit multiple named destinations, place each on a platform-specific map, drag the native marker or use their current location, preview navigation and archive obsolete entries.
-- Signed-in trip members see every active destination as a distinct marker on the native and web maps; web also exposes a destination list, and every destination opens external navigation.
+- Signed-in trip members see every active destination as a distinct marker on the native and web maps. A “Trip destinations” button exposes the full list on both platforms; native selections focus the corresponding marker, and every destination remains reachable through external navigation.
 - The last successful destination list is cached locally with strict validation and a user ID. It remains visible after an app restart when the initial read fails, while a successful server response, including an empty list, replaces the cache authoritatively.
 - Realtime, app focus and staggered fallback refreshes keep guidance and reports current.
 - Clear network failures queue reports in a validated, user-scoped AsyncStorage outbox. Pending UI never claims the leader received the report, and retries remain idempotent.

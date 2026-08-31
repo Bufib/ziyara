@@ -1,7 +1,13 @@
 import * as Location from "expo-location";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import MapView, { Marker, type Region } from "react-native-maps";
 import {
   SafeAreaView,
@@ -9,6 +15,7 @@ import {
 } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/button";
+import { SymbolIcon } from "@/components/ui/symbol-icon";
 import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
 import { allPlaces } from "@/data/places";
@@ -43,6 +50,7 @@ export function MapExperience() {
   );
   const [selectedDestination, setSelectedDestination] =
     useState<TripNavigationDestination | null>(null);
+  const [showDestinations, setShowDestinations] = useState(false);
   const insets = useSafeAreaInsets();
   const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
   const [userLocation, setUserLocation] =
@@ -62,6 +70,24 @@ export function MapExperience() {
       650,
     );
   }, []);
+
+  const showDestinationOnMap = useCallback(
+    (destination: TripNavigationDestination) => {
+      setShowDestinations(false);
+      setSelectedPlace(null);
+      setSelectedDestination(destination);
+      mapRef.current?.animateToRegion(
+        {
+          latitude: destination.latitude,
+          longitude: destination.longitude,
+          latitudeDelta: 0.04,
+          longitudeDelta: 0.04,
+        },
+        650,
+      );
+    },
+    [],
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -158,32 +184,18 @@ export function MapExperience() {
         ) : null}
       </MapView>
 
-      <View style={styles.topBar}>
-        <Button
-          disabled={locationStatus === "loading"}
-          icon="map"
-          label={
-            locationStatus === "loading"
-              ? t("map.locationLoading")
-              : userLocation
-                ? t("map.recenter")
-                : t("map.myLocation")
-          }
-          variant={userLocation ? "secondary" : "primary"}
-          onPress={requestLocation}
-        />
-        {navigationDestinations.length > 0 ? (
-          <View
-            style={[
-              styles.destinationCount,
-              { backgroundColor: theme.surface, borderColor: theme.danger },
-            ]}>
-            <ThemedText type="smallBold" themeColor="danger">
-              {t("map.tripDestinationCount", { count: navigationDestinations.length })}
-            </ThemedText>
-          </View>
-        ) : null}
-      </View>
+      {navigationDestinations.length > 0 ? (
+        <View style={styles.topBar}>
+          <Button
+            accessibilityState={{ expanded: showDestinations }}
+            icon="map"
+            label={t("map.tripDestinationsButton")}
+            onPress={() => setShowDestinations(true)}
+            style={styles.destinationButton}
+            variant="secondary"
+          />
+        </View>
+      ) : null}
 
       {(locationStatus === "denied" || locationStatus === "error") && (
         <View
@@ -249,6 +261,127 @@ export function MapExperience() {
           </View>
         </View>
       )}
+
+      <Pressable
+        accessibilityLabel={
+          locationStatus === "loading"
+            ? t("map.locationLoading")
+            : userLocation
+              ? t("map.recenter")
+              : t("map.myLocation")
+        }
+        accessibilityRole="button"
+        accessibilityState={{ disabled: locationStatus === "loading" }}
+        disabled={locationStatus === "loading"}
+        onPress={() => void requestLocation()}
+        style={({ pressed }) => [
+          styles.locationButton,
+          {
+            backgroundColor: theme.surface,
+            borderColor: theme.border,
+            bottom:
+              insets.bottom +
+              (selectedDestination || localizedSelectedPlace ? 164 : Spacing.three),
+            shadowColor: theme.text,
+          },
+          pressed && styles.pressed,
+          locationStatus === "loading" && styles.locationButtonDisabled,
+        ]}
+      >
+        <SymbolIcon color={theme.location} name="location" size={28} />
+      </Pressable>
+
+      <Modal
+        animationType="slide"
+        onRequestClose={() => setShowDestinations(false)}
+        statusBarTranslucent
+        transparent
+        visible={showDestinations && navigationDestinations.length > 0}
+      >
+        <View style={styles.destinationModal}>
+          <Pressable
+            accessibilityLabel={t("map.closeTripDestinations")}
+            accessibilityRole="button"
+            onPress={() => setShowDestinations(false)}
+            style={[
+              StyleSheet.absoluteFill,
+              styles.destinationBackdrop,
+              { backgroundColor: theme.text },
+            ]}
+          />
+          <SafeAreaView
+            edges={["bottom"]}
+            style={[
+              styles.destinationPanel,
+              { backgroundColor: theme.surface, borderColor: theme.border },
+            ]}
+          >
+            <View style={styles.destinationHeader}>
+              <View style={styles.destinationHeaderText}>
+                <ThemedText type="subtitle">
+                  {t("map.tripDestinationsButton")}
+                </ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t("map.tripDestinationCount", {
+                    count: navigationDestinations.length,
+                  })}
+                </ThemedText>
+              </View>
+              <Pressable
+                accessibilityLabel={t("map.closeTripDestinations")}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={() => setShowDestinations(false)}
+                style={({ pressed }) => [
+                  styles.closeButton,
+                  { backgroundColor: theme.backgroundElement },
+                  pressed && styles.pressed,
+                ]}
+              >
+                <SymbolIcon color={theme.text} name="close" size={22} />
+              </Pressable>
+            </View>
+            <ThemedText themeColor="textSecondary">
+              {t("map.tripDestinationListBody")}
+            </ThemedText>
+            <ScrollView
+              contentContainerStyle={styles.destinationList}
+              showsVerticalScrollIndicator={false}
+              style={styles.destinationScroll}
+            >
+              {navigationDestinations.map((destination) => (
+                <Pressable
+                  accessibilityLabel={`${destination.name}. ${t("map.showTripDestinationOnMap")}`}
+                  accessibilityRole="button"
+                  key={destination.id}
+                  onPress={() => showDestinationOnMap(destination)}
+                  style={({ pressed }) => [
+                    styles.destinationRow,
+                    {
+                      backgroundColor: theme.background,
+                      borderColor: theme.danger,
+                    },
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <View style={styles.destinationRowText}>
+                    <ThemedText type="heading">{destination.name}</ThemedText>
+                    {destination.details ? (
+                      <ThemedText type="small" themeColor="textSecondary">
+                        {destination.details}
+                      </ThemedText>
+                    ) : null}
+                    <ThemedText type="smallBold" themeColor="danger">
+                      {t("map.showTripDestinationOnMap")}
+                    </ThemedText>
+                  </View>
+                  <SymbolIcon color={theme.danger} name="chevron" size={22} />
+                </Pressable>
+              ))}
+            </ScrollView>
+          </SafeAreaView>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -257,15 +390,84 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  destinationCount: {
-    alignSelf: "flex-start",
+  closeButton: {
+    alignItems: "center",
     borderRadius: 999,
+    height: 48,
+    justifyContent: "center",
+    width: 48,
+  },
+  destinationBackdrop: {
+    opacity: 0.38,
+  },
+  destinationButton: {
+    alignSelf: "flex-start",
+  },
+  destinationHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: Spacing.two,
+    justifyContent: "space-between",
+  },
+  destinationHeaderText: {
+    flex: 1,
+    gap: Spacing.half,
+    minWidth: 0,
+  },
+  destinationList: {
+    gap: Spacing.two,
+    paddingBottom: Spacing.three,
+  },
+  destinationModal: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  destinationPanel: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
+    gap: Spacing.three,
+    height: "86%",
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
+    paddingTop: Spacing.three,
+  },
+  destinationRow: {
+    alignItems: "center",
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    gap: Spacing.two,
+    minHeight: 72,
+    padding: Spacing.three,
+  },
+  destinationScroll: {
+    flexShrink: 1,
+  },
+  destinationRowText: {
+    flex: 1,
+    gap: Spacing.half,
+    minWidth: 0,
   },
   map: {
     ...StyleSheet.absoluteFill,
+  },
+  locationButton: {
+    alignItems: "center",
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+    height: 54,
+    justifyContent: "center",
+    position: "absolute",
+    right: Spacing.three,
+    elevation: 4,
+    shadowOffset: { height: 2, width: 0 },
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    width: 54,
+    zIndex: 2,
+  },
+  locationButtonDisabled: {
+    opacity: 0.55,
   },
   topBar: {
     gap: Spacing.two,
@@ -282,6 +484,9 @@ const styles = StyleSheet.create({
     gap: Spacing.half,
     marginHorizontal: Spacing.three,
     padding: Spacing.three,
+  },
+  pressed: {
+    opacity: 0.72,
   },
   sheet: {
     borderRadius: 8,

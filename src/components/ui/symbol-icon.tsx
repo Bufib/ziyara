@@ -15,6 +15,7 @@ export type SymbolIconName =
   | 'external-link'
   | 'home'
   | 'info'
+  | 'location'
   | 'logout'
   | 'map'
   | 'minus'
@@ -41,6 +42,7 @@ const symbolNames: Record<SymbolIconName, React.ComponentProps<typeof SymbolView
   'external-link': { ios: 'arrow.up.forward.square', android: 'open_in_new', web: 'open_in_new' },
   home: { ios: 'house', android: 'home', web: 'home' },
   info: { ios: 'info.circle', android: 'info', web: 'info' },
+  location: { ios: 'location.fill', android: 'navigation', web: 'navigation' },
   logout: {
     ios: 'rectangle.portrait.and.arrow.right',
     android: 'logout',

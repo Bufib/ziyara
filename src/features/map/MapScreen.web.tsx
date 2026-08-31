@@ -56,6 +56,7 @@ export function MapExperience() {
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [selectedDestination, setSelectedDestination] =
     useState<TripNavigationDestination | null>(null);
+  const [showDestinations, setShowDestinations] = useState(false);
 
   const requestLocation = () => {
     const geolocation = globalThis.navigator?.geolocation;
@@ -103,6 +104,54 @@ export function MapExperience() {
           onPress={requestLocation}
           variant={userLocation ? 'secondary' : 'primary'}
         />
+        {navigationDestinations.length > 0 ? (
+          <Button
+            accessibilityState={{ expanded: showDestinations }}
+            icon="map"
+            label={t('map.tripDestinationsButton')}
+            onPress={() => setShowDestinations((current) => !current)}
+            style={styles.destinationButton}
+            variant="secondary"
+          />
+        ) : null}
+        {showDestinations && navigationDestinations.length > 0 ? (
+          <View
+            style={[
+              styles.destinationListPanel,
+              { backgroundColor: theme.surface, borderColor: theme.danger },
+            ]}>
+            <View style={styles.placeText}>
+              <ThemedText type="heading">{t('map.tripDestinationsTitle')}</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('map.tripDestinationsBody')}
+              </ThemedText>
+            </View>
+            <View style={styles.list}>
+              {navigationDestinations.map((destination) => (
+                <View
+                  key={destination.id}
+                  style={[
+                    styles.placeRow,
+                    { backgroundColor: theme.background, borderColor: theme.danger },
+                  ]}>
+                  <View style={styles.placeText}>
+                    <ThemedText type="heading">{destination.name}</ThemedText>
+                    {destination.details ? (
+                      <ThemedText type="small" themeColor="textSecondary">
+                        {destination.details}
+                      </ThemedText>
+                    ) : null}
+                  </View>
+                  <Button
+                    icon="map"
+                    label={t('common.navigate')}
+                    onPress={() => void openNavigation(destination)}
+                  />
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
         {locationMessageKey ? (
           <View style={[styles.locationNotice, { backgroundColor: theme.warningSoft }]}>
             <ThemedText type="smallBold">
@@ -183,38 +232,6 @@ export function MapExperience() {
         ) : null}
       </Section>
 
-      {navigationDestinations.length > 0 ? (
-        <Section title={t('map.tripDestinationsTitle')}>
-          <ThemedText themeColor="textSecondary">
-            {t('map.tripDestinationsBody')}
-          </ThemedText>
-          <View style={styles.list}>
-            {navigationDestinations.map((destination) => (
-              <View
-                key={destination.id}
-                style={[
-                  styles.placeRow,
-                  { backgroundColor: theme.surface, borderColor: theme.danger },
-                ]}>
-                <View style={styles.placeText}>
-                  <ThemedText type="heading">{destination.name}</ThemedText>
-                  {destination.details ? (
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {destination.details}
-                    </ThemedText>
-                  ) : null}
-                </View>
-                <Button
-                  icon="map"
-                  label={t('common.navigate')}
-                  onPress={() => void openNavigation(destination)}
-                />
-              </View>
-            ))}
-          </View>
-        </Section>
-      ) : null}
-
       <Section title={t('map.places')}>
         <View style={styles.list}>
           {places.map((place) => (
@@ -278,6 +295,15 @@ const styles = StyleSheet.create({
     marginTop: -13,
     position: 'absolute',
     width: 26,
+  },
+  destinationListPanel: {
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: Spacing.three,
+    padding: Spacing.three,
+  },
+  destinationButton: {
+    alignSelf: 'flex-start',
   },
   markerText: {
     fontSize: 1,
