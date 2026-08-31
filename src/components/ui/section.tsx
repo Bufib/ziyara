@@ -1,7 +1,7 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { ThemedText } from "@/components/themed-text";
+import { Spacing } from "@/constants/theme";
 
 type SectionProps = {
   actionLabel?: string;
@@ -10,13 +10,22 @@ type SectionProps = {
   title: string;
 };
 
-export function Section({ actionLabel, children, onAction, title }: SectionProps) {
+export function Section({
+  actionLabel,
+  children,
+  onAction,
+  title,
+}: SectionProps) {
   return (
     <View style={styles.section}>
       <View style={styles.header}>
         <ThemedText type="subtitle">{title}</ThemedText>
         {actionLabel && onAction ? (
-          <Pressable accessibilityRole="button" onPress={onAction} style={styles.action}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onAction}
+            style={styles.action}
+          >
             <ThemedText type="smallBold" themeColor="accent">
               {actionLabel}
             </ThemedText>
@@ -33,13 +42,13 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   header: {
-    alignItems: 'center',
-    flexDirection: 'row',
+    alignItems: "center",
+    flexDirection: "row",
     gap: Spacing.two,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   action: {
     minHeight: 44,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
 });

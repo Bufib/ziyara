@@ -7,6 +7,7 @@ import type { Mock } from 'jest-mock';
 
 import type { TripDailyProgram } from '@/domain/database';
 import { supabase } from '@/features/auth/supabase';
+import type { DailyProgramCache } from '@/features/daily-program/daily-program-cache';
 import {
   DailyProgramProvider,
   useDailyProgram,
@@ -24,6 +25,24 @@ jest.mock('@/features/auth/supabase', () => ({
     from: jest.fn(),
     removeChannel: jest.fn(),
   },
+}));
+
+const mockDailyProgramCacheState: {
+  loaded: boolean;
+  setValue: ReturnType<typeof jest.fn>;
+  value: DailyProgramCache | null;
+} = {
+  loaded: true,
+  setValue: jest.fn(),
+  value: null,
+};
+
+jest.mock('@/features/daily-program/daily-program-cache', () => ({
+  useDailyProgramCache: () => [
+    mockDailyProgramCacheState.value,
+    mockDailyProgramCacheState.setValue,
+    mockDailyProgramCacheState.loaded,
+  ],
 }));
 
 type QueryResult = { data: TripDailyProgram[] | null; error: PostgrestError | null };
@@ -112,6 +131,9 @@ describe('DailyProgramProvider', () => {
     queryResponses = [];
     renderer = null;
     jest.clearAllMocks();
+    mockDailyProgramCacheState.loaded = true;
+    mockDailyProgramCacheState.setValue.mockReset();
+    mockDailyProgramCacheState.value = null;
 
     jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, listener) => {
       appStateListener = listener as (state: string) => void;
@@ -158,10 +180,15 @@ describe('DailyProgramProvider', () => {
   it('lädt Programme und aktualisiert sie über Realtime und App-Resume', async () => {
     await renderProvider({ data: [savedProgram], error: null });
     expect(getContext()).toMatchObject({
+      hasProgramSnapshot: true,
       hasSyncError: false,
       isLoading: false,
       programs: [savedProgram],
       syncErrorKind: null,
+    });
+    expect(mockDailyProgramCacheState.setValue).toHaveBeenCalledWith({
+      programs: [savedProgram],
+      userId: mockSession.user.id,
     });
 
     queryResponses.push(Promise.resolve({ data: [], error: null }));
@@ -186,10 +213,36 @@ describe('DailyProgramProvider', () => {
     await act(async () => getContext().refresh());
 
     expect(getContext()).toMatchObject({
+      hasProgramSnapshot: true,
       hasSyncError: true,
       isLoading: false,
       programs: [savedProgram],
       syncErrorKind: 'server',
+    });
+  });
+
+  it('zeigt den lokalen Stand sofort und aktualisiert ihn im Hintergrund', async () => {
+    mockDailyProgramCacheState.value = {
+      programs: [savedProgram],
+      userId: mockSession.user.id,
+    };
+    queryResponses.push(new Promise<QueryResult>(() => undefined));
+
+    await act(async () => {
+      renderer = create(
+        <DailyProgramProvider>
+          <DailyProgramProbe />
+        </DailyProgramProvider>,
+      );
+      await flushAsyncWork();
+    });
+
+    expect(getContext()).toMatchObject({
+      hasProgramSnapshot: true,
+      hasSyncError: false,
+      isLoading: false,
+      isRefreshing: true,
+      programs: [savedProgram],
     });
   });
 });

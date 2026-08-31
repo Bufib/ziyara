@@ -23,6 +23,7 @@ export function DailyProgramWeek() {
   const theme = useTheme();
   const { language, t } = useI18n();
   const {
+    hasProgramSnapshot,
     hasSyncError,
     isLoading,
     isRefreshing,
@@ -86,16 +87,18 @@ export function DailyProgramWeek() {
             </Card>
           ) : null}
 
-          <View style={styles.dayList}>
-            {weekDates.map((date) => (
-              <ProgramDay
-                date={date}
-                isToday={date === today}
-                key={date}
-                program={programsByDate.get(date)}
-              />
-            ))}
-          </View>
+          {hasProgramSnapshot || !hasSyncError ? (
+            <View style={styles.dayList}>
+              {weekDates.map((date) => (
+                <ProgramDay
+                  date={date}
+                  isToday={date === today}
+                  key={date}
+                  program={programsByDate.get(date)}
+                />
+              ))}
+            </View>
+          ) : null}
         </>
       )}
     </Screen>

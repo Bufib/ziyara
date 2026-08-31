@@ -1,33 +1,36 @@
-import { router, type Href } from 'expo-router';
-import { Alert, StyleSheet, View } from 'react-native';
+import { router, type Href } from "expo-router";
+import { Alert, StyleSheet, View } from "react-native";
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Screen } from '@/components/ui/screen';
-import { Section } from '@/components/ui/section';
-import { ThemedText } from '@/components/themed-text';
-import { allPlaces, getPlaceBySlug } from '@/data/places';
-import { religiousContent, getReligiousContentBySlug } from '@/data/religiousContent';
-import type { Place } from '@/domain/types';
-import { useI18n } from '@/features/i18n/i18n';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Screen } from "@/components/ui/screen";
+import { Section } from "@/components/ui/section";
+import { ThemedText } from "@/components/themed-text";
+import { allPlaces, getPlaceBySlug } from "@/data/places";
+import {
+  religiousContent,
+  getReligiousContentBySlug,
+} from "@/data/religiousContent";
+import type { Place } from "@/domain/types";
+import { useI18n } from "@/features/i18n/i18n";
 import {
   localizePlace,
   localizeReligiousContent,
-} from '@/features/i18n/localizedData';
-import { readerRoute } from '@/features/navigation/routes';
-import { PlaceImageCard } from '@/features/places/PlaceImageCard';
-import { useBookmarks } from '@/features/storage/useBookmarks';
-import { Spacing } from '@/constants/theme';
+} from "@/features/i18n/localizedData";
+import { readerRoute } from "@/features/navigation/routes";
+import { PlaceImageCard } from "@/features/places/PlaceImageCard";
+import { useBookmarks } from "@/features/storage/useBookmarks";
+import { Spacing } from "@/constants/theme";
 
 type PlaceBookmarkItem = {
   key: string;
-  kind: 'place';
+  kind: "place";
   place: Place;
 };
 
 type ContentBookmarkItem = {
   key: string;
-  kind: 'content';
+  kind: "content";
   route: Href;
   subtitle: string;
   title: string;
@@ -43,31 +46,41 @@ export default function BookmarksScreen() {
   const { bookmarks, clearBookmarks } = useBookmarks();
   const { language, t } = useI18n();
   const confirmClearBookmarks = () => {
-    Alert.alert(t('bookmarks.clearConfirmTitle'), t('bookmarks.clearConfirmBody'), [
-      { style: 'cancel', text: t('bookmarks.clearCancel') },
-      { onPress: clearBookmarks, style: 'destructive', text: t('bookmarks.clearAction') },
-    ]);
+    Alert.alert(
+      t("bookmarks.clearConfirmTitle"),
+      t("bookmarks.clearConfirmBody"),
+      [
+        { style: "cancel", text: t("bookmarks.clearCancel") },
+        {
+          onPress: clearBookmarks,
+          style: "destructive",
+          text: t("bookmarks.clearAction"),
+        },
+      ],
+    );
   };
   const items: BookmarkItem[] = bookmarks
     .map<BookmarkItem | null>((bookmark) => {
-      const [kind, slug] = bookmark.split(':');
-      if (kind === 'place') {
+      const [kind, slug] = bookmark.split(":");
+      if (kind === "place") {
         const rawPlace = getPlaceBySlug(slug);
         const place = rawPlace ? localizePlace(rawPlace, language) : undefined;
         return place
           ? {
               key: bookmark,
-              kind: 'place',
+              kind: "place",
               place,
             }
           : null;
       }
       const rawContent = getReligiousContentBySlug(slug);
-      const content = rawContent ? localizeReligiousContent(rawContent, language) : undefined;
+      const content = rawContent
+        ? localizeReligiousContent(rawContent, language)
+        : undefined;
       return content
         ? {
             key: bookmark,
-            kind: 'content',
+            kind: "content",
             title: content.title,
             subtitle: t(`labels.contentType.${content.type}`),
             route: readerRoute(content.slug),
@@ -77,14 +90,15 @@ export default function BookmarksScreen() {
     .filter(isBookmarkItem);
 
   return (
-    <Screen>
+    <Screen contentStyle={{ flex: 1 }}>
       <Section
-        title={t('bookmarks.title')}
-        actionLabel={items.length > 0 ? t('bookmarks.clear') : undefined}
-        onAction={items.length > 0 ? confirmClearBookmarks : undefined}>
+        title={t("bookmarks.title")}
+        actionLabel={items.length > 0 ? t("bookmarks.clear") : undefined}
+        onAction={items.length > 0 ? confirmClearBookmarks : undefined}
+      >
         <View style={styles.list}>
           {items.map((item) =>
-            item.kind === 'place' ? (
+            item.kind === "place" ? (
               <PlaceImageCard key={item.key} place={item.place} />
             ) : (
               <Card key={item.key} onPress={() => router.push(item.route)}>
@@ -98,23 +112,12 @@ export default function BookmarksScreen() {
 
           {items.length === 0 && (
             <View style={styles.empty}>
-              <ThemedText type="heading">{t('bookmarks.emptyTitle')}</ThemedText>
-              <ThemedText themeColor="textSecondary">
-                {t('bookmarks.emptyBody')}
+              <ThemedText type="heading">
+                {t("bookmarks.emptyTitle")}
               </ThemedText>
-              <View style={styles.actions}>
-                <Button
-                  icon="map"
-                  label={t('bookmarks.showPlaces', { count: allPlaces.length })}
-                  onPress={() => router.push('/map')}
-                />
-                <Button
-                  icon="book"
-                  label={t('bookmarks.readingEntries', { count: religiousContent.length })}
-                  variant="secondary"
-                  onPress={() => router.push('/search')}
-                />
-              </View>
+              <ThemedText themeColor="textSecondary">
+                {t("bookmarks.emptyBody")}
+              </ThemedText>
             </View>
           )}
         </View>
@@ -128,11 +131,11 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   empty: {
-    gap: Spacing.three,
+    gap: Spacing.two,
   },
   actions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: Spacing.two,
   },
 });

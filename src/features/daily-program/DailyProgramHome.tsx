@@ -19,7 +19,15 @@ const heroTextMuted = '#E4EEE6';
 
 export function DailyProgramHome() {
   const { language, t } = useI18n();
-  const { hasSyncError, isLoading, programs, refresh, syncErrorKind } = useDailyProgram();
+  const {
+    hasProgramSnapshot,
+    hasSyncError,
+    isLoading,
+    isRefreshing,
+    programs,
+    refresh,
+    syncErrorKind,
+  } = useDailyProgram();
   const today = localISODate();
   const todaysProgram = programs.find((program) => program.program_date === today);
 
@@ -32,7 +40,7 @@ export function DailyProgramHome() {
     );
   }
 
-  if (hasSyncError) {
+  if (hasSyncError && !hasProgramSnapshot) {
     return (
       <View accessibilityRole="alert" style={styles.state}>
         <ThemedText style={styles.eyebrow} type="eyebrow">
@@ -70,10 +78,13 @@ export function DailyProgramHome() {
             {formatProgramDate(today, language)}
           </ThemedText>
         </View>
-        <View style={styles.todayBadge}>
-          <ThemedText style={styles.todayText} type="tinyBold">
-            {t('dailyProgram.today')}
-          </ThemedText>
+        <View style={styles.statusRow}>
+          {isRefreshing ? <ActivityIndicator color={heroText} size="small" /> : null}
+          <View style={styles.todayBadge}>
+            <ThemedText style={styles.todayText} type="tinyBold">
+              {t('dailyProgram.today')}
+            </ThemedText>
+          </View>
         </View>
       </View>
 
@@ -95,6 +106,15 @@ export function DailyProgramHome() {
           </ThemedText>
         )}
       </View>
+
+      {hasSyncError ? (
+        <ThemedText
+          accessibilityLiveRegion="polite"
+          style={styles.syncNotice}
+          type="small">
+          {t('dailyProgram.cachedNotice')}
+        </ThemedText>
+      ) : null}
 
       <View style={styles.openRow}>
         <ThemedText style={styles.openLabel} type="smallBold">
@@ -167,6 +187,14 @@ const styles = StyleSheet.create({
   },
   state: {
     gap: Spacing.two,
+  },
+  statusRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  syncNotice: {
+    color: heroTextMuted,
   },
   todayBadge: {
     backgroundColor: 'rgba(255,255,255,0.18)',

@@ -586,6 +586,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "dailyProgram.admin.tripRequiredBody":
       "Lege zuerst eine aktive Reise im Busmanagement an.",
     "dailyProgram.admin.tripRequiredTitle": "Aktive Reise erforderlich",
+    "dailyProgram.cachedNotice":
+      "Zuletzt gespeicherter Stand · Aktualisierung fehlgeschlagen",
     "dailyProgram.homeTitle": "Tagesprogramm",
     "dailyProgram.loading": "Tagesprogramm wird geladen …",
     "dailyProgram.noProgramForDay":
@@ -1531,6 +1533,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "dailyProgram.admin.tripRequiredBody":
       "First create an active trip in Bus management.",
     "dailyProgram.admin.tripRequiredTitle": "Active trip required",
+    "dailyProgram.cachedNotice":
+      "Last saved version · Update failed",
     "dailyProgram.homeTitle": "Daily program",
     "dailyProgram.loading": "Loading daily program …",
     "dailyProgram.noProgramForDay": "No program has been published for this day yet.",
@@ -2461,6 +2465,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "dailyProgram.admin.tripRequiredBody":
       "أنشئ أولاً رحلة نشطة في إدارة الحافلات.",
     "dailyProgram.admin.tripRequiredTitle": "يلزم وجود رحلة نشطة",
+    "dailyProgram.cachedNotice":
+      "آخر نسخة محفوظة · تعذر التحديث",
     "dailyProgram.homeTitle": "البرنامج اليومي",
     "dailyProgram.loading": "جارٍ تحميل البرنامج اليومي …",
     "dailyProgram.noProgramForDay": "لم يُنشر برنامج لهذا اليوم بعد.",

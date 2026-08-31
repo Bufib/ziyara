@@ -13,6 +13,7 @@ import { AppState, Platform } from 'react-native';
 import type { TripDailyProgram } from '@/domain/database';
 import { useAuth } from '@/features/auth/auth-context';
 import { supabase } from '@/features/auth/supabase';
+import { useDailyProgramCache } from '@/features/daily-program/daily-program-cache';
 import {
   getSupabaseReadFailureKind,
   type SupabaseReadFailureKind,
@@ -22,6 +23,7 @@ import {
 type SyncState = 'error' | 'loading' | 'ready' | 'refreshing';
 
 type DailyProgramContextValue = {
+  hasProgramSnapshot: boolean;
   hasSyncError: boolean;
   isLoading: boolean;
   isRefreshing: boolean;
@@ -40,6 +42,7 @@ export function DailyProgramProvider({ children }: PropsWithChildren) {
   const previousUserIdRef = useRef(userId);
   const syncedUserIdRef = useRef<string | null>(null);
   const stateVersionRef = useRef(0);
+  const [programCache, setProgramCache] = useDailyProgramCache();
   const [programs, setPrograms] = useState<TripDailyProgram[]>([]);
   const [syncedUserId, setSyncedUserId] = useState<string | null>(null);
   const [syncState, setSyncState] = useState<SyncState>('loading');
@@ -85,7 +88,9 @@ export function DailyProgramProvider({ children }: PropsWithChildren) {
       if (error) throw error;
 
       if (requestVersion === stateVersionRef.current) {
-        setPrograms(data ?? []);
+        const nextPrograms = data ?? [];
+        setPrograms(nextPrograms);
+        setProgramCache({ programs: nextPrograms, userId });
         syncedUserIdRef.current = userId;
         setSyncedUserId(userId);
         setSyncErrorKind(null);
@@ -93,13 +98,11 @@ export function DailyProgramProvider({ children }: PropsWithChildren) {
       }
     } catch (error) {
       if (requestVersion === stateVersionRef.current) {
-        syncedUserIdRef.current = userId;
-        setSyncedUserId(userId);
         setSyncErrorKind(getSupabaseReadFailureKind(error));
         setSyncState('error');
       }
     }
-  }, [userId]);
+  }, [setProgramCache, userId]);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -147,16 +150,38 @@ export function DailyProgramProvider({ children }: PropsWithChildren) {
     };
   }, [isAuthLoading, refresh, userId]);
 
+  const cachedPrograms =
+    userId && programCache?.userId === userId ? programCache.programs : null;
+  const hasProgramSnapshot =
+    Boolean(userId) && (syncedUserId === userId || cachedPrograms !== null);
+
   const value = useMemo<DailyProgramContextValue>(
-    () => ({
-      hasSyncError: syncState === 'error',
-      isLoading: syncState === 'loading' || syncedUserId !== userId,
-      isRefreshing: syncState === 'refreshing',
+    () => {
+      const visiblePrograms =
+        syncedUserId === userId ? programs : (cachedPrograms ?? []);
+
+      return {
+        hasProgramSnapshot,
+        hasSyncError: syncState === 'error',
+        isLoading: syncState === 'loading' && !hasProgramSnapshot,
+        isRefreshing:
+          syncState === 'refreshing' ||
+          (syncState === 'loading' && hasProgramSnapshot),
+        programs: visiblePrograms,
+        refresh,
+        syncErrorKind,
+      };
+    },
+    [
+      cachedPrograms,
+      hasProgramSnapshot,
       programs,
       refresh,
+      syncedUserId,
       syncErrorKind,
-    }),
-    [programs, refresh, syncErrorKind, syncState, syncedUserId, userId],
+      syncState,
+      userId,
+    ],
   );
 
   return <DailyProgramContext.Provider value={value}>{children}</DailyProgramContext.Provider>;

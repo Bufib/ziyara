@@ -479,6 +479,7 @@ Acceptance criteria:
 - One row per trip and calendar date is updated atomically through an authenticated admin RPC; direct client writes remain unavailable.
 - Every signed-in account can read the active trip's programs even before a physical participant ID is linked.
 - Home shows a compact preview of today's program. Opening it shows today and the next six days in separate day sections with structured agenda lines.
+- The last validated per-user program snapshot is available immediately after restart while the server refresh continues in the background; an empty successful response remains authoritative.
 - Realtime, app focus and staggered fallback refreshes retain the last visible data during background read failures.
 - Calendar helpers use local dates and reject invalid ISO dates without shifting a day through UTC conversion.
 - German, English and Arabic UI copy plus loading, empty, validation and sync-error states are present.
