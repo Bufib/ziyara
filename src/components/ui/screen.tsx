@@ -1,6 +1,10 @@
 import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
+  TouchableWithoutFeedback,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   type StyleProp,
@@ -35,23 +39,36 @@ export function Screen({
       edges={safeAreaEdges}
       style={[styles.safeArea, { backgroundColor: theme.background }]}
     >
-      <ScrollView
-        ref={scrollViewRef}
-        onContentSizeChange={onContentSizeChange}
-        onScroll={onScroll}
-        scrollEventThrottle={500}
-        contentContainerStyle={[styles.content, contentStyle]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardView}
       >
-        {children}
-      </ScrollView>
+        <TouchableWithoutFeedback
+          accessible={false}
+          onPress={Keyboard.dismiss}
+        >
+          <ScrollView
+            ref={scrollViewRef}
+            onContentSizeChange={onContentSizeChange}
+            onScroll={onScroll}
+            scrollEventThrottle={500}
+            contentContainerStyle={[styles.content, contentStyle]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
+    flex: 1,
+  },
+  keyboardView: {
     flex: 1,
   },
   content: {

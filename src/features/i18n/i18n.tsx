@@ -394,23 +394,26 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "Die Aktion konnte nicht ausgeführt werden. Prüfe die Verbindung und versuche es erneut.",
     "groupCheck.activeLabel": "Verpflichtende Abfrage läuft",
     "groupCheck.adminActiveBody":
-      "Alle Konten ohne Adminrolle sehen jetzt ausschließlich diese Abfrage. Die Namen werden live aktualisiert.",
+      "Konten ohne Adminrolle sehen diese Abfrage bis zu ihrer ersten Antwort exklusiv. Die Namen werden live aktualisiert.",
     "groupCheck.adminBody":
-      "Starte eine Frage. Bis du sie beendest, bleiben alle anderen App-Bereiche für Konten ohne Adminrolle gesperrt.",
+      "Starte eine Frage. Konten ohne Adminrolle bleiben bis zu ihrer ersten Antwort gesperrt und können ihre Antwort danach bis zum Ende ändern.",
     "groupCheck.adminParticipantBody":
       "Als Admin bleibt die App zugänglich. Nach deiner Antwort kannst du direkt in die App zurückkehren.",
     "groupCheck.adminTitle": "Gruppenabfrage",
+    "groupCheck.answeredBody":
+      "Deine Antwort ist gespeichert. Solange die Abfrage offen ist, kannst du sie jederzeit ändern.",
     "groupCheck.answerSaved": "Deine Antwort wurde gespeichert.",
     "groupCheck.accountCount": "Accounts: {count}",
     "groupCheck.accountPartySize": "Vertretene Personen: {count}",
-    "groupCheck.close": "Abfrage beenden und App freigeben",
+    "groupCheck.changeAnswer": "Antwort ändern",
+    "groupCheck.close": "Abfrage beenden",
     "groupCheck.confirmedCount": "Bestätigt: {count}",
     "groupCheck.declinedCount": "Abgelehnt: {count}",
     "groupCheck.homeBody":
-      "Die Statusabfrage gilt auch für Admins. Du kannst antworten, ohne den Adminbereich zu verlieren.",
+      "Die Statusabfrage ist noch offen. Du kannst deine Antwort jederzeit prüfen oder ändern.",
     "groupCheck.homeTitle": "Aktive Statusabfrage",
     "groupCheck.lockedBody":
-      "Die übrigen Bereiche werden wieder freigegeben, sobald der Admin die Abfrage beendet.",
+      "Beantworte die Abfrage, um die übrigen App-Bereiche wieder freizuschalten.",
     "groupCheck.navTitle": "Statusabfrage",
     "groupCheck.no": "Ablehnen",
     "groupCheck.noConfirmed": "Noch keine Bestätigung",
@@ -1380,23 +1383,26 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "The action could not be completed. Check your connection and try again.",
     "groupCheck.activeLabel": "Required check in progress",
     "groupCheck.adminActiveBody":
-      "All accounts without the administrator role can now see only this check. Names update live.",
+      "Accounts without the administrator role see only this check until their first response. Names update live.",
     "groupCheck.adminBody":
-      "Start a question. All other areas remain locked for accounts without the administrator role until you end it.",
+      "Start a question. Accounts without the administrator role remain locked until their first response and can change it until the check ends.",
     "groupCheck.adminParticipantBody":
       "As an administrator, the app remains accessible. After answering, you can return directly to the app.",
     "groupCheck.adminTitle": "Group check",
+    "groupCheck.answeredBody":
+      "Your response is saved. You can change it at any time while the check remains open.",
     "groupCheck.answerSaved": "Your answer has been saved.",
     "groupCheck.accountCount": "Accounts: {count}",
     "groupCheck.accountPartySize": "Represented people: {count}",
-    "groupCheck.close": "End check and unlock app",
+    "groupCheck.changeAnswer": "Change response",
+    "groupCheck.close": "End check",
     "groupCheck.confirmedCount": "Confirmed: {count}",
     "groupCheck.declinedCount": "Declined: {count}",
     "groupCheck.homeBody":
-      "The status check also applies to administrators. You can respond without losing access to the admin area.",
+      "The status check is still open. You can review or change your response at any time.",
     "groupCheck.homeTitle": "Active status check",
     "groupCheck.lockedBody":
-      "The other areas will become available again when the admin ends the check.",
+      "Respond to the check to unlock the other areas of the app.",
     "groupCheck.navTitle": "Status check",
     "groupCheck.no": "Decline",
     "groupCheck.noConfirmed": "No confirmations yet",
@@ -2354,23 +2360,26 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "تعذر تنفيذ الإجراء. تحقق من الاتصال وحاول مرة أخرى.",
     "groupCheck.activeLabel": "استطلاع إلزامي جارٍ",
     "groupCheck.adminActiveBody":
-      "ترى جميع الحسابات التي لا تحمل دور المشرف هذا الاستطلاع فقط الآن، وتُحدَّث الأسماء مباشرة.",
+      "ترى الحسابات التي لا تحمل دور المشرف هذا الاستطلاع فقط حتى تقدم إجابتها الأولى، وتُحدَّث الأسماء مباشرة.",
     "groupCheck.adminBody":
-      "ابدأ سؤالاً. ستبقى بقية أقسام التطبيق مقفلة للحسابات التي لا تحمل دور المشرف حتى تنهيه.",
+      "ابدأ سؤالاً. تبقى الحسابات التي لا تحمل دور المشرف مقفلة حتى تقدم إجابتها الأولى، ويمكنها تغيير الإجابة حتى نهاية الاستطلاع.",
     "groupCheck.adminParticipantBody":
       "يبقى التطبيق متاحاً لك بصفتك مشرفاً. بعد الإجابة يمكنك العودة مباشرة إلى التطبيق.",
     "groupCheck.adminTitle": "استطلاع المجموعة",
+    "groupCheck.answeredBody":
+      "تم حفظ إجابتك. ما دام استطلاع الحالة مفتوحاً، يمكنك تغييرها في أي وقت.",
     "groupCheck.answerSaved": "تم حفظ إجابتك.",
     "groupCheck.accountCount": "الحسابات: {count}",
     "groupCheck.accountPartySize": "الأشخاص المُمثَّلون: {count}",
-    "groupCheck.close": "إنهاء الاستطلاع وفتح التطبيق",
+    "groupCheck.changeAnswer": "تغيير الإجابة",
+    "groupCheck.close": "إنهاء الاستطلاع",
     "groupCheck.confirmedCount": "أكدوا: {count}",
     "groupCheck.declinedCount": "رفضوا: {count}",
     "groupCheck.homeBody":
-      "يشمل استطلاع الحالة المشرفين أيضاً. يمكنك الإجابة دون فقدان الوصول إلى قسم المشرف.",
+      "ما زال استطلاع الحالة مفتوحاً. يمكنك مراجعة إجابتك أو تغييرها في أي وقت.",
     "groupCheck.homeTitle": "استطلاع حالة نشط",
     "groupCheck.lockedBody":
-      "ستُفتح بقية الأقسام مجدداً عندما ينهي المشرف الاستطلاع.",
+      "أجب عن الاستطلاع لفتح بقية أقسام التطبيق.",
     "groupCheck.navTitle": "استطلاع الحالة",
     "groupCheck.no": "رفض",
     "groupCheck.noConfirmed": "لا توجد تأكيدات بعد",

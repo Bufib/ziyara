@@ -45,7 +45,7 @@ export default function HomeScreen() {
   const { activeBoarding, participants: busParticipants } = useBusManagement();
 
 
-  const { activeCheck } = useGroupCheck();
+  const { activeCheck, currentResponse } = useGroupCheck();
   const { groups: tripGroups } = useTripGroups();
   const {
     activeRound,
@@ -96,7 +96,11 @@ export default function HomeScreen() {
           </ThemedText>
           <Button
             icon="confirm"
-            label={t("groupCheck.openForm")}
+            label={t(
+              currentResponse === null
+                ? "groupCheck.openForm"
+                : "groupCheck.changeAnswer",
+            )}
             onPress={() => router.push("/check-in")}
           />
         </View>

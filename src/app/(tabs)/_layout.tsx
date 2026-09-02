@@ -1,7 +1,9 @@
 import { Redirect } from "expo-router";
+import { useEffect } from "react";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
 
 import { Colors } from "@/constants/theme";
+import { useAuth } from "@/features/auth/auth-context";
 import { useI18n } from "@/features/i18n/i18n";
 import { onboardingRoute } from "@/features/navigation/routes";
 import {
@@ -13,15 +15,22 @@ import { useResolvedTheme } from "@/features/theme/theme-mode";
 export default function TabsLayout() {
   const scheme = useResolvedTheme();
   const colors = Colors[scheme];
+  const { isLoading: isAuthLoading, session } = useAuth();
   const { t } = useI18n();
-  const { hasCompletedOnboarding, loaded } = useOnboarding();
+  const { completeOnboarding, hasCompletedOnboarding, loaded } = useOnboarding();
   const gateDecision = getOnboardingGateDecision(loaded, hasCompletedOnboarding);
 
-  if (gateDecision === "loading") {
+  useEffect(() => {
+    if (loaded && session && !hasCompletedOnboarding) {
+      completeOnboarding();
+    }
+  }, [completeOnboarding, hasCompletedOnboarding, loaded, session]);
+
+  if (gateDecision === "loading" || (gateDecision === "onboarding" && isAuthLoading)) {
     return null;
   }
 
-  if (gateDecision === "onboarding") {
+  if (gateDecision === "onboarding" && !session) {
     return <Redirect href={onboardingRoute()} />;
   }
 

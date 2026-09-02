@@ -9,6 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
+  TouchableWithoutFeedback,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -192,16 +193,17 @@ export function AuthFormScreen({ mode, returnTo }: AuthFormScreenProps) {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled">
-          <View
-            style={[
-              styles.container,
-              { width: Math.max(0, Math.min(MaxContentWidth, 480, width - Spacing.three * 2)) },
-            ]}>
+        <TouchableWithoutFeedback accessible={false} onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled">
+            <View
+              style={[
+                styles.container,
+                { width: Math.max(0, Math.min(MaxContentWidth, 480, width - Spacing.three * 2)) },
+              ]}>
             <View style={styles.intro}>
               <ThemedText type="eyebrow" themeColor="accent">
                 Shia Ziyarah Iraq
@@ -471,8 +473,9 @@ export function AuthFormScreen({ mode, returnTo }: AuthFormScreenProps) {
                 </ThemedText>
               </Pressable>
             </View>
-          </View>
-        </ScrollView>
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

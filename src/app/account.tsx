@@ -4,11 +4,14 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Keyboard,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 
@@ -378,14 +381,19 @@ function AccountContent() {
   };
 
   return (
-    <ScrollView contentContainerStyle={{ paddingHorizontal: 10 }}>
-      <View style={styles.intro}>
-        <ThemedText type="title">{t("account.title")}</ThemedText>
-        <ThemedText themeColor="textSecondary">
-          {t("account.description")}
-        </ThemedText>
-      </View>
-      <View style={{ gap: 30 }}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.keyboardView}
+    >
+      <TouchableWithoutFeedback accessible={false} onPress={Keyboard.dismiss}>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 10 }}>
+          <View style={styles.intro}>
+            <ThemedText type="title">{t("account.title")}</ThemedText>
+            <ThemedText themeColor="textSecondary">
+              {t("account.description")}
+            </ThemedText>
+          </View>
+          <View style={{ gap: 30 }}>
         <Section title={t("account.partySizeTitle")}>
           <ThemedView
             type="surface"
@@ -697,8 +705,10 @@ function AccountContent() {
             </View>
           </ThemedView>
         </View>
-      </Modal>
-    </ScrollView>
+          </Modal>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -768,6 +778,9 @@ function SubmitButton({
 }
 
 const styles = StyleSheet.create({
+  keyboardView: {
+    flex: 1,
+  },
   intro: {
     gap: Spacing.two,
   },

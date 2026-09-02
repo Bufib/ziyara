@@ -364,7 +364,7 @@ describe('GroupCheckProvider request versioning', () => {
       activeCheck,
       currentResponse: false,
       hasSyncError: true,
-      isBlocking: true,
+      isBlocking: false,
       isLoading: false,
       syncErrorKind: 'server',
     });

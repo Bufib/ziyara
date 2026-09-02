@@ -55,6 +55,10 @@ function CheckInContent({ returnTo }: { returnTo: ReturnType<typeof getProtected
     try {
       const { error } = await respond(activeCheck.id, answer);
       setSubmitError(Boolean(error));
+
+      if (!error && !isAdmin) {
+        router.replace(returnTo as Href);
+      }
     } catch {
       setSubmitError(true);
     } finally {
@@ -137,10 +141,16 @@ function CheckInContent({ returnTo }: { returnTo: ReturnType<typeof getProtected
         </Card>
 
         <ThemedText type="small" themeColor="textSecondary" style={styles.waitingText}>
-          {t(isAdmin ? 'groupCheck.adminParticipantBody' : 'groupCheck.lockedBody')}
+          {t(
+            currentResponse !== null
+              ? 'groupCheck.answeredBody'
+              : isAdmin
+                ? 'groupCheck.adminParticipantBody'
+                : 'groupCheck.lockedBody',
+          )}
         </ThemedText>
 
-        {isAdmin && currentResponse !== null ? (
+        {currentResponse !== null ? (
           <Button
             icon="home"
             label={t('groupCheck.returnToApp')}

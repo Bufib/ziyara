@@ -81,6 +81,10 @@ function RootNavigation() {
             contentStyle: { backgroundColor: colors.background },
           }}>
           <Stack.Screen
+            name="check-in"
+            options={{ headerShown: !isBlocking, title: t('groupCheck.navTitle') }}
+          />
+          <Stack.Screen
             name="onboarding"
             options={{ headerShown: false, title: t('onboarding.title') }}
           />
@@ -119,10 +123,6 @@ function RootNavigation() {
             />
           </Stack.Protected>
 
-          <Stack.Screen
-            name="check-in"
-            options={{ headerShown: !isBlocking, title: t('groupCheck.navTitle') }}
-          />
           <Stack.Screen name="admin" options={{ title: t('nav.admin') }} />
         </Stack>
       </NavigationThemeProvider>

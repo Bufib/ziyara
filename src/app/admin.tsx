@@ -2,10 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   RefreshControl,
   StyleSheet,
   TextInput,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -259,7 +263,11 @@ function AdminContent() {
     <SafeAreaView
       edges={['right', 'bottom', 'left']}
       style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      <FlatList
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}>
+        <TouchableWithoutFeedback accessible={false} onPress={Keyboard.dismiss}>
+          <FlatList
         contentContainerStyle={styles.content}
         data={expandedSections.users && hasLoaded && !hasError ? userListItems : []}
         extraData={{
@@ -665,7 +673,11 @@ function AdminContent() {
           }
 
           return (
-            <Card style={styles.familyPacket}>
+            <Card
+              style={[
+                styles.familyPacket,
+                { backgroundColor: theme.backgroundElement },
+              ]}>
               <View style={styles.familyPacketHeader}>
                 <ThemedText style={styles.familyPacketName}>
                   {item.familyName ?? t('accountFamilies.unknownFamily')}
@@ -678,7 +690,9 @@ function AdminContent() {
             </Card>
           );
         }}
-      />
+          />
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -712,7 +726,7 @@ function AdminUserDisclosure({
     <View
       style={[
         styles.userDisclosure,
-        { backgroundColor: theme.background, borderColor: theme.border },
+        { backgroundColor: theme.surface, borderColor: theme.border },
       ]}>
       <Pressable
         accessibilityLabel={t(
@@ -834,6 +848,9 @@ function AdminUserDisclosure({
 
 const styles = StyleSheet.create({
   safeArea: {
+    flex: 1,
+  },
+  keyboardView: {
     flex: 1,
   },
   content: {

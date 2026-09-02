@@ -256,8 +256,10 @@ export function GroupCheckProvider({ children }: PropsWithChildren) {
 
   const hasSyncError = syncState === 'error';
   const isLoading = isAuthLoading || syncedUserId !== userId || syncState === 'loading';
+  const needsResponse =
+    currentResponse === null && Boolean(activeCheck || isLoading || hasSyncError);
   const isBlocking = Boolean(
-    session && !isAuthLoading && !isAdmin && (isLoading || activeCheck || hasSyncError),
+    session && !isAuthLoading && !isAdmin && needsResponse,
   );
 
   const value = useMemo<GroupCheckContextValue>(

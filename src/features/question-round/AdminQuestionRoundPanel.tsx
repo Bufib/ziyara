@@ -50,7 +50,6 @@ export function AdminQuestionRoundPanel() {
 
   const loadLatestRound = useCallback(async () => {
     const requestSequence = ++latestRoundRequestSequence.current;
-    setIsLoadingRound(true);
     setRoundErrorKind(null);
 
     try {
@@ -189,13 +188,15 @@ export function AdminQuestionRoundPanel() {
     setHasActionError(false);
 
     try {
-      const { error } = await supabase.rpc('open_question_round');
+      const { data, error } = await supabase.rpc('open_question_round');
 
       if (error) {
         throw error;
       }
 
-      await loadLatestRound();
+      latestRoundRequestSequence.current += 1;
+      setLatestRound(data);
+      setRoundErrorKind(null);
     } catch {
       setHasActionError(true);
     } finally {
@@ -212,7 +213,7 @@ export function AdminQuestionRoundPanel() {
     setHasActionError(false);
 
     try {
-      const { error } = await supabase.rpc('close_question_round', {
+      const { data, error } = await supabase.rpc('close_question_round', {
         p_round_id: latestRound.id,
       });
 
@@ -220,7 +221,9 @@ export function AdminQuestionRoundPanel() {
         throw error;
       }
 
-      await loadLatestRound();
+      latestRoundRequestSequence.current += 1;
+      setLatestRound(data);
+      setRoundErrorKind(null);
     } catch {
       setHasActionError(true);
     } finally {
