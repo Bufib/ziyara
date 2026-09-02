@@ -14,6 +14,39 @@ export type AdminUserListItem =
       user: AdminUserSummary;
     };
 
+export type AdminUserStats = {
+  brotherAccounts: number;
+  luggageCount: number;
+  representedPeople: number;
+  simCardCount: number;
+  sisterAccounts: number;
+  unknownMemberTypeAccounts: number;
+};
+
+export function getAdminUserStats(users: AdminUserSummary[]): AdminUserStats {
+  return users.reduce<AdminUserStats>(
+    (stats, user) => ({
+      brotherAccounts:
+        stats.brotherAccounts + (user.member_type === 'brother' ? 1 : 0),
+      luggageCount: stats.luggageCount + user.luggage_count,
+      representedPeople: stats.representedPeople + user.party_size,
+      simCardCount: stats.simCardCount + user.sim_card_count,
+      sisterAccounts:
+        stats.sisterAccounts + (user.member_type === 'sister' ? 1 : 0),
+      unknownMemberTypeAccounts:
+        stats.unknownMemberTypeAccounts + (user.member_type === null ? 1 : 0),
+    }),
+    {
+      brotherAccounts: 0,
+      luggageCount: 0,
+      representedPeople: 0,
+      simCardCount: 0,
+      sisterAccounts: 0,
+      unknownMemberTypeAccounts: 0,
+    },
+  );
+}
+
 export function buildAdminUserListItems(
   users: AdminUserSummary[],
   searchQuery: string,

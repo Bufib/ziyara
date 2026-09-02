@@ -19,6 +19,7 @@ export type UserProfile = {
   member_type: MemberType | null;
   party_size: number;
   role: AppRole;
+  sim_card_count: number;
   updated_at: string;
   user_id: string;
 };
@@ -28,8 +29,10 @@ export type AdminUserSummary = {
   family_id: number | null;
   family_name: string | null;
   luggage_count: number;
+  member_type: MemberType | null;
   party_size: number;
   role: AppRole;
+  sim_card_count: number;
   user_id: string;
 };
 
@@ -448,6 +451,7 @@ export type Database = {
           member_type?: MemberType | null;
           party_size?: number;
           role?: AppRole;
+          sim_card_count?: number;
           updated_at?: string;
           user_id: string;
         };
@@ -460,6 +464,7 @@ export type Database = {
           member_type?: MemberType | null;
           party_size?: number;
           role?: AppRole;
+          sim_card_count?: number;
           updated_at?: string;
         };
       };

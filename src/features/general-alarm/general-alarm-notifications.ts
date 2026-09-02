@@ -1,8 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { isRunningInExpoGo } from 'expo';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 import { Linking, Platform } from 'react-native';
+
+import type { NotificationResponse } from 'expo-notifications';
 
 import type { Language } from '@/features/i18n/i18n';
 import { supabase } from '@/features/auth/supabase';
@@ -15,8 +17,19 @@ import type {
 const channelId = 'general-alarm';
 const pushTokenStorageKey = 'ziyara.general-alarm.expo-push-token';
 const reminderKind = 'general_alarm_reminder';
+const runsInExpoGo = isRunningInExpoGo();
+type NotificationsModule = typeof import('expo-notifications');
+const Notifications: NotificationsModule | null = runsInExpoGo
+  ? null
+  // Expo Go throws while evaluating the package on Android, so this must stay conditional.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  : require('expo-notifications');
+const expoGoState: GeneralAlarmNotificationState = {
+  availability: 'expo_go',
+  permissionGranted: false,
+};
 
-Notifications.setNotificationHandler({
+Notifications?.setNotificationHandler({
   handleNotification: async () => ({
     shouldPlaySound: true,
     shouldSetBadge: false,
@@ -33,7 +46,7 @@ function getProjectId() {
 }
 
 async function ensureAndroidChannel() {
-  if (Platform.OS !== 'android') return;
+  if (Platform.OS !== 'android' || !Notifications) return;
 
   await Notifications.setNotificationChannelAsync(channelId, {
     description: 'Zeitkritische Erinnerungen für Abfahrt und Bus-Boarding',
@@ -48,6 +61,8 @@ async function ensureAndroidChannel() {
 }
 
 export async function inspectGeneralAlarmNotificationState(): Promise<GeneralAlarmNotificationState> {
+  if (!Notifications) return expoGoState;
+
   try {
     await ensureAndroidChannel();
     const permission = await Notifications.getPermissionsAsync();
@@ -74,6 +89,8 @@ export async function registerGeneralAlarmNotifications(
   language: Language,
   requestPermission: boolean,
 ): Promise<GeneralAlarmNotificationState> {
+  if (!Notifications) return expoGoState;
+
   let permissionGranted = false;
 
   try {
@@ -151,6 +168,8 @@ function reminderKey(reminder: ScheduledGeneralAlarmReminder) {
 export async function syncGeneralAlarmReminders(
   reminders: ScheduledGeneralAlarmReminder[],
 ) {
+  if (!Notifications) return;
+
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   const desiredKeys = new Set(reminders.map(reminderKey));
   const existingKeys = new Set<string>();
@@ -196,6 +215,8 @@ export async function syncGeneralAlarmReminders(
 }
 
 export async function cancelGeneralAlarmReminders() {
+  if (!Notifications) return;
+
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   await Promise.all(
     scheduled
@@ -206,13 +227,15 @@ export async function cancelGeneralAlarmReminders() {
   );
 }
 
-function isBusNotificationResponse(response: Notifications.NotificationResponse | null) {
+function isBusNotificationResponse(response: NotificationResponse | null) {
   return response?.notification.request.content.data?.route === '/bus';
 }
 
 export function subscribeToGeneralAlarmNotificationResponses(
   listener: () => void,
 ): NotificationResponseSubscription {
+  if (!Notifications) return { remove: () => undefined };
+
   const previousResponse = Notifications.getLastNotificationResponse();
   if (isBusNotificationResponse(previousResponse)) {
     Notifications.clearLastNotificationResponse();

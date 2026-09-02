@@ -22,6 +22,8 @@ import { getAuthErrorTranslationKey, useAuth } from '@/features/auth/auth-contex
 import { LuggageCountField } from '@/features/auth/LuggageCountField';
 import { getLuggageCount } from '@/features/auth/luggage-count';
 import { getPartySize, PartySizeField } from '@/features/auth/PartySizeField';
+import { SimCardCountField } from '@/features/auth/SimCardCountField';
+import { getSimCardCount } from '@/features/auth/sim-card-count';
 import { useI18n } from '@/features/i18n/i18n';
 import {
   forgotPasswordRoute,
@@ -53,6 +55,7 @@ export function AuthFormScreen({ mode, returnTo }: AuthFormScreenProps) {
   const [memberType, setMemberType] = useState<MemberType | null>(null);
   const [accountCoverage, setAccountCoverage] = useState<AccountCoverage | null>(null);
   const [luggageCount, setLuggageCount] = useState('0');
+  const [simCardCount, setSimCardCount] = useState('0');
   const [partySize, setPartySize] = useState('2');
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isError, setIsError] = useState(false);
@@ -71,6 +74,7 @@ export function AuthFormScreen({ mode, returnTo }: AuthFormScreenProps) {
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedName = displayName.trim();
     const normalizedLuggageCount = getLuggageCount(luggageCount);
+    const normalizedSimCardCount = getSimCardCount(simCardCount);
     const normalizedPartySize =
       accountCoverage === 'family' ? getPartySize(partySize, 2) : 1;
 
@@ -101,6 +105,11 @@ export function AuthFormScreen({ mode, returnTo }: AuthFormScreenProps) {
 
     if (isRegister && normalizedLuggageCount === null) {
       showFeedback(t('luggage.validation.count'), true);
+      return;
+    }
+
+    if (isRegister && normalizedSimCardCount === null) {
+      showFeedback(t('simCards.validation.count'), true);
       return;
     }
 
@@ -140,6 +149,7 @@ export function AuthFormScreen({ mode, returnTo }: AuthFormScreenProps) {
           memberType,
           normalizedPartySize ?? 1,
           normalizedLuggageCount ?? 0,
+          normalizedSimCardCount ?? 0,
         );
 
         if (result.error) {
@@ -284,6 +294,12 @@ export function AuthFormScreen({ mode, returnTo }: AuthFormScreenProps) {
                     disabled={isSubmitting}
                     onChange={setLuggageCount}
                     value={luggageCount}
+                  />
+
+                  <SimCardCountField
+                    disabled={isSubmitting}
+                    onChange={setSimCardCount}
+                    value={simCardCount}
                   />
                 </>
               ) : null}

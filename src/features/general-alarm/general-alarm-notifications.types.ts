@@ -4,6 +4,7 @@ export type GeneralAlarmNotificationAvailability =
   | 'checking'
   | 'denied'
   | 'error'
+  | 'expo_go'
   | 'missing_project_id'
   | 'registered'
   | 'simulator'

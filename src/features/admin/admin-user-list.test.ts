@@ -1,7 +1,10 @@
 import { describe, expect, it } from '@jest/globals';
 
 import type { AdminUserSummary } from '@/domain/database';
-import { buildAdminUserListItems } from '@/features/admin/admin-user-list';
+import {
+  buildAdminUserListItems,
+  getAdminUserStats,
+} from '@/features/admin/admin-user-list';
 
 const users: AdminUserSummary[] = [
   {
@@ -9,8 +12,10 @@ const users: AdminUserSummary[] = [
     family_id: 3,
     family_name: 'Familie Ali',
     luggage_count: 2,
+    member_type: 'sister',
     party_size: 2,
     role: 'user',
+    sim_card_count: 3,
     user_id: 'zainab',
   },
   {
@@ -18,8 +23,10 @@ const users: AdminUserSummary[] = [
     family_id: 3,
     family_name: 'Familie Ali',
     luggage_count: 1,
+    member_type: 'brother',
     party_size: 1,
     role: 'user',
+    sim_card_count: 1,
     user_id: 'abbas',
   },
   {
@@ -27,8 +34,10 @@ const users: AdminUserSummary[] = [
     family_id: null,
     family_name: null,
     luggage_count: 1,
+    member_type: null,
     party_size: 1,
     role: 'medical_staff',
+    sim_card_count: 0,
     user_id: 'mariam',
   },
 ];
@@ -72,5 +81,16 @@ describe('admin user list', () => {
         user: users[2],
       },
     ]);
+  });
+
+  it('summiert Personen, Geschlechter, Koffer und SIM-Karten', () => {
+    expect(getAdminUserStats(users)).toEqual({
+      brotherAccounts: 1,
+      luggageCount: 4,
+      representedPeople: 4,
+      simCardCount: 4,
+      sisterAccounts: 1,
+      unknownMemberTypeAccounts: 1,
+    });
   });
 });

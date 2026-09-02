@@ -28,6 +28,8 @@ import {
   PartySizeField,
 } from "@/features/auth/PartySizeField";
 import { useI18n } from "@/features/i18n/i18n";
+import { SimCardCountField } from "@/features/auth/SimCardCountField";
+import { getSimCardCount } from "@/features/auth/sim-card-count";
 import { useTheme } from "@/hooks/use-theme";
 
 type FeedbackState = {
@@ -66,6 +68,7 @@ function AccountContent() {
     profile,
     updateLuggageCount,
     updatePartySize,
+    updateSimCardCount,
     user,
   } = useAuth();
   const [partySize, setPartySize] = useState(
@@ -78,6 +81,11 @@ function AccountContent() {
   );
   const [luggageFeedback, setLuggageFeedback] = useState<FeedbackState>(null);
   const [isChangingLuggageCount, setIsChangingLuggageCount] = useState(false);
+  const [simCardCount, setSimCardCount] = useState(
+    String(profile?.sim_card_count ?? 0),
+  );
+  const [simCardFeedback, setSimCardFeedback] = useState<FeedbackState>(null);
+  const [isChangingSimCardCount, setIsChangingSimCardCount] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [emailPassword, setEmailPassword] = useState("");
   const [emailFeedback, setEmailFeedback] = useState<FeedbackState>(null);
@@ -175,6 +183,45 @@ function AccountContent() {
       });
     } finally {
       setIsChangingLuggageCount(false);
+    }
+  };
+
+  const submitSimCardCountChange = async () => {
+    setSimCardFeedback(null);
+    const normalizedSimCardCount = getSimCardCount(simCardCount);
+
+    if (normalizedSimCardCount === null) {
+      setSimCardFeedback({
+        isError: true,
+        message: t("simCards.validation.count"),
+      });
+      return;
+    }
+
+    setIsChangingSimCardCount(true);
+
+    try {
+      const { error } = await updateSimCardCount(normalizedSimCardCount);
+
+      if (error) {
+        setSimCardFeedback({
+          isError: true,
+          message: t("account.simCardError"),
+        });
+      } else {
+        setSimCardCount(String(normalizedSimCardCount));
+        setSimCardFeedback({
+          isError: false,
+          message: t("account.simCardSuccess"),
+        });
+      }
+    } catch {
+      setSimCardFeedback({
+        isError: true,
+        message: t("account.simCardError"),
+      });
+    } finally {
+      setIsChangingSimCardCount(false);
     }
   };
 
@@ -379,6 +426,28 @@ function AccountContent() {
               isLoading={isChangingLuggageCount}
               label={t("account.luggageSave")}
               onPress={() => void submitLuggageCountChange()}
+            />
+          </ThemedView>
+        </Section>
+
+        <Section title={t("account.simCardTitle")}>
+          <ThemedView
+            type="surface"
+            style={[styles.panel, { borderColor: theme.border }]}
+          >
+            <ThemedText type="small" themeColor="textSecondary">
+              {t("account.simCardBody")}
+            </ThemedText>
+            <SimCardCountField
+              disabled={isChangingSimCardCount}
+              onChange={setSimCardCount}
+              value={simCardCount}
+            />
+            <Feedback feedback={simCardFeedback} />
+            <SubmitButton
+              isLoading={isChangingSimCardCount}
+              label={t("account.simCardSave")}
+              onPress={() => void submitSimCardCountChange()}
             />
           </ThemedView>
         </Section>

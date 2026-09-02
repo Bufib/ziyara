@@ -30,13 +30,13 @@ export function DailyProgramHome() {
   } = useDailyProgram();
   const today = localISODate();
   const todaysProgram = programs.find((program) => program.program_date === today);
-
   if (isLoading) {
     return (
       <View style={styles.state}>
         <ActivityIndicator color={heroText} />
         <ThemedText style={styles.mutedText}>{t('dailyProgram.loading')}</ThemedText>
       </View>
+      
     );
   }
 

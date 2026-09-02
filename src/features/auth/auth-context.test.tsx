@@ -167,6 +167,7 @@ function createProfile(
     member_type: 'brother',
     party_size: 1,
     role: 'user',
+    sim_card_count: 0,
     updated_at: '2026-08-26T00:00:00.000Z',
     user_id: userId,
     ...overrides,
@@ -333,7 +334,7 @@ describe('AuthProvider profile synchronization', () => {
       query.abortSignal.mockReturnValue(query);
       query.update.mockImplementation((value: unknown) => {
         const profileUpdate = value as Partial<
-          Pick<UserProfile, 'luggage_count' | 'party_size'>
+          Pick<UserProfile, 'luggage_count' | 'party_size' | 'sim_card_count'>
         >;
         query.single.mockResolvedValue({
           data: createProfile('user-a', {
@@ -775,6 +776,7 @@ describe('AuthProvider profile synchronization', () => {
           'sister',
           3,
           4,
+          2,
         ),
       ).resolves.toEqual({ error: null, requiresEmailConfirmation: true });
     });
@@ -786,6 +788,7 @@ describe('AuthProvider profile synchronization', () => {
           luggage_count: 4,
           member_type: 'sister',
           party_size: 3,
+          sim_card_count: 2,
         },
       },
       password: 'Passwort123',
@@ -808,6 +811,10 @@ describe('AuthProvider profile synchronization', () => {
       await expect(getAuthValue().updateLuggageCount(5)).resolves.toEqual({ error: null });
     });
 
+    await act(async () => {
+      await expect(getAuthValue().updateSimCardCount(3)).resolves.toEqual({ error: null });
+    });
+
     expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
       email: 'user-a@example.com',
       password: 'Alt12345',
@@ -816,6 +823,7 @@ describe('AuthProvider profile synchronization', () => {
     expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({ password: 'Neu12345' });
     expect(getAuthValue().profile?.party_size).toBe(4);
     expect(getAuthValue().profile?.luggage_count).toBe(5);
+    expect(getAuthValue().profile?.sim_card_count).toBe(3);
   });
 
   it('lehnt kontoabhängige Aktionen ohne Session lokal ab', async () => {
@@ -834,6 +842,9 @@ describe('AuthProvider profile synchronization', () => {
       'Für die Änderung ist eine Anmeldung erforderlich.',
     );
     await expect(getAuthValue().updateLuggageCount(2)).rejects.toThrow(
+      'Für die Änderung ist eine Anmeldung erforderlich.',
+    );
+    await expect(getAuthValue().updateSimCardCount(2)).rejects.toThrow(
       'Für die Änderung ist eine Anmeldung erforderlich.',
     );
     await expect(getAuthValue().deleteAccount()).resolves.toMatchObject({

@@ -17,7 +17,10 @@ import { SymbolIcon } from '@/components/ui/symbol-icon';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import type { AccountFamily, AdminUserSummary, AppRole } from '@/domain/database';
 import { AdminAccountFamilyPanel } from '@/features/account-families/AdminAccountFamilyPanel';
-import { buildAdminUserListItems } from '@/features/admin/admin-user-list';
+import {
+  buildAdminUserListItems,
+  getAdminUserStats,
+} from '@/features/admin/admin-user-list';
 import { AdminSectionHeader } from '@/features/admin/AdminSectionHeader';
 import { useAuth } from '@/features/auth/auth-context';
 import { RequireAuth } from '@/features/auth/RequireAuth';
@@ -159,10 +162,7 @@ function AdminContent() {
     users: false,
   });
 
-  const representedPeople = useMemo(
-    () => users.reduce((total, user) => total + user.party_size, 0),
-    [users],
-  );
+  const userStats = useMemo(() => getAdminUserStats(users), [users]);
   const userListItems = useMemo(
     () => buildAdminUserListItems(users, searchQuery, language),
     [language, searchQuery, users],
@@ -564,7 +564,32 @@ function AdminContent() {
                           {t('admin.userCount', { count: users.length })}
                         </ThemedText>
                         <ThemedText type="small" themeColor="textSecondary">
-                          {t('admin.personCount', { count: representedPeople })}
+                          {t('admin.personCount', { count: userStats.representedPeople })}
+                        </ThemedText>
+                        <ThemedText type="small" themeColor="textSecondary">
+                          {t('admin.brotherCount', { count: userStats.brotherAccounts })}
+                        </ThemedText>
+                        <ThemedText type="small" themeColor="textSecondary">
+                          {t('admin.sisterCount', { count: userStats.sisterAccounts })}
+                        </ThemedText>
+                        {userStats.unknownMemberTypeAccounts > 0 ? (
+                          <ThemedText type="small" themeColor="textSecondary">
+                            {t('admin.unknownMemberTypeCount', {
+                              count: userStats.unknownMemberTypeAccounts,
+                            })}
+                          </ThemedText>
+                        ) : null}
+                        <ThemedText type="small" themeColor="textSecondary">
+                          {t('admin.familyCount', { count: families.length })}
+                        </ThemedText>
+                        <ThemedText type="small" themeColor="textSecondary">
+                          {t('admin.totalLuggageCount', { count: userStats.luggageCount })}
+                        </ThemedText>
+                        <ThemedText type="small" themeColor="textSecondary">
+                          {t('admin.totalSimCardCount', { count: userStats.simCardCount })}
+                        </ThemedText>
+                        <ThemedText type="small" themeColor="textSecondary">
+                          {t('admin.memberTypeCountHint')}
                         </ThemedText>
                       </Card>
 
@@ -730,7 +755,15 @@ function AdminUserDisclosure({
             {t('admin.partySize', { count: user.party_size })}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
+            {t('admin.memberType', {
+              memberType: t(`admin.memberType.${user.member_type ?? 'unknown'}`),
+            })}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
             {t('admin.luggageCount', { count: user.luggage_count })}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('admin.simCardCount', { count: user.sim_card_count })}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {user.family_name

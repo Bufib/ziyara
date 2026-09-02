@@ -82,9 +82,11 @@ type AuthContextValue = {
     memberType: MemberType,
     partySize: number,
     luggageCount: number,
+    simCardCount: number,
   ) => Promise<SignUpResult>;
   updateLuggageCount: (luggageCount: number) => Promise<ProfileUpdateResult>;
   updatePartySize: (partySize: number) => Promise<ProfileUpdateResult>;
+  updateSimCardCount: (simCardCount: number) => Promise<ProfileUpdateResult>;
   user: User | null;
 };
 
@@ -385,7 +387,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const { data, error } = await withSupabaseReadTimeout((signal) =>
         supabase
           .from('profiles')
-          .select('id, user_id, display_name, member_type, party_size, luggage_count, family_id, role, created_at, updated_at')
+          .select('id, user_id, display_name, member_type, party_size, luggage_count, sim_card_count, family_id, role, created_at, updated_at')
           .eq('user_id', userId)
           .abortSignal(signal)
           .maybeSingle(),
@@ -499,6 +501,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       memberType: MemberType,
       partySize: number,
       luggageCount: number,
+      simCardCount: number,
     ) => {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -509,6 +512,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
             luggage_count: luggageCount,
             member_type: memberType,
             party_size: partySize,
+            sim_card_count: simCardCount,
           },
         },
       });
@@ -667,7 +671,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         .from('profiles')
         .update({ party_size: partySize })
         .eq('user_id', userId)
-        .select('id, user_id, display_name, member_type, party_size, luggage_count, family_id, role, created_at, updated_at')
+        .select('id, user_id, display_name, member_type, party_size, luggage_count, sim_card_count, family_id, role, created_at, updated_at')
         .single();
 
       if (!error && sessionUserIdRef.current === userId) {
@@ -696,7 +700,36 @@ export function AuthProvider({ children }: PropsWithChildren) {
         .from('profiles')
         .update({ luggage_count: luggageCount })
         .eq('user_id', userId)
-        .select('id, user_id, display_name, member_type, party_size, luggage_count, family_id, role, created_at, updated_at')
+        .select('id, user_id, display_name, member_type, party_size, luggage_count, sim_card_count, family_id, role, created_at, updated_at')
+        .single();
+
+      if (!error && sessionUserIdRef.current === userId) {
+        profileRequestSequence.current += 1;
+        updateProfileSyncState((current) =>
+          current.userId === userId
+            ? { error: null, profile: data, status: 'ready', userId }
+            : current,
+        );
+      }
+
+      return { error };
+    },
+    [session, updateProfileSyncState],
+  );
+
+  const updateSimCardCount = useCallback(
+    async (simCardCount: number) => {
+      const userId = session?.user.id;
+
+      if (!userId) {
+        throw new Error('Für die Änderung ist eine Anmeldung erforderlich.');
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ sim_card_count: simCardCount })
+        .eq('user_id', userId)
+        .select('id, user_id, display_name, member_type, party_size, luggage_count, sim_card_count, family_id, role, created_at, updated_at')
         .single();
 
       if (!error && sessionUserIdRef.current === userId) {
@@ -756,6 +789,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       signOut,
       signUp,
       updateLuggageCount,
+      updateSimCardCount,
       user: session?.user ?? null,
       updatePartySize,
     }),
@@ -779,6 +813,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       signOut,
       signUp,
       updateLuggageCount,
+      updateSimCardCount,
       updatePartySize,
     ],
   );

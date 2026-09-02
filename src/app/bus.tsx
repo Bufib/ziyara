@@ -374,7 +374,10 @@ function GeneralAlarmNotificationCard() {
       <ThemedText type="small" themeColor="textSecondary">
         {t('generalAlarm.platformLimit')}
       </ThemedText>
-      {!enabled && availability !== 'checking' && availability !== 'unsupported' ? (
+      {!enabled &&
+      availability !== 'checking' &&
+      availability !== 'expo_go' &&
+      availability !== 'unsupported' ? (
         <View style={styles.notificationActions}>
           <Button
             disabled={isWorking}

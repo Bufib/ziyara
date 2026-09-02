@@ -23,7 +23,7 @@ Die App speichert Expo-Push-Tokens in einer nicht clientlesbaren Tabelle. Regist
 
 ## Bewusste Plattformgrenzen
 
-Die Funktion ist kein unstillbarer Wecker. Nutzer können Benachrichtigungen deaktivieren, das Gerät ausschalten oder die App beenden. iOS darf Lautlosmodus beziehungsweise Fokus ohne Apples besonderes Critical-Alerts-Entitlement nicht umgehen. Android beschränkt bildschirmfüllende Alarmoberflächen auf dafür vorgesehene App-Kategorien. Hintergrundausführung ist ebenfalls nicht minutengenau garantiert. Remote-Push benötigt einen nativen Build und funktioniert auf Android nicht vollständig in Expo Go.
+Die Funktion ist kein unstillbarer Wecker. Nutzer können Benachrichtigungen deaktivieren, das Gerät ausschalten oder die App beenden. iOS darf Lautlosmodus beziehungsweise Fokus ohne Apples besonderes Critical-Alerts-Entitlement nicht umgehen. Android beschränkt bildschirmfüllende Alarmoberflächen auf dafür vorgesehene App-Kategorien. Hintergrundausführung ist ebenfalls nicht minutengenau garantiert. Remote-Push benötigt einen nativen Build und funktioniert in Expo Go nicht. Die App erkennt Expo Go vor dem Laden von `expo-notifications`, deaktiviert dort die Benachrichtigungsintegration und zeigt den eingeschränkten Zustand an, statt auf Android den vom Paket vorgesehenen Fehler auszulösen. Lokale Benachrichtigungen unterstützt Expo Go grundsätzlich; diese App aktiviert sie dort bewusst nicht getrennt vom produktiven Generalalarm-Pushpfad.
 
 Darum bleibt die serverseitige Liste fehlender Bestätigungen die maßgebliche operative Sicht. Die App behauptet an keiner Stelle, eine Person garantiert geweckt oder eine Push-Nachricht garantiert zugestellt zu haben.
 

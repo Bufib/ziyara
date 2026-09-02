@@ -27,6 +27,7 @@ const mockProfile: UserProfile = {
   member_type: 'brother',
   party_size: 2,
   role: 'user',
+  sim_card_count: 0,
   updated_at: '2026-08-26T00:00:00.000Z',
   user_id: 'user-a',
 };

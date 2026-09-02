@@ -525,7 +525,7 @@ Tests/checks:
 - TypeScript, lint, Expo dependency alignment, Expo Doctor and web export.
 - Manual iOS/Android checks for foreground permission grant/denial, Realtime delivery and fifteen-minute expiry on a signed build.
 
-## Phase 16: Account families and luggage count
+## Phase 16: Account families, luggage, and SIM-card counts
 
 Files to create or modify:
 
@@ -536,21 +536,26 @@ Files to create or modify:
 - `src/domain/database.ts`
 - `src/features/i18n/i18n.tsx`
 - `supabase/migrations/20260830010000_add_account_families_and_luggage.sql`
+- `supabase/migrations/20260902000000_add_profile_sim_card_count.sql`
 - `supabase/tests/database/account_families_and_luggage.test.sql`
+- `supabase/tests/database/profile_sim_card_count.test.sql`
 
 Acceptance criteria:
 
 - Registration requires a luggage count from `0` to `50`; the value covers every person represented by the account. Existing accounts default to `0`.
+- Registration accepts a required SIM-card count from `0` to `50`; the value covers every person represented by the account. Existing accounts default to `0`.
 - Signed-in users can update only their own luggage count from the account page reached through Settings.
+- Signed-in users can update only their own SIM-card count from the account page reached through Settings.
 - Admins can create, rename and delete named account families and assign registered user accounts to them.
 - One account belongs to at most one account family. Assigning it elsewhere moves it atomically, while deleting a family preserves the accounts and clears their assignment.
 - Account families remain separate from `party_size`, physical participants and trip groups.
 - Direct family writes remain unavailable to clients. Minimal authenticated admin RPCs handle management, and RLS lets members read only their own family name without exposing other memberships.
 - German, English and Arabic UI copy includes loading, validation, empty, move, success and error states.
+- The admin people overview shows registered accounts, represented people, brother/sister account counts, legacy accounts without a member type, created families, total suitcases and total SIM cards. Per-account details show member type and SIM-card count.
 
 Tests/checks:
 
-- Jest tests for luggage parsing, registration metadata and own-account updates.
+- Jest tests for luggage and SIM-card parsing, registration metadata, own-account updates and admin summary totals.
 - Additive local migration, DB lint and pgTAP tests for grants, RLS, admin-only family management, atomic moves and deletion.
 - TypeScript, lint, coverage validation, Expo Doctor and web export.
 - Manual iOS/Android/Web checks for registration, account updates, family moves, small widths, themes, languages and dynamic text.
