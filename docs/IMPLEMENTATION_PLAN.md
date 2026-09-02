@@ -554,3 +554,31 @@ Tests/checks:
 - Additive local migration, DB lint and pgTAP tests for grants, RLS, admin-only family management, atomic moves and deletion.
 - TypeScript, lint, coverage validation, Expo Doctor and web export.
 - Manual iOS/Android/Web checks for registration, account updates, family moves, small widths, themes, languages and dynamic text.
+
+## Phase 17: First-run video and language onboarding
+
+Files to create or modify:
+
+- `src/app/onboarding.tsx`
+- `src/app/(tabs)/_layout.tsx`
+- `src/app/_layout.tsx`
+- `src/features/onboarding/*`
+- `src/features/auth/AuthFormScreen.tsx`
+- `src/features/i18n/i18n.tsx`
+- `src/features/navigation/routes.ts`
+- `assets/videos/*`
+
+Acceptance criteria:
+
+- A fresh installation opens a locally bundled introduction video with German, English and Arabic language choices.
+- Choosing a language persists the selection and opens registration in that language without replaying onboarding on later starts.
+- Registration offers account creation, sign-in for existing accounts and an explicit guest path into the public offline guide.
+- A video playback failure never blocks the language selection.
+- Login and password-recovery deep links remain public and usable independently of the first-run tab gate.
+
+Tests/checks:
+
+- Jest tests for the validated onboarding state and navigation decision.
+- Playwright smoke from first start through language selection, registration screen, guest entry and reload persistence.
+- TypeScript, lint, Expo dependency alignment, Expo Doctor and web export.
+- Manual iOS/Android/Web checks for fullscreen cropping, muted autoplay, small widths, themes, languages and Arabic text direction.

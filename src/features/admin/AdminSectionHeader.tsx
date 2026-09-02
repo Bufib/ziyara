@@ -37,12 +37,12 @@ export function AdminSectionHeader({
         { backgroundColor: theme.surface, borderColor: theme.border },
         pressed && styles.pressed,
       ]}>
-      <View style={[styles.icon, { backgroundColor: theme.accentSoft }]}>
-        <SymbolIcon color={theme.accent} name={icon} size={22} />
+      <View style={[styles.icon, { backgroundColor: theme.background }]}>
+        <SymbolIcon color={theme.textSecondary} name={icon} size={21} />
       </View>
 
       <View style={styles.text}>
-        <ThemedText type="heading">{title}</ThemedText>
+        <ThemedText style={styles.title}>{title}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
           {description}
         </ThemedText>
@@ -65,7 +65,7 @@ export function AdminSectionHeader({
 const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     gap: Spacing.three,
@@ -83,6 +83,11 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: Spacing.one,
     minWidth: 0,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 600,
+    lineHeight: 24,
   },
   trailing: {
     alignItems: 'flex-end',

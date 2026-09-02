@@ -159,7 +159,8 @@ export function AdminAccountFamilyPanel({
               icon="close"
               label={t('accountFamilies.cancel')}
               onPress={resetEditor}
-              variant="ghost"
+              style={[styles.cancelButton, { backgroundColor: theme.background }]}
+              variant="secondary"
             />
           ) : null}
         </View>
@@ -176,7 +177,7 @@ export function AdminAccountFamilyPanel({
             style={[
               styles.input,
               {
-                backgroundColor: theme.backgroundElement,
+                backgroundColor: theme.background,
                 borderColor: theme.border,
                 color: theme.text,
               },
@@ -225,6 +226,7 @@ export function AdminAccountFamilyPanel({
               : 'accountFamilies.save',
           )}
           onPress={() => void saveFamily()}
+          style={styles.submitButton}
         />
       </Card>
 
@@ -266,28 +268,12 @@ export function AdminAccountFamilyPanel({
 
           return (
             <Card key={family.id} style={styles.familyCard}>
-              <View style={styles.header}>
+              <View style={styles.familyHeader}>
                 <View style={styles.flexText}>
-                  <ThemedText type="heading">{family.name}</ThemedText>
+                  <ThemedText style={styles.familyName}>{family.name}</ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
                     {t('accountFamilies.memberCount', { count: members.length })}
                   </ThemedText>
-                </View>
-                <View style={styles.actions}>
-                  <Button
-                    disabled={isWorking}
-                    icon="settings"
-                    label={t('accountFamilies.edit')}
-                    onPress={() => editFamily(family)}
-                    variant="ghost"
-                  />
-                  <Button
-                    disabled={isWorking}
-                    icon="close"
-                    label={t('accountFamilies.delete')}
-                    onPress={() => confirmDelete(family)}
-                    variant="ghost"
-                  />
                 </View>
               </View>
 
@@ -302,12 +288,34 @@ export function AdminAccountFamilyPanel({
                       key={member.user_id}
                       style={[
                         styles.chip,
-                        { backgroundColor: theme.backgroundElement },
+                        {
+                          backgroundColor: theme.background,
+                          borderColor: theme.border,
+                        },
                       ]}>
-                      <ThemedText type="tinyBold">{member.display_name}</ThemedText>
+                      <ThemedText type="small">{member.display_name}</ThemedText>
                     </View>
                   ))
                 )}
+              </View>
+
+              <View style={[styles.actions, { borderColor: theme.border }]}>
+                <Button
+                  disabled={isWorking}
+                  icon="settings"
+                  label={t('accountFamilies.edit')}
+                  onPress={() => editFamily(family)}
+                  style={[styles.actionButton, { backgroundColor: theme.background }]}
+                  variant="secondary"
+                />
+                <Button
+                  disabled={isWorking}
+                  icon="close"
+                  label={t('accountFamilies.delete')}
+                  onPress={() => confirmDelete(family)}
+                  style={styles.actionButton}
+                  variant="danger"
+                />
               </View>
             </Card>
           );
@@ -341,7 +349,7 @@ function FamilyMemberChoice({
       style={({ pressed }) => [
         styles.choice,
         {
-          backgroundColor: selected ? theme.accentSoft : theme.backgroundElement,
+          backgroundColor: selected ? theme.accentSoft : theme.background,
           borderColor: selected ? theme.accent : theme.border,
         },
         pressed && styles.pressed,
@@ -358,7 +366,7 @@ function FamilyMemberChoice({
         {selected ? <SymbolIcon color={theme.background} name="confirm" size={14} /> : null}
       </View>
       <View style={styles.flexText}>
-        <ThemedText type="smallBold">{label}</ThemedText>
+        <ThemedText type="small">{label}</ThemedText>
         {note ? (
           <ThemedText type="small" themeColor="textSecondary">
             {note}
@@ -374,6 +382,7 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   formCard: {
+    borderRadius: 12,
     gap: Spacing.three,
   },
   header: {
@@ -402,6 +411,13 @@ const styles = StyleSheet.create({
   memberList: {
     gap: Spacing.two,
   },
+  cancelButton: {
+    minHeight: 44,
+  },
+  submitButton: {
+    alignSelf: 'flex-start',
+    minWidth: 180,
+  },
   choice: {
     alignItems: 'center',
     borderRadius: 8,
@@ -429,12 +445,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   familyCard: {
+    borderRadius: 12,
     gap: Spacing.three,
   },
+  familyHeader: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  familyName: {
+    fontSize: 18,
+    fontWeight: 600,
+    lineHeight: 24,
+  },
   actions: {
+    borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.one,
+    gap: Spacing.two,
+    paddingTop: Spacing.three,
+  },
+  actionButton: {
+    flex: 1,
+    minWidth: 120,
   },
   chips: {
     flexDirection: 'row',
@@ -443,6 +476,7 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.one,
   },

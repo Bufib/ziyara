@@ -12,7 +12,7 @@ import { Colors, Spacing } from '@/constants/theme';
 import { useResolvedTheme } from '@/features/theme/theme-mode';
 import { useTheme } from '@/hooks/use-theme';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+export type ButtonVariant = 'danger' | 'primary' | 'secondary' | 'ghost';
 
 export type ButtonProps = {
   accessibilityState?: AccessibilityState;
@@ -37,11 +37,14 @@ export function Button({
   const resolvedTheme = useResolvedTheme();
   const isPrimary = variant === 'primary';
   const isGhost = variant === 'ghost';
+  const isDanger = variant === 'danger';
   const foreground = isPrimary
     ? resolvedTheme === 'dark'
       ? Colors.dark.background
       : Colors.dark.text
-    : theme.text;
+    : isDanger
+      ? theme.danger
+      : theme.text;
 
   return (
     <Pressable
@@ -56,8 +59,16 @@ export function Button({
             ? theme.accent
             : isGhost
               ? 'transparent'
-              : theme.backgroundElement,
-          borderColor: isGhost ? 'transparent' : isPrimary ? theme.accent : theme.border,
+              : isDanger
+                ? theme.dangerSoft
+                : theme.backgroundElement,
+          borderColor: isGhost
+            ? 'transparent'
+            : isPrimary
+              ? theme.accent
+              : isDanger
+                ? theme.danger
+                : theme.border,
         },
         style,
         pressed && styles.pressed,

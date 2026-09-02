@@ -1,6 +1,6 @@
 # Ziyarah – verbindlicher Projektkontext für LLMs
 
-Stand: 31. August 2026
+Stand: 2. September 2026
 
 ## Zweck und Pflege
 
@@ -50,7 +50,8 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 - Ortssuche, Inhaltssuche und Suche nach empfohlenen Handlungen.
 - Ortsdetails mit Bildern, Quellen, Hinweisen, empfohlenen Handlungen und Merkliste.
 - Reader mit abschnittsweiser oder zusammenhängender Darstellung, RTL für Arabisch, Schriftgrößensteuerung, Kopieren, Teilen und Merkliste.
-- Sprache Deutsch/Englisch/Arabisch und Theme `system`/`light`/`dark` werden lokal gespeichert.
+- Sprache Deutsch/Englisch/Arabisch und Theme `system`/`light`/`dark` werden lokal gespeichert. Eine explizite Theme-Auswahl synchronisiert zusätzlich das native App-Farbschema und den Native-Tabs-Container, damit native Zurück- und Navigationsbuttons beim Umschalten nicht zwischen zwei Darstellungen flackern.
+- Beim ersten Start zeigt die App ein lokal gebündeltes Einführungsvideo und eine Sprachauswahl. Die Auswahl wird separat gespeichert und öffnet unmittelbar die Registrierung; dort bleiben Anmeldung und die Nutzung des öffentlichen Guides ohne Konto als gleichwertige Wege erreichbar.
 
 ### Gruppenfunktionen
 
@@ -165,6 +166,7 @@ src/features/trip-guidance/ Live-Programmpunkt, Teilnehmerstatus und Offline-War
 src/features/i18n/          UI-Wörterbücher und lokalisierte Fachdaten
 src/features/map/           Native Karte und Web-Fallback
 src/features/network/       Abbruch und Fehlerklassifizierung für Supabase-Lesezugriffe
+src/features/onboarding/    Persistenter Erststart-Status und Navigationsentscheidung
 src/features/places/        Ortsbilder, Stadtkarte, externe Navigation
 src/features/reader/        Darstellung religiöser Textsegmente
 src/features/storage/       AsyncStorage-Hooks
@@ -172,6 +174,7 @@ src/features/theme/         Gespeicherter Theme-Modus
 supabase/migrations/        Versioniertes Postgres-Schema, RLS und RPCs
 supabase/functions/         Lokaler Function-Quellcode; Remote-Deployments nur nach ausdrücklicher Freigabe
 assets/images/places/       Lokal gebündelte Ortsbilder
+assets/videos/              Lokal gebündeltes Einführungsvideo
 docs/IMPLEMENTATION_PLAN.md Ursprüngliche Roadmap, nicht alleinige Ist-Quelle
 ```
 
@@ -196,7 +199,7 @@ AppErrorBoundary
                                         └── RootNavigation
 ```
 
-Die Reihenfolge ist relevant: Bus-, Reisegruppen-, Tagesprogramm-, Generalalarm-, Reiseführungs-, Gruppen- und Fragerundenfunktionen benötigen den Auth-State; der Reisegruppenprovider benötigt zusätzlich aktive Reise und physische Teilnehmer aus dem Buszustand, der Generalalarm ebenfalls den bereits berechneten Buszustand. Der Splash Screen wartet nur auf die lokal gespeicherten Sprach- und Themezustände; Auth-, Profil-, Bus-, Reisegruppen-, Tagesprogramm-, Generalalarm-, Reiseführungs-, Gruppen- und Fragerundenabfragen dürfen den öffentlichen Guide nicht blockieren. Ohne Session überspringen die privaten Provider Tabellenabfragen und Realtime-Kanäle vollständig und entfernen lokale Generalalarm-Erinnerungen. Bei einer vorhandenen Session blockiert nur das initiale Profil-/Pflichtabfrage-Laden beziehungsweise ein echter Benutzerwechsel die geschützte Navigation. Der Tagesprogrammprovider zeigt einen passenden benutzergebundenen Cache bereits während des initialen Serverabrufs; auf Web wird dieser Stand synchron aus `localStorage`, nativ über den gemeinsamen AsyncStorage-Hook geladen. Bus-, Reisegruppen-, Tagesprogramm- und Reiseführungs-Hintergrundrefreshes behalten den letzten Stand sichtbar und melden Offline-, Timeout- oder Serverfehler ohne die Navigation auszuhängen. Ein Profilfehler bleibt als wiederholbarer, nicht blockierender Hinweis sichtbar; Rollen- und Gruppenrechte werden dadurch nicht erweitert.
+Die Reihenfolge ist relevant: Bus-, Reisegruppen-, Tagesprogramm-, Generalalarm-, Reiseführungs-, Gruppen- und Fragerundenfunktionen benötigen den Auth-State; der Reisegruppenprovider benötigt zusätzlich aktive Reise und physische Teilnehmer aus dem Buszustand, der Generalalarm ebenfalls den bereits berechneten Buszustand. Der Splash Screen wartet nur auf die lokal gespeicherten Sprach-, Theme- und Onboardingzustände; Auth-, Profil-, Bus-, Reisegruppen-, Tagesprogramm-, Generalalarm-, Reiseführungs-, Gruppen- und Fragerundenabfragen dürfen den öffentlichen Guide nicht blockieren. Ohne Session überspringen die privaten Provider Tabellenabfragen und Realtime-Kanäle vollständig und entfernen lokale Generalalarm-Erinnerungen. Bei einer vorhandenen Session blockiert nur das initiale Profil-/Pflichtabfrage-Laden beziehungsweise ein echter Benutzerwechsel die geschützte Navigation. Der Tagesprogrammprovider zeigt einen passenden benutzergebundenen Cache bereits während des initialen Serverabrufs; auf Web wird dieser Stand synchron aus `localStorage`, nativ über den gemeinsamen AsyncStorage-Hook geladen. Bus-, Reisegruppen-, Tagesprogramm- und Reiseführungs-Hintergrundrefreshes behalten den letzten Stand sichtbar und melden Offline-, Timeout- oder Serverfehler ohne die Navigation auszuhängen. Ein Profilfehler bleibt als wiederholbarer, nicht blockierender Hinweis sichtbar; Rollen- und Gruppenrechte werden dadurch nicht erweitert.
 
 `AppErrorBoundary` verwendet absichtlich keine Theme-, I18n-, Auth- oder Netzwerkabhängigkeit, damit der Fallback auch bei einem Providerfehler rendern kann. Die Fehlergrenze arbeitet vollständig lokal; externes Crash-Reporting ist nicht Bestandteil der App.
 
@@ -208,6 +211,7 @@ Der gleiche Provider registriert den nativen Linking-Listener für Passwort-Reco
 
 | Route | Zugriff | Zweck |
 | --- | --- | --- |
+| `/onboarding` | öffentlich; beim ersten Öffnen der Tabs | lokales Einführungsvideo und Auswahl von Deutsch, Englisch oder Arabisch |
 | `/login`, `/register` | öffentlich; vorhandene Session wird weitergeleitet | Anmeldung und Registrierung |
 | `/forgot-password` | öffentlich | neutral formulierter Versand eines Recovery-Links |
 | `/reset-password` | öffentlich; nur mit gültiger Recovery-Session änderbar | neues Passwort setzen und danach lokale Session entfernen |
@@ -273,6 +277,7 @@ Verbindliche Inhaltsregeln:
 | Schlüssel | Inhalt |
 | --- | --- |
 | `ziyara.language` | `de`, `en` oder `ar` |
+| `ziyara.onboarding.completed` | ob die einmalige Sprachauswahl abgeschlossen wurde |
 | `ziyara.theme-mode` | `system`, `light` oder `dark` |
 | `ziyara.bookmarks` | Keys wie `place:<slug>` und `content:<slug>` |
 | `ziyara.reader.preferences` | arabische Schriftgröße und Zeilenansicht |
@@ -396,6 +401,7 @@ Der anschließend ergänzte Busstatus-Session-Retry ist Clientcode im lokalen Wo
 - Die administrative Treffpunktauswahl besitzt ebenfalls native und `.web.tsx`-Varianten: Native Geräte zeigen eine interaktive Karte mit verschiebbarem Marker, Web eine klickbare Irak-Koordinatenfläche. Beide können nach ausdrücklicher Standortfreigabe einmalig den aktuellen Gerätestandort übernehmen.
 - Platform-spezifische Implementierungen bevorzugen, wenn ein natives Modul Web-Exporte brechen würde.
 - Gebündelte Katalogdaten und Bilder sind offline verfügbar. Supabase-Funktionen und Kartenkacheln sind nicht vollständig offlinefähig.
+- Das gebündelte Erststartvideo wird mit `expo-video` auf iOS, Android und Web bildschirmfüllend als Hintergrund abgespielt und läuft bewusst stumm in Schleife. Eine abgedunkelte Ebene hält die Sprachauswahl lesbar; ein Wiedergabefehler blockiert sie nicht.
 - Generalalarm-Push und lokale Benachrichtigungen sind nativ; die Webversion zeigt den Statusfluss ohne Push. Remote-Push erfordert einen nativen Development-/Produktionsbuild und ist auf Android nicht vollständig in Expo Go verfügbar. Kein Plattformpfad behauptet, Lautlosmodus, Fokus, ausgeschaltete Geräte oder deaktivierte Benachrichtigungen zuverlässig umgehen zu können.
 
 ## UI-Konventionen
@@ -444,11 +450,11 @@ npx supabase db lint --local --level warning
 npx supabase test db --local
 ```
 
-`npm test` führt derzeit 154 Jest-Tests in 29 Suites aus. Abgedeckt sind unter anderem die Familiengruppierung der Admin-Benutzerliste, AuthContext einschließlich Kofferregistrierung und -änderung, BusManagementContext einschließlich Session-Refresh-Retry und Fehlerklassifizierung, DailyProgramContext, der validierte benutzergebundene Programm-Cache, lokale Kalenderdatumslogik und die Zerlegung mehrzeiliger Ablaufpunkte, Generalalarm-Stufen/Erinnerungsplanung und Dispatcher-Autorisierung, TripGuidanceContext einschließlich Offline-Vormerkung, Wiederholung, Problemübernahme und benutzergebundenem Neustart-Cache für Reiseziele, Reisegruppen-Zustandsaufbau, Standortablauf und Fehlerklassifizierung, GroupCheckContext einschließlich des Rollenlade-Timings, QuestionRoundContext, die Navigationsübergabe an Karten-Apps, Kofferzahlvalidierung, Persistenz-Races und Speicherfehler, der gerenderte `RequireAuth`-Guard, der öffentliche Providerstart einschließlich Reisegruppen ohne Supabase-Zugriff, Recovery-/Account-Löschverträge sowie die globale Error Boundary. `npm run test:coverage` beziehungsweise `npm run validate` erzwingt mindestens 50 % globale Line Coverage und jeweils 80 % für die fünf Kernkontexte. Der vollständig ausgeführte lokale Stand vom 31. August 2026 liegt bei 85,33 % global, 91,21 % AuthContext, 92,90 % BusManagementContext, 90,36 % DailyProgramContext, 87,86 % TripGuidanceContext, 95,31 % GroupCheckContext und 95,65 % QuestionRoundContext.
+`npm test` führt derzeit 158 Jest-Tests in 30 Suites aus. Abgedeckt sind unter anderem der validierte Onboardingstatus und seine Navigationsentscheidung, die Familiengruppierung der Admin-Benutzerliste, AuthContext einschließlich Kofferregistrierung und -änderung, BusManagementContext einschließlich Session-Refresh-Retry und Fehlerklassifizierung, DailyProgramContext, der validierte benutzergebundene Programm-Cache, lokale Kalenderdatumslogik und die Zerlegung mehrzeiliger Ablaufpunkte, Generalalarm-Stufen/Erinnerungsplanung und Dispatcher-Autorisierung, TripGuidanceContext einschließlich Offline-Vormerkung, Wiederholung, Problemübernahme und benutzergebundenem Neustart-Cache für Reiseziele, Reisegruppen-Zustandsaufbau, Standortablauf und Fehlerklassifizierung, GroupCheckContext einschließlich des Rollenlade-Timings, QuestionRoundContext, die Navigationsübergabe an Karten-Apps, Kofferzahlvalidierung, Persistenz-Races und Speicherfehler, der gerenderte `RequireAuth`-Guard, der öffentliche Providerstart einschließlich Reisegruppen ohne Supabase-Zugriff, Recovery-/Account-Löschverträge sowie die globale Error Boundary. `npm run test:coverage` beziehungsweise `npm run validate` erzwingt mindestens 50 % globale Line Coverage und jeweils 80 % für die fünf Kernkontexte. Der vollständig ausgeführte lokale Stand vom 2. September 2026 liegt bei 84,68 % global, 91,21 % AuthContext, 92,90 % BusManagementContext, 90,36 % DailyProgramContext, 87,86 % TripGuidanceContext, 95,31 % GroupCheckContext und 95,65 % QuestionRoundContext.
 
-Unter `supabase/tests/database` prüfen zusätzlich 224 pgTAP-Assertions in elf SQL-Testdateien die RLS-/RPC-/Parallelitätsregeln sowie Cascades, Audit-Anonymisierung, Function-Grants, Kontofamilien, Kofferregistrierung und -änderung, konkurrierende Account-Löschungen, beide Reihenfolgen von Boarding-Antwort gegen Schließung, die serverseitige Generalalarm-Stufenfolge, Token/Versandfenster/Eskalationen, den vollständigen Reiseführungs-Lebenszyklus, das atomare Tagesprogramm-Batch und die Reisegruppen-/Anführerstandortgrenzen einschließlich Adminmitgliedschaft und 15-Minuten-Ablauf. `npm run test:e2e` führt neun serielle Playwright-Smokes mit synthetischen Konten gegen die lokale Expo-/Supabase-/Mailpit-Umgebung aus: Registrierung/Login, Recovery-Link, öffentlicher Guide bei abgebrochenen Supabase-Requests, Gruppencheck, anonyme Fragerunde, Busmanagement einschließlich der gestuften Generalalarm-Bestätigung, Mehrtagesprogramm von der kompakten Home-Vorschau bis zur Wochenansicht, Reiseführung mit Realtime-Treffpunktänderung und Problemübernahme sowie Rollenänderung. Der E2E-Start liest lokale Schlüssel bei neueren Supabase-CLI-Versionen über `supabase status -o env`, falls `start-secrets/docker.env` nicht erzeugt wird. `.github/workflows/ci.yml` führt bei Pushes und Pull Requests App-Validierung samt Coverage, Expo Doctor, getrennte Web-/iOS-/Android-Exports und einen Critical-Audit-Gate aus; der Datenbank-Job startet das lokale Schema aus Migrationen, prüft die 401-Auth-Gates beider Edge Functions, führt DB-Lint und SQL-Tests sowie danach die Playwright-Smokes aus.
+Unter `supabase/tests/database` prüfen zusätzlich 224 pgTAP-Assertions in elf SQL-Testdateien die RLS-/RPC-/Parallelitätsregeln sowie Cascades, Audit-Anonymisierung, Function-Grants, Kontofamilien, Kofferregistrierung und -änderung, konkurrierende Account-Löschungen, beide Reihenfolgen von Boarding-Antwort gegen Schließung, die serverseitige Generalalarm-Stufenfolge, Token/Versandfenster/Eskalationen, den vollständigen Reiseführungs-Lebenszyklus, das atomare Tagesprogramm-Batch und die Reisegruppen-/Anführerstandortgrenzen einschließlich Adminmitgliedschaft und 15-Minuten-Ablauf. `npm run test:e2e` führt neun serielle Playwright-Smokes mit synthetischen Konten gegen die lokale Expo-/Supabase-/Mailpit-Umgebung aus: Registrierung/Login, Recovery-Link, Erststart mit Video, Sprache und Gastzugang bei abgebrochenen Supabase-Requests, Gruppencheck, anonyme Fragerunde, Busmanagement einschließlich der gestuften Generalalarm-Bestätigung, Mehrtagesprogramm von der kompakten Home-Vorschau bis zur Wochenansicht, Reiseführung mit Realtime-Treffpunktänderung und Problemübernahme sowie Rollenänderung. Der E2E-Start liest lokale Schlüssel bei neueren Supabase-CLI-Versionen über `supabase status -o env`, falls `start-secrets/docker.env` nicht erzeugt wird. `.github/workflows/ci.yml` führt bei Pushes und Pull Requests App-Validierung samt Coverage, Expo Doctor, getrennte Web-/iOS-/Android-Exports und einen Critical-Audit-Gate aus; der Datenbank-Job startet das lokale Schema aus Migrationen, prüft die 401-Auth-Gates beider Edge Functions, führt DB-Lint und SQL-Tests sowie danach die Playwright-Smokes aus.
 
-Der aktuelle Prüfstand vom 31. August 2026: `npm run validate` mit 154/154 Jest-Tests bestanden, Expo Doctor 21/21 sowie Web-Export mit 30 statischen Routen bestanden; iOS-Export und Android-Export waren im unmittelbar vorherigen Stand ebenfalls erfolgreich. Der zuvor ausgeführte lokale DB-Lint hatte keine Anwendungsschemafehler und 224/224 pgTAP-Assertions waren bestanden. Die neun vorhandenen Playwright-Smokes wurden mit der neuen Home-/Wochenprogramm-Navigation erfolgreich geprüft. Die SDK-57-Patchstände blieben auf `expo ~57.0.18`, `expo-constants ~57.0.16` und `expo-font ~57.0.2` ausgerichtet. Native Gerätetests wurden für diesen Änderungssatz nicht erneut ausgeführt; insbesondere Tagesprogramm-Cache und Wochenansicht nach einem kalten Start, auf kleiner Breite, mit Arabisch/RTL, beiden Themes und dynamischer Schrift müssen proportional zur Änderung manuell geprüft werden.
+Der aktuelle Prüfstand vom 2. September 2026: `npm run validate` mit 158/158 Jest-Tests und Expo-Abhängigkeitsprüfung bestanden; Web-Export mit 31 statischen Routen sowie iOS- und Android-Export einschließlich `assets/videos/intro.mp4` waren erfolgreich. Expo Doctor bestand 20/21 Checks und meldete ausschließlich neun inzwischen verfügbare SDK-57-Patchupdates für bereits vorhandene Expo-Pakete; `expo-video ~57.0.3` selbst ist passend. Der Erststart wurde zusätzlich bei 390 × 844 Pixeln in lokalem Headless Chrome visuell mit bildschirmfüllendem Video geprüft. Die geänderte Playwright-E2E-Suite, native Echtgerätewiedergabe und ein neuer Development Build wurden noch nicht ausgeführt. Der zuvor ausgeführte lokale DB-Lint hatte keine Anwendungsschemafehler und 224/224 pgTAP-Assertions waren bestanden.
 
 ## Bekannte Lücken und Risiken
 

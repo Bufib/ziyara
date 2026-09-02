@@ -80,10 +80,17 @@ test.describe.serial('Phase 7 E2E smoke flows', () => {
     await login(page, memberEmail, memberResetPassword);
   });
 
-  test('öffentlicher Guide startet ohne Session bei ausgefallenem Backend', async ({ page }) => {
+  test('Erststart führt per Sprache und Gastzugang in den öffentlichen Guide', async ({ page }) => {
     await page.route('http://127.0.0.1:54321/**', (route) => route.abort('internetdisconnected'));
     await page.goto('/');
 
+    await expect(page.getByText('Sprache wählen', { exact: true })).toBeVisible();
+    await expect(page.locator('video')).toBeVisible();
+    await page.getByRole('button', { name: 'Deutsch' }).click();
+    await expect(page.getByText('Konto erstellen', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Ohne Konto fortfahren' }).click();
+    await expect(page.getByText('Städte (5)', { exact: true })).toBeVisible();
+    await page.reload();
     await expect(page.getByText('Städte (5)', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Karbala' })).toBeVisible();
     await page.getByRole('tab', { name: 'Suche' }).click();

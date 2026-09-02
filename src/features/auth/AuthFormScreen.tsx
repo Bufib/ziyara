@@ -29,6 +29,7 @@ import {
   registerRoute,
   type ProtectedRoutePath,
 } from '@/features/navigation/routes';
+import { useOnboarding } from '@/features/onboarding/onboarding-state';
 import { useTheme } from '@/hooks/use-theme';
 
 type AuthMode = 'login' | 'register';
@@ -44,6 +45,7 @@ export function AuthFormScreen({ mode, returnTo }: AuthFormScreenProps) {
   const { width } = useWindowDimensions();
   const { t } = useI18n();
   const { signIn, signUp } = useAuth();
+  const { completeOnboarding } = useOnboarding();
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -142,16 +144,22 @@ export function AuthFormScreen({ mode, returnTo }: AuthFormScreenProps) {
 
         if (result.error) {
           showFeedback(t(getAuthErrorTranslationKey(result.error)), true);
-        } else if (result.requiresEmailConfirmation) {
-          setPassword('');
-          setPasswordConfirmation('');
-          showFeedback(t('auth.success.checkEmail'), false);
+        } else {
+          completeOnboarding();
+
+          if (result.requiresEmailConfirmation) {
+            setPassword('');
+            setPasswordConfirmation('');
+            showFeedback(t('auth.success.checkEmail'), false);
+          }
         }
       } else {
         const result = await signIn(normalizedEmail, password);
 
         if (result.error) {
           showFeedback(t(getAuthErrorTranslationKey(result.error)), true);
+        } else {
+          completeOnboarding();
         }
       }
     } catch {
@@ -164,6 +172,11 @@ export function AuthFormScreen({ mode, returnTo }: AuthFormScreenProps) {
   const switchMode = () => {
     setFeedback(null);
     router.replace(isRegister ? loginRoute(returnTo) : registerRoute(returnTo));
+  };
+
+  const continueWithoutAccount = () => {
+    completeOnboarding();
+    router.replace('/');
   };
 
   return (
@@ -406,6 +419,26 @@ export function AuthFormScreen({ mode, returnTo }: AuthFormScreenProps) {
                   </ThemedText>
                 )}
               </Pressable>
+
+              {isRegister ? (
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={isSubmitting}
+                  onPress={continueWithoutAccount}
+                  style={({ pressed }) => [
+                    styles.guestButton,
+                    {
+                      backgroundColor: theme.backgroundElement,
+                      borderColor: theme.border,
+                    },
+                    pressed && styles.pressed,
+                    isSubmitting && styles.disabled,
+                  ]}>
+                  <ThemedText type="smallBold">
+                    {t('auth.continueWithoutAccount')}
+                  </ThemedText>
+                </Pressable>
+              ) : null}
             </ThemedView>
 
             <View style={styles.switchRow}>
@@ -574,6 +607,14 @@ const styles = StyleSheet.create({
   submitButton: {
     alignItems: 'center',
     borderRadius: 8,
+    justifyContent: 'center',
+    minHeight: 50,
+    paddingHorizontal: Spacing.three,
+  },
+  guestButton: {
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
     justifyContent: 'center',
     minHeight: 50,
     paddingHorizontal: Spacing.three,

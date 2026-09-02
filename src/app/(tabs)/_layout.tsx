@@ -1,13 +1,29 @@
+import { Redirect } from "expo-router";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
 
 import { Colors } from "@/constants/theme";
 import { useI18n } from "@/features/i18n/i18n";
+import { onboardingRoute } from "@/features/navigation/routes";
+import {
+  getOnboardingGateDecision,
+  useOnboarding,
+} from "@/features/onboarding/onboarding-state";
 import { useResolvedTheme } from "@/features/theme/theme-mode";
 
 export default function TabsLayout() {
   const scheme = useResolvedTheme();
   const colors = Colors[scheme];
   const { t } = useI18n();
+  const { hasCompletedOnboarding, loaded } = useOnboarding();
+  const gateDecision = getOnboardingGateDecision(loaded, hasCompletedOnboarding);
+
+  if (gateDecision === "loading") {
+    return null;
+  }
+
+  if (gateDecision === "onboarding") {
+    return <Redirect href={onboardingRoute()} />;
+  }
 
   return (
     <NativeTabs
@@ -19,6 +35,7 @@ export default function TabsLayout() {
         selected: { color: colors.text, fontSize: 12 },
       }}
       tintColor={colors.accent}
+      unstable_nativeProps={{ colorScheme: scheme }}
     >
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>{t("nav.home")}</NativeTabs.Trigger.Label>

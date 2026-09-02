@@ -723,6 +723,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.accountCoverage.individualBody":
       "Dieses Konto vertritt ausschließlich mich.",
     "auth.accountCoverageTitle": "Für wen ist dieses Konto?",
+    "auth.continueWithoutAccount": "Ohne Konto fortfahren",
     "auth.loginBody":
       "Melde dich für Konto, Gruppenabfragen und geschützte Funktionen an. Der lokale Guide bleibt ohne Anmeldung verfügbar.",
     "auth.loginTitle": "Willkommen zurück",
@@ -762,6 +763,14 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.validation.passwordPattern":
       "Das Passwort muss mindestens einen Buchstaben und eine Zahl enthalten.",
     "auth.validation.passwordRequired": "Gib dein Passwort ein.",
+    "onboarding.body":
+      "Wähle deine Sprache. Danach kannst du ein Konto erstellen, dich anmelden oder die App ohne Konto nutzen.",
+    "onboarding.languageHint":
+      "Öffnet die Registrierung in dieser Sprache.",
+    "onboarding.title": "Sprache wählen",
+    "onboarding.videoLabel": "Einführungsvideo zur Ziyara-App",
+    "onboarding.videoUnavailable":
+      "Das Einführungsvideo kann gerade nicht abgespielt werden. Du kannst trotzdem eine Sprache auswählen.",
     "recovery.backToLogin": "Zurück zur Anmeldung",
     "recovery.checkingLink": "Recovery-Link wird geprüft …",
     "recovery.forgotBody":
@@ -1670,6 +1679,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.accountCoverage.individual": "Only me",
     "auth.accountCoverage.individualBody": "This account represents only me.",
     "auth.accountCoverageTitle": "Who is this account for?",
+    "auth.continueWithoutAccount": "Continue without an account",
     "auth.loginBody":
       "Sign in for account, group, and protected features. The local guide remains available without signing in.",
     "auth.loginTitle": "Welcome back",
@@ -1708,6 +1718,14 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.validation.passwordPattern":
       "The password must contain at least one letter and one number.",
     "auth.validation.passwordRequired": "Enter your password.",
+    "onboarding.body":
+      "Choose your language. You can then create an account, sign in, or use the app without an account.",
+    "onboarding.languageHint":
+      "Opens registration in this language.",
+    "onboarding.title": "Choose your language",
+    "onboarding.videoLabel": "Introduction video for the Ziyara app",
+    "onboarding.videoUnavailable":
+      "The introduction video cannot be played right now. You can still choose a language.",
     "recovery.backToLogin": "Back to sign in",
     "recovery.checkingLink": "Checking recovery link…",
     "recovery.forgotBody":
@@ -2604,6 +2622,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.accountCoverage.individual": "أنا فقط",
     "auth.accountCoverage.individualBody": "هذا الحساب يمثلني أنا فقط.",
     "auth.accountCoverageTitle": "من يمثل هذا الحساب؟",
+    "auth.continueWithoutAccount": "المتابعة بدون حساب",
     "auth.loginBody":
       "سجل الدخول لاستخدام الحساب والميزات الجماعية والمحمية. يبقى الدليل المحلي متاحاً دون تسجيل الدخول.",
     "auth.loginTitle": "مرحبا بعودتك",
@@ -2639,6 +2658,14 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "auth.validation.passwordPattern":
       "يجب أن تحتوي كلمة المرور على حرف واحد ورقم واحد على الأقل.",
     "auth.validation.passwordRequired": "أدخل كلمة المرور.",
+    "onboarding.body":
+      "اختر لغتك. بعد ذلك يمكنك إنشاء حساب أو تسجيل الدخول أو استخدام التطبيق بدون حساب.",
+    "onboarding.languageHint":
+      "يفتح التسجيل بهذه اللغة.",
+    "onboarding.title": "اختر اللغة",
+    "onboarding.videoLabel": "فيديو تعريفي بتطبيق Ziyara",
+    "onboarding.videoUnavailable":
+      "يتعذر تشغيل الفيديو التعريفي حالياً. لا يزال بإمكانك اختيار اللغة.",
     "recovery.backToLogin": "العودة إلى تسجيل الدخول",
     "recovery.checkingLink": "جارٍ التحقق من رابط الاسترداد…",
     "recovery.forgotBody":

@@ -8,6 +8,7 @@ import {
   getProtectedReturnRoute,
   groupRoute,
   loginRoute,
+  onboardingRoute,
   protectedRoutePaths,
 } from '@/features/navigation/routes';
 
@@ -53,6 +54,10 @@ describe('protected navigation', () => {
 
     expect(getProtectedReturnRoute('https://example.com')).toBe('/');
     expect(getProtectedReturnRoute('//example.com')).toBe('/');
+  });
+
+  it('führt den einmaligen Einstieg als eigene öffentliche Route', () => {
+    expect(onboardingRoute()).toBe('/onboarding');
   });
 
   it('führt das Busmanagement als geschützte interne Route', () => {

@@ -484,7 +484,7 @@ function AdminContent() {
                             count: families.length,
                           })
                   }
-                  statusColor={hasError ? 'danger' : 'accent'}
+                  statusColor={hasError ? 'danger' : 'textSecondary'}
                   title={t('admin.section.families.title')}
                 />
                 {expandedSections.families ? (
@@ -530,7 +530,7 @@ function AdminContent() {
                         ? t('admin.section.users.loading')
                         : t('admin.section.users.count', { count: users.length })
                   }
-                  statusColor={hasError ? 'danger' : 'accent'}
+                  statusColor={hasError ? 'danger' : 'textSecondary'}
                   title={t('admin.section.users.title')}
                 />
 
@@ -560,10 +560,10 @@ function AdminContent() {
                   ) : (
                     <View style={styles.usersTools}>
                       <Card style={styles.overviewCard}>
-                        <ThemedText type="smallBold" themeColor="accent">
+                        <ThemedText type="small">
                           {t('admin.userCount', { count: users.length })}
                         </ThemedText>
-                        <ThemedText type="smallBold" themeColor="accent">
+                        <ThemedText type="small" themeColor="textSecondary">
                           {t('admin.personCount', { count: representedPeople })}
                         </ThemedText>
                       </Card>
@@ -642,7 +642,7 @@ function AdminContent() {
           return (
             <Card style={styles.familyPacket}>
               <View style={styles.familyPacketHeader}>
-                <ThemedText type="heading" style={styles.familyPacketName}>
+                <ThemedText style={styles.familyPacketName}>
                   {item.familyName ?? t('accountFamilies.unknownFamily')}
                 </ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
@@ -687,7 +687,7 @@ function AdminUserDisclosure({
     <View
       style={[
         styles.userDisclosure,
-        { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+        { backgroundColor: theme.background, borderColor: theme.border },
       ]}>
       <Pressable
         accessibilityLabel={t(
@@ -701,7 +701,7 @@ function AdminUserDisclosure({
           styles.userSummary,
           pressed && styles.userSummaryPressed,
         ]}>
-        <ThemedText type="heading" style={styles.userName}>
+        <ThemedText style={styles.userName}>
           {user.display_name}
         </ThemedText>
         <View style={[styles.userChevron, { transform: [{ rotate: chevronRotation }] }]}>
@@ -719,9 +719,8 @@ function AdminUserDisclosure({
               style={[
                 styles.roleBadge,
                 {
-                  backgroundColor:
-                    user.role === 'admin' ? theme.accentSoft : theme.background,
-                  borderColor: user.role === 'admin' ? theme.accent : theme.border,
+                  backgroundColor: theme.surface,
+                  borderColor: theme.border,
                 },
               ]}>
               <ThemedText type="tinyBold">{t(`admin.role.${user.role}`)}</ThemedText>
@@ -748,7 +747,7 @@ function AdminUserDisclosure({
                 : 'admin.roleAssignment.title',
             )}
             onPress={onToggleRoleAssignment}
-            style={styles.roleAssignmentButton}
+            style={[styles.roleAssignmentButton, { backgroundColor: theme.surface }]}
             variant="secondary"
           />
 
@@ -824,6 +823,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   overviewCard: {
+    borderRadius: 12,
     gap: Spacing.half,
   },
   usersTools: {
@@ -851,6 +851,7 @@ const styles = StyleSheet.create({
     minHeight: 180,
   },
   familyPacket: {
+    borderRadius: 12,
     gap: Spacing.three,
   },
   familyPacketHeader: {
@@ -862,13 +863,16 @@ const styles = StyleSheet.create({
   },
   familyPacketName: {
     flex: 1,
+    fontSize: 18,
+    fontWeight: 600,
+    lineHeight: 24,
     minWidth: 180,
   },
   familyMembers: {
     gap: Spacing.two,
   },
   userDisclosure: {
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
@@ -885,6 +889,9 @@ const styles = StyleSheet.create({
   },
   userName: {
     flex: 1,
+    fontSize: 16,
+    fontWeight: 600,
+    lineHeight: 24,
   },
   userChevron: {
     alignItems: 'center',

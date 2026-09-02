@@ -83,5 +83,13 @@ export const Spacing = {
   six: 64,
 } as const;
 
+export const MediaBackdrop = {
+  border: 'rgba(255, 255, 255, 0.34)',
+  scrim: 'rgba(0, 0, 0, 0.48)',
+  surface: 'rgba(20, 32, 26, 0.78)',
+  text: '#F4F8FF',
+  textSecondary: '#DDE8E1',
+} as const;
+
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;

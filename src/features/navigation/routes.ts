@@ -59,6 +59,10 @@ export function resetPasswordRoute(): Href {
   return '/reset-password' as Href;
 }
 
+export function onboardingRoute(): Href {
+  return '/onboarding' as Href;
+}
+
 export function busRoute(): Href & ProtectedRoutePath {
   return '/bus' as Href & ProtectedRoutePath;
 }

@@ -15,6 +15,7 @@ import { GroupCheckProvider, useGroupCheck } from '@/features/group-check/group-
 import { GeneralAlarmNotificationsProvider } from '@/features/general-alarm/general-alarm-notifications-context';
 import { AppI18nProvider, useI18n } from '@/features/i18n/i18n';
 import { supabaseReadFailureTranslationKey } from '@/features/network/supabase-read';
+import { useOnboarding } from '@/features/onboarding/onboarding-state';
 import { QuestionRoundProvider } from '@/features/question-round/question-round-context';
 import { AppThemeProvider, useThemeMode } from '@/features/theme/theme-mode';
 import { TripGuidanceProvider } from '@/features/trip-guidance/trip-guidance-context';
@@ -54,16 +55,17 @@ function RootNavigation() {
   const { loaded: isThemeLoaded, resolvedTheme: scheme } = useThemeMode();
   const colors = Colors[scheme];
   const { loaded: isLanguageLoaded, t } = useI18n();
+  const { loaded: isOnboardingLoaded } = useOnboarding();
   const { profileSyncErrorKind, refreshProfile } = useAuth();
   const { isBlocking } = useGroupCheck();
 
   useEffect(() => {
-    if (isLanguageLoaded && isThemeLoaded) {
+    if (isLanguageLoaded && isOnboardingLoaded && isThemeLoaded) {
       SplashScreen.hideAsync().catch(() => undefined);
     }
-  }, [isLanguageLoaded, isThemeLoaded]);
+  }, [isLanguageLoaded, isOnboardingLoaded, isThemeLoaded]);
 
-  if (!isLanguageLoaded || !isThemeLoaded) {
+  if (!isLanguageLoaded || !isOnboardingLoaded || !isThemeLoaded) {
     return null;
   }
 
@@ -78,6 +80,10 @@ function RootNavigation() {
             headerShadowVisible: false,
             contentStyle: { backgroundColor: colors.background },
           }}>
+          <Stack.Screen
+            name="onboarding"
+            options={{ headerShown: false, title: t('onboarding.title') }}
+          />
           <Stack.Screen
             name="login"
             options={{ headerShown: false, title: t('auth.loginTitle') }}
