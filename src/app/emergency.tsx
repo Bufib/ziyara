@@ -1,5 +1,5 @@
-import * as Location from 'expo-location';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import * as Location from "expo-location";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   AppState,
@@ -9,28 +9,32 @@ import {
   StyleSheet,
   TextInput,
   View,
-} from 'react-native';
+} from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Screen } from '@/components/ui/screen';
-import { Section } from '@/components/ui/section';
-import { Spacing } from '@/constants/theme';
-import type { EmergencyInboxMessage, EmergencyRequest, EmergencyTeam } from '@/domain/database';
-import { RequireAuth } from '@/features/auth/RequireAuth';
-import { useAuth } from '@/features/auth/auth-context';
-import { supabase } from '@/features/auth/supabase';
-import { useGeneralAlarmNotifications } from '@/features/general-alarm/general-alarm-notifications-context';
-import { useI18n } from '@/features/i18n/i18n';
+import { ThemedText } from "@/components/themed-text";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Screen } from "@/components/ui/screen";
+import { Section } from "@/components/ui/section";
+import { Spacing } from "@/constants/theme";
+import type {
+  EmergencyInboxMessage,
+  EmergencyRequest,
+  EmergencyTeam,
+} from "@/domain/database";
+import { RequireAuth } from "@/features/auth/RequireAuth";
+import { useAuth } from "@/features/auth/auth-context";
+import { supabase } from "@/features/auth/supabase";
+import { useGeneralAlarmNotifications } from "@/features/general-alarm/general-alarm-notifications-context";
+import { useI18n } from "@/features/i18n/i18n";
 import {
   getSupabaseReadFailureKind,
   supabaseReadFailureTranslationKey,
   type SupabaseReadFailureKind,
   withSupabaseReadTimeout,
-} from '@/features/network/supabase-read';
-import { openNavigation } from '@/features/places/openNavigation';
-import { useTheme } from '@/hooks/use-theme';
+} from "@/features/network/supabase-read";
+import { openNavigation } from "@/features/places/openNavigation";
+import { useTheme } from "@/hooks/use-theme";
 
 type Coordinates = {
   accuracy: number | null;
@@ -38,15 +42,21 @@ type Coordinates = {
   longitude: number;
 };
 
-type LocationFeedback = 'denied' | 'error' | 'ready' | null;
+type LocationFeedback = "denied" | "error" | "ready" | null;
 type SubmitFeedback =
-  | { kind: 'error' | 'validation_message' | 'validation_team' }
-  | { kind: 'no_recipients' }
-  | { count: number; kind: 'success' | 'success_no_push' }
+  | {
+      kind:
+        | "error"
+        | "validation_location"
+        | "validation_message"
+        | "validation_team";
+    }
+  | { kind: "no_recipients" }
+  | { count: number; kind: "success" | "success_no_push" }
   | null;
 
 const requestSelect =
-  'id, requester_profile_id, requester_display_name, target_team, message, location_label, latitude, longitude, accuracy_meters, created_at';
+  "id, requester_profile_id, requester_display_name, target_team, message, location_label, latitude, longitude, accuracy_meters, created_at";
 const pushDispatchTimeoutMs = 8_000;
 
 async function dispatchEmergencyPush(requestId: number) {
@@ -58,7 +68,7 @@ async function dispatchEmergencyPush(requestId: number) {
   try {
     return await Promise.race([
       supabase.functions.invoke<{ accepted?: number; claimed?: number }>(
-        'dispatch-emergency-alert',
+        "dispatch-emergency-alert",
         { body: { requestId } },
       ),
       timeoutResult,
@@ -82,10 +92,11 @@ function EmergencyContent() {
   const { profile, session } = useAuth();
   const notifications = useGeneralAlarmNotifications();
   const [team, setTeam] = useState<EmergencyTeam | null>(null);
-  const [message, setMessage] = useState('');
-  const [locationLabel, setLocationLabel] = useState('');
+  const [message, setMessage] = useState("");
+  const [locationLabel, setLocationLabel] = useState("");
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
-  const [locationFeedback, setLocationFeedback] = useState<LocationFeedback>(null);
+  const [locationFeedback, setLocationFeedback] =
+    useState<LocationFeedback>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitFeedback, setSubmitFeedback] = useState<SubmitFeedback>(null);
@@ -93,14 +104,16 @@ function EmergencyContent() {
   const [sent, setSent] = useState<EmergencyRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [syncErrorKind, setSyncErrorKind] = useState<SupabaseReadFailureKind | null>(null);
+  const [syncErrorKind, setSyncErrorKind] =
+    useState<SupabaseReadFailureKind | null>(null);
   const [markingReadId, setMarkingReadId] = useState<number | null>(null);
   const [markReadErrorId, setMarkReadErrorId] = useState<number | null>(null);
   const refreshVersion = useRef(0);
   const loadedUserId = useRef<string | null>(null);
   const userId = session?.user.id ?? null;
   const profileId = profile?.id ?? null;
-  const isStaff = profile?.role === 'medical_staff' || profile?.role === 'organization_team';
+  const isStaff =
+    profile?.role === "medical_staff" || profile?.role === "organization_team";
 
   const refresh = useCallback(async () => {
     const version = ++refreshVersion.current;
@@ -122,14 +135,14 @@ function EmergencyContent() {
     try {
       const [inboxResult, sentResult] = await Promise.all([
         withSupabaseReadTimeout((signal) =>
-          supabase.rpc('list_my_emergency_messages').abortSignal(signal),
+          supabase.rpc("list_my_emergency_messages").abortSignal(signal),
         ),
         withSupabaseReadTimeout((signal) =>
           supabase
-            .from('emergency_requests')
+            .from("emergency_requests")
             .select(requestSelect)
-            .eq('requester_profile_id', profileId)
-            .order('created_at', { ascending: false })
+            .eq("requester_profile_id", profileId)
+            .order("created_at", { ascending: false })
             .limit(50)
             .abortSignal(signal),
         ),
@@ -163,22 +176,22 @@ function EmergencyContent() {
     const channel = supabase
       .channel(`emergency-messages:${userId}`)
       .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'emergency_requests' },
+        "postgres_changes",
+        { event: "*", schema: "public", table: "emergency_requests" },
         () => void refresh(),
       )
       .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'emergency_request_recipients' },
+        "postgres_changes",
+        { event: "*", schema: "public", table: "emergency_request_recipients" },
         () => void refresh(),
       )
       .subscribe();
 
     const appStateSubscription =
-      Platform.OS === 'web'
+      Platform.OS === "web"
         ? null
-        : AppState.addEventListener('change', (state) => {
-            if (state === 'active') void refresh();
+        : AppState.addEventListener("change", (state) => {
+            if (state === "active") void refresh();
           });
 
     return () => {
@@ -197,7 +210,7 @@ function EmergencyContent() {
     try {
       const permission = await Location.requestForegroundPermissionsAsync();
       if (!permission.granted) {
-        setLocationFeedback('denied');
+        setLocationFeedback("denied");
         return;
       }
 
@@ -209,9 +222,9 @@ function EmergencyContent() {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
       });
-      setLocationFeedback('ready');
+      setLocationFeedback("ready");
     } catch {
-      setLocationFeedback('error');
+      setLocationFeedback("error");
     } finally {
       setIsLocating(false);
     }
@@ -219,13 +232,18 @@ function EmergencyContent() {
 
   const submit = async () => {
     if (isSubmitting) return;
+    const normalizedLocationLabel = locationLabel.trim();
     const normalizedMessage = message.trim();
     if (!team) {
-      setSubmitFeedback({ kind: 'validation_team' });
+      setSubmitFeedback({ kind: "validation_team" });
+      return;
+    }
+    if (!normalizedLocationLabel) {
+      setSubmitFeedback({ kind: "validation_location" });
       return;
     }
     if (normalizedMessage.length < 5) {
-      setSubmitFeedback({ kind: 'validation_message' });
+      setSubmitFeedback({ kind: "validation_message" });
       return;
     }
 
@@ -234,15 +252,16 @@ function EmergencyContent() {
     setIsSubmitting(true);
 
     try {
-      const { data, error } = await supabase.rpc('submit_emergency_request', {
+      const { data, error } = await supabase.rpc("submit_emergency_request", {
         p_accuracy_meters: coordinates?.accuracy ?? null,
         p_latitude: coordinates?.latitude ?? null,
-        p_location_label: locationLabel.trim() || null,
+        p_location_label: normalizedLocationLabel,
         p_longitude: coordinates?.longitude ?? null,
         p_message: normalizedMessage,
         p_target_team: team,
       });
-      if (error || !data?.[0]) throw error ?? new Error('Missing emergency request result.');
+      if (error || !data?.[0])
+        throw error ?? new Error("Missing emergency request result.");
 
       const result = data[0];
       let pushAccepted = false;
@@ -258,22 +277,22 @@ function EmergencyContent() {
         }
       }
 
-      setMessage('');
-      setLocationLabel('');
+      setMessage("");
+      setLocationLabel("");
       setCoordinates(null);
       setLocationFeedback(null);
       setTeam(null);
       setSubmitFeedback(
         result.recipient_count === 0
-          ? { kind: 'no_recipients' }
+          ? { kind: "no_recipients" }
           : {
               count: result.recipient_count,
-              kind: pushAccepted ? 'success' : 'success_no_push',
+              kind: pushAccepted ? "success" : "success_no_push",
             },
       );
       await refresh();
     } catch {
-      setSubmitFeedback({ kind: 'error' });
+      setSubmitFeedback({ kind: "error" });
     } finally {
       setIsSubmitting(false);
     }
@@ -284,14 +303,16 @@ function EmergencyContent() {
     setMarkingReadId(requestId);
     setMarkReadErrorId(null);
     try {
-      const { error } = await supabase.rpc('mark_emergency_request_read', {
+      const { error } = await supabase.rpc("mark_emergency_request_read", {
         p_request_id: requestId,
       });
       if (error) throw error;
 
       setInbox((current) =>
         current.map((item) =>
-          item.request_id === requestId ? { ...item, read_at: new Date().toISOString() } : item,
+          item.request_id === requestId
+            ? { ...item, read_at: new Date().toISOString() }
+            : item,
         ),
       );
     } catch {
@@ -302,41 +323,37 @@ function EmergencyContent() {
   };
 
   const formatDate = (value: string) =>
-    new Intl.DateTimeFormat(language, { dateStyle: 'short', timeStyle: 'short' }).format(
-      new Date(value),
-    );
+    new Intl.DateTimeFormat(language, {
+      dateStyle: "short",
+      timeStyle: "short",
+    }).format(new Date(value));
 
-  const openCoordinates = (item: Pick<EmergencyRequest, 'latitude' | 'longitude' | 'location_label'>) => {
+  const openCoordinates = (
+    item: Pick<EmergencyRequest, "latitude" | "longitude" | "location_label">,
+  ) => {
     if (item.latitude === null || item.longitude === null) return;
     void openNavigation({
       latitude: item.latitude,
       longitude: item.longitude,
-      name: item.location_label ?? t('emergency.locationFallback'),
+      name: item.location_label ?? t("emergency.locationFallback"),
     });
   };
 
   return (
-    <Screen safeAreaEdges={['right', 'bottom', 'left']}>
+    <Screen safeAreaEdges={["right", "bottom", "left"]}>
       <View style={styles.intro}>
-        <ThemedText type="title">{t('emergency.title')}</ThemedText>
-        <ThemedText themeColor="textSecondary">{t('emergency.body')}</ThemedText>
+        <ThemedText type="title">{t("emergency.title")}</ThemedText>
+        <ThemedText themeColor="textSecondary">
+          {t("emergency.body")}
+        </ThemedText>
       </View>
 
-      <Card style={[styles.safetyCard, { backgroundColor: theme.dangerSoft, borderColor: theme.danger }]}>
-        <ThemedText type="smallBold" themeColor="danger">
-          {t('emergency.safetyTitle')}
-        </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('emergency.safetyBody')}
-        </ThemedText>
-      </Card>
-
-      <Section title={t('emergency.formTitle')}>
+      <Section title={t("emergency.formTitle")}>
         <Card style={styles.formCard}>
           <View style={styles.field}>
-            <ThemedText type="smallBold">{t('emergency.teamLabel')}</ThemedText>
+            <ThemedText type="smallBold">{t("emergency.teamLabel")}</ThemedText>
             <View style={styles.teamChoices}>
-              {(['medical', 'travel'] as const).map((value) => {
+              {(["medical", "travel"] as const).map((value) => {
                 const selected = team === value;
                 return (
                   <Pressable
@@ -350,12 +367,18 @@ function EmergencyContent() {
                     style={({ pressed }) => [
                       styles.teamChoice,
                       {
-                        backgroundColor: selected ? theme.dangerSoft : theme.background,
+                        backgroundColor: selected
+                          ? theme.dangerSoft
+                          : theme.background,
                         borderColor: selected ? theme.danger : theme.border,
                       },
                       pressed && styles.pressed,
-                    ]}>
-                    <ThemedText type="heading" themeColor={selected ? 'danger' : 'text'}>
+                    ]}
+                  >
+                    <ThemedText
+                      type="heading"
+                      themeColor={selected ? "danger" : "text"}
+                    >
                       {t(`emergency.team.${value}`)}
                     </ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
@@ -368,37 +391,44 @@ function EmergencyContent() {
           </View>
 
           <View style={styles.field}>
-            <ThemedText type="smallBold">{t('emergency.locationLabel')}</ThemedText>
+            <ThemedText type="smallBold">
+              {t("emergency.locationLabel")}
+            </ThemedText>
             <TextInput
-              accessibilityLabel={t('emergency.locationLabel')}
+              accessibilityLabel={t("emergency.locationLabel")}
               editable={!isSubmitting}
               maxLength={300}
               onChangeText={(value) => {
                 setLocationLabel(value);
                 setSubmitFeedback(null);
               }}
-              placeholder={t('emergency.locationPlaceholder')}
+              placeholder={t("emergency.locationPlaceholder")}
               placeholderTextColor={theme.textSecondary}
               style={[
                 styles.input,
                 {
                   backgroundColor: theme.background,
-                  borderColor: theme.border,
+                  borderColor:
+                    submitFeedback?.kind === "validation_location"
+                      ? theme.danger
+                      : theme.border,
                   color: theme.text,
-                  textAlign: isRTL ? 'right' : 'left',
+                  textAlign: isRTL ? "right" : "left",
                 },
               ]}
               value={locationLabel}
             />
             <ThemedText type="small" themeColor="textSecondary">
-              {t('emergency.locationPrivacy')}
+              {t("emergency.locationPrivacy")}
             </ThemedText>
             <View style={styles.inlineActions}>
               <Button
                 disabled={isLocating || isSubmitting}
                 icon="location"
                 label={
-                  isLocating ? t('emergency.locationSharing') : t('emergency.locationShare')
+                  isLocating
+                    ? t("emergency.locationSharing")
+                    : t("emergency.locationShare")
                 }
                 onPress={() => void captureCurrentLocation()}
                 variant="secondary"
@@ -407,7 +437,7 @@ function EmergencyContent() {
                 <Button
                   disabled={isSubmitting}
                   icon="close"
-                  label={t('emergency.locationClear')}
+                  label={t("emergency.locationClear")}
                   onPress={() => {
                     setCoordinates(null);
                     setLocationFeedback(null);
@@ -418,27 +448,34 @@ function EmergencyContent() {
             </View>
             {coordinates ? (
               <ThemedText type="code" themeColor="success">
-                {coordinates.latitude.toFixed(5)}, {coordinates.longitude.toFixed(5)}
+                {coordinates.latitude.toFixed(5)},{" "}
+                {coordinates.longitude.toFixed(5)}
                 {coordinates.accuracy !== null
                   ? ` · ±${Math.round(coordinates.accuracy)} m`
-                  : ''}
+                  : ""}
               </ThemedText>
             ) : null}
-            {locationFeedback === 'denied' || locationFeedback === 'error' ? (
-              <ThemedText type="small" themeColor="danger" accessibilityLiveRegion="polite">
+            {locationFeedback === "denied" || locationFeedback === "error" ? (
+              <ThemedText
+                type="small"
+                themeColor="danger"
+                accessibilityLiveRegion="polite"
+              >
                 {t(
-                  locationFeedback === 'denied'
-                    ? 'emergency.locationDenied'
-                    : 'emergency.locationError',
+                  locationFeedback === "denied"
+                    ? "emergency.locationDenied"
+                    : "emergency.locationError",
                 )}
               </ThemedText>
             ) : null}
           </View>
 
           <View style={styles.field}>
-            <ThemedText type="smallBold">{t('emergency.messageLabel')}</ThemedText>
+            <ThemedText type="smallBold">
+              {t("emergency.messageLabel")}
+            </ThemedText>
             <TextInput
-              accessibilityLabel={t('emergency.messageLabel')}
+              accessibilityLabel={t("emergency.messageLabel")}
               editable={!isSubmitting}
               maxLength={1200}
               multiline
@@ -446,7 +483,7 @@ function EmergencyContent() {
                 setMessage(value);
                 setSubmitFeedback(null);
               }}
-              placeholder={t('emergency.messagePlaceholder')}
+              placeholder={t("emergency.messagePlaceholder")}
               placeholderTextColor={theme.textSecondary}
               style={[
                 styles.input,
@@ -454,15 +491,21 @@ function EmergencyContent() {
                 {
                   backgroundColor: theme.background,
                   borderColor:
-                    submitFeedback?.kind === 'validation_message' ? theme.danger : theme.border,
+                    submitFeedback?.kind === "validation_message"
+                      ? theme.danger
+                      : theme.border,
                   color: theme.text,
-                  textAlign: isRTL ? 'right' : 'left',
+                  textAlign: isRTL ? "right" : "left",
                 },
               ]}
               textAlignVertical="top"
               value={message}
             />
-            <ThemedText style={styles.characterCount} type="small" themeColor="textSecondary">
+            <ThemedText
+              style={styles.characterCount}
+              type="small"
+              themeColor="textSecondary"
+            >
               {message.length}/1200
             </ThemedText>
           </View>
@@ -475,24 +518,32 @@ function EmergencyContent() {
                 styles.feedback,
                 {
                   backgroundColor:
-                    submitFeedback.kind === 'success' ? theme.successSoft : theme.warningSoft,
+                    submitFeedback.kind === "success"
+                      ? theme.successSoft
+                      : theme.warningSoft,
                   borderColor:
-                    submitFeedback.kind === 'success' ? theme.success : theme.warning,
+                    submitFeedback.kind === "success"
+                      ? theme.success
+                      : theme.warning,
                 },
-              ]}>
+              ]}
+            >
               <ThemedText
                 type="small"
                 themeColor={
-                  submitFeedback.kind === 'success'
-                    ? 'success'
-                    : submitFeedback.kind === 'error' ||
-                        submitFeedback.kind.startsWith('validation')
-                      ? 'danger'
-                      : 'warning'
-                }>
+                  submitFeedback.kind === "success"
+                    ? "success"
+                    : submitFeedback.kind === "error" ||
+                        submitFeedback.kind.startsWith("validation")
+                      ? "danger"
+                      : "warning"
+                }
+              >
                 {t(
                   `emergency.feedback.${submitFeedback.kind}`,
-                  'count' in submitFeedback ? { count: submitFeedback.count } : undefined,
+                  "count" in submitFeedback
+                    ? { count: submitFeedback.count }
+                    : undefined,
                 )}
               </ThemedText>
             </View>
@@ -501,7 +552,9 @@ function EmergencyContent() {
           <Button
             disabled={isSubmitting}
             icon="warning"
-            label={isSubmitting ? t('emergency.submitting') : t('emergency.submit')}
+            label={
+              isSubmitting ? t("emergency.submitting") : t("emergency.submit")
+            }
             onPress={() => void submit()}
             variant="danger"
           />
@@ -510,23 +563,25 @@ function EmergencyContent() {
       </Section>
 
       {isStaff ? (
-        <Section title={t('emergency.notificationsTitle')}>
+        <Section title={t("emergency.notificationsTitle")}>
           <Card style={styles.notificationCard}>
             <ThemedText type="small" themeColor="textSecondary">
               {t(`emergency.notifications.${notifications.availability}`)}
             </ThemedText>
-            {notifications.availability === 'checking' || notifications.isWorking ? (
+            {notifications.availability === "checking" ||
+            notifications.isWorking ? (
               <ActivityIndicator color={theme.accent} />
-            ) : notifications.availability === 'denied' || notifications.availability === 'error' ? (
+            ) : notifications.availability === "denied" ||
+              notifications.availability === "error" ? (
               <View style={styles.inlineActions}>
                 <Button
                   icon="warning"
-                  label={t('emergency.notificationsEnable')}
+                  label={t("emergency.notificationsEnable")}
                   onPress={() => void notifications.enable()}
                 />
                 <Button
                   icon="settings"
-                  label={t('emergency.notificationsSettings')}
+                  label={t("emergency.notificationsSettings")}
                   onPress={() => void notifications.openSettings()}
                   variant="secondary"
                 />
@@ -537,14 +592,21 @@ function EmergencyContent() {
       ) : null}
 
       {syncErrorKind ? (
-        <Card style={[styles.feedback, { backgroundColor: theme.warningSoft, borderColor: theme.warning }]}>
-          <ThemedText type="heading">{t('emergency.syncErrorTitle')}</ThemedText>
+        <Card
+          style={[
+            styles.feedback,
+            { backgroundColor: theme.warningSoft, borderColor: theme.warning },
+          ]}
+        >
+          <ThemedText type="heading">
+            {t("emergency.syncErrorTitle")}
+          </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {t(supabaseReadFailureTranslationKey(syncErrorKind))}
           </ThemedText>
           <Button
             icon="refresh"
-            label={t('emergency.retry')}
+            label={t("emergency.retry")}
             onPress={() => void refresh()}
             variant="secondary"
           />
@@ -552,14 +614,16 @@ function EmergencyContent() {
       ) : null}
 
       {isStaff ? (
-        <Section title={t('emergency.inboxTitle')}>
+        <Section title={t("emergency.inboxTitle")}>
           {isLoading ? (
             <ActivityIndicator color={theme.accent} size="large" />
           ) : inbox.length === 0 ? (
             <Card>
-              <ThemedText type="heading">{t('emergency.inboxEmpty')}</ThemedText>
+              <ThemedText type="heading">
+                {t("emergency.inboxEmpty")}
+              </ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                {t('emergency.inboxBody')}
+                {t("emergency.inboxBody")}
               </ThemedText>
             </Card>
           ) : (
@@ -580,13 +644,13 @@ function EmergencyContent() {
         </Section>
       ) : null}
 
-      <Section title={t('emergency.sentTitle')}>
+      <Section title={t("emergency.sentTitle")}>
         {isLoading ? (
           <ActivityIndicator color={theme.accent} size="large" />
         ) : sent.length === 0 ? (
           <Card>
             <ThemedText type="small" themeColor="textSecondary">
-              {t('emergency.sentEmpty')}
+              {t("emergency.sentEmpty")}
             </ThemedText>
           </Card>
         ) : (
@@ -634,8 +698,11 @@ function EmergencyMessageCard({
     <Card
       style={[
         styles.messageCard,
-        unread ? { backgroundColor: theme.dangerSoft, borderColor: theme.danger } : null,
-      ]}>
+        unread
+          ? { backgroundColor: theme.dangerSoft, borderColor: theme.danger }
+          : null,
+      ]}
+    >
       <View style={styles.messageHeader}>
         <View style={styles.messageHeading}>
           <ThemedText type="heading">
@@ -650,7 +717,7 @@ function EmergencyMessageCard({
         {unread ? (
           <View style={[styles.newBadge, { backgroundColor: theme.danger }]}>
             <ThemedText style={{ color: theme.surface }} type="tinyBold">
-              {t('emergency.new')}
+              {t("emergency.new")}
             </ThemedText>
           </View>
         ) : null}
@@ -665,18 +732,24 @@ function EmergencyMessageCard({
 
       {item.location_label ? (
         <ThemedText type="small">
-          {t('emergency.locationPrefix', { location: item.location_label })}
+          {t("emergency.locationPrefix", { location: item.location_label })}
         </ThemedText>
       ) : null}
       {item.latitude !== null && item.longitude !== null ? (
         <View style={styles.coordinatesRow}>
-          <ThemedText type="code" themeColor="textSecondary" style={styles.coordinatesText}>
+          <ThemedText
+            type="code"
+            themeColor="textSecondary"
+            style={styles.coordinatesText}
+          >
             {item.latitude.toFixed(5)}, {item.longitude.toFixed(5)}
-            {item.accuracy_meters !== null ? ` · ±${Math.round(item.accuracy_meters)} m` : ''}
+            {item.accuracy_meters !== null
+              ? ` · ±${Math.round(item.accuracy_meters)} m`
+              : ""}
           </ThemedText>
           <Button
             icon="map"
-            label={t('emergency.locationOpen')}
+            label={t("emergency.locationOpen")}
             onPress={onOpenCoordinates}
             variant="secondary"
           />
@@ -687,19 +760,23 @@ function EmergencyMessageCard({
         <Button
           disabled={markingRead}
           icon="confirm"
-          label={t('emergency.markRead')}
+          label={t("emergency.markRead")}
           onPress={onMarkRead}
           variant="secondary"
         />
       ) : null}
       {!unread && !sent ? (
         <ThemedText type="small" themeColor="success">
-          {t('emergency.read')}
+          {t("emergency.read")}
         </ThemedText>
       ) : null}
       {markReadError ? (
-        <ThemedText type="small" themeColor="danger" accessibilityLiveRegion="polite">
-          {t('emergency.markReadError')}
+        <ThemedText
+          type="small"
+          themeColor="danger"
+          accessibilityLiveRegion="polite"
+        >
+          {t("emergency.markReadError")}
         </ThemedText>
       ) : null}
     </Card>
@@ -707,24 +784,56 @@ function EmergencyMessageCard({
 }
 
 const styles = StyleSheet.create({
-  characterCount: { textAlign: 'right', writingDirection: 'ltr' },
-  coordinatesRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  characterCount: { textAlign: "right", writingDirection: "ltr" },
+  coordinatesRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.two,
+  },
   coordinatesText: { flex: 1, minWidth: 180 },
-  feedback: { borderRadius: 8, borderWidth: StyleSheet.hairlineWidth, gap: Spacing.two, padding: Spacing.three },
+  feedback: {
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: Spacing.two,
+    padding: Spacing.three,
+  },
   field: { gap: Spacing.two },
   formCard: { gap: Spacing.four },
-  inlineActions: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  input: { borderRadius: 8, borderWidth: StyleSheet.hairlineWidth, fontSize: 16, minHeight: 48, padding: Spacing.three },
+  inlineActions: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.two },
+  input: {
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    fontSize: 16,
+    minHeight: 48,
+    padding: Spacing.three,
+  },
   intro: { gap: Spacing.two },
   list: { gap: Spacing.three },
   messageCard: { gap: Spacing.three },
-  messageHeader: { alignItems: 'flex-start', flexDirection: 'row', gap: Spacing.two },
+  messageHeader: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: Spacing.two,
+  },
   messageHeading: { flex: 1, gap: Spacing.one },
   messageInput: { minHeight: 150 },
-  newBadge: { borderRadius: 8, minHeight: 28, justifyContent: 'center', paddingHorizontal: Spacing.two },
+  newBadge: {
+    borderRadius: 8,
+    minHeight: 28,
+    justifyContent: "center",
+    paddingHorizontal: Spacing.two,
+  },
   notificationCard: { gap: Spacing.three },
   pressed: { opacity: 0.72 },
   safetyCard: { gap: Spacing.two },
-  teamChoice: { borderRadius: 8, borderWidth: StyleSheet.hairlineWidth, flex: 1, gap: Spacing.one, minWidth: 220, padding: Spacing.three },
-  teamChoices: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  teamChoice: {
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    flex: 1,
+    gap: Spacing.one,
+    minWidth: 220,
+    padding: Spacing.three,
+  },
+  teamChoices: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.two },
 });

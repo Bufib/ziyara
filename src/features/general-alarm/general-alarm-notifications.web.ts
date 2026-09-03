@@ -41,4 +41,10 @@ export function subscribeToEmergencyNotificationResponses(
   return { remove: () => undefined };
 }
 
+export function subscribeToEmergencyDashboardNotificationResponses(
+  _listener: () => void,
+): NotificationResponseSubscription {
+  return { remove: () => undefined };
+}
+
 export async function openGeneralAlarmNotificationSettings() {}

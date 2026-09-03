@@ -9,6 +9,7 @@ import {
 const users: AdminUserSummary[] = [
   {
     display_name: 'Zainab Ali',
+    emergency_on_duty: false,
     family_id: 3,
     family_name: 'Familie Ali',
     luggage_count: 2,
@@ -20,6 +21,7 @@ const users: AdminUserSummary[] = [
   },
   {
     display_name: 'Abbas Ali',
+    emergency_on_duty: false,
     family_id: 3,
     family_name: 'Familie Ali',
     luggage_count: 1,
@@ -31,6 +33,7 @@ const users: AdminUserSummary[] = [
   },
   {
     display_name: 'Mariam Hassan',
+    emergency_on_duty: true,
     family_id: null,
     family_name: null,
     luggage_count: 1,

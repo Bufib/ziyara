@@ -7,12 +7,12 @@ const corsHeaders = {
   'Content-Type': 'application/json',
 };
 
-type EmergencyNotificationClaim = {
+type DutyNotificationClaim = {
   attempt_id: number;
   expo_push_token: string;
   locale: string;
-  request_id: number;
-  target_team: 'medical' | 'travel';
+  notification_id: number;
+  team: 'medical' | 'travel';
 };
 
 type ExpoPushTicket = {
@@ -23,19 +23,19 @@ type ExpoPushTicket = {
 
 const translations = {
   ar: {
-    body: 'وصل بلاغ طارئ جديد. افتح لوحة الطوارئ المحمية لقراءته.',
-    medical: 'حالة طارئة طبية',
-    travel: 'طلب مساعدة لفريق الرحلة',
+    medical: 'تم تعيينك الآن لمناوبة الطوارئ الطبية. افتح لوحة الطوارئ.',
+    title: 'مناوبة الطوارئ',
+    travel: 'تم تعيينك الآن لمناوبة فريق التنظيم. افتح لوحة الطوارئ.',
   },
   de: {
-    body: 'Eine neue Notfallmeldung ist eingegangen. Öffne zum Lesen das geschützte Notfall-Dashboard.',
-    medical: 'Medizinischer Notfall',
-    travel: 'Hilfeanfrage an das Reiseteam',
+    medical: 'Du wurdest zum medizinischen Notfalldienst eingeteilt. Öffne das Notfall-Dashboard.',
+    title: 'Notfalldienst',
+    travel: 'Du wurdest zum Dienst im Organisationsteam eingeteilt. Öffne das Notfall-Dashboard.',
   },
   en: {
-    body: 'A new emergency report has arrived. Open the protected emergency dashboard to read it.',
-    medical: 'Medical emergency',
-    travel: 'Travel team assistance request',
+    medical: 'You have been assigned to medical emergency duty. Open the emergency dashboard.',
+    title: 'Emergency duty',
+    travel: 'You have been assigned to organization team duty. Open the emergency dashboard.',
   },
 } as const;
 
@@ -43,28 +43,30 @@ function getBearerToken(authorization: string | null) {
   return authorization?.match(/^Bearer\s+([^\s]+)$/i)?.[1] ?? null;
 }
 
-function readRequestId(body: unknown) {
-  if (!body || typeof body !== 'object' || !('requestId' in body)) return null;
-  const requestId = (body as { requestId?: unknown }).requestId;
-  return typeof requestId === 'number' && Number.isSafeInteger(requestId) && requestId > 0
-    ? requestId
+function readNotificationId(body: unknown) {
+  if (!body || typeof body !== 'object' || !('notificationId' in body)) return null;
+  const notificationId = (body as { notificationId?: unknown }).notificationId;
+  return typeof notificationId === 'number' &&
+    Number.isSafeInteger(notificationId) &&
+    notificationId > 0
+    ? notificationId
     : null;
 }
 
-function notificationFor(claim: EmergencyNotificationClaim) {
+function notificationFor(claim: DutyNotificationClaim) {
   const locale = claim.locale === 'ar' || claim.locale === 'en' ? claim.locale : 'de';
 
   return {
-    body: translations[locale].body,
-    channelId: 'emergency-alerts',
+    body: translations[locale][claim.team],
+    channelId: 'emergency-duty',
     data: {
-      kind: 'emergency_request',
-      requestId: claim.request_id,
+      kind: 'emergency_duty',
+      notificationId: claim.notification_id,
       route: '/emergency-dashboard',
     },
     priority: 'high',
     sound: 'default',
-    title: translations[locale][claim.target_team],
+    title: translations[locale].title,
     to: claim.expo_push_token,
   };
 }
@@ -89,16 +91,16 @@ Deno.serve(async (request: Request) => {
     );
   }
 
-  let requestId: number | null = null;
+  let notificationId: number | null = null;
   try {
-    requestId = readRequestId(await request.json());
+    notificationId = readNotificationId(await request.json());
   } catch {
-    requestId = null;
+    notificationId = null;
   }
 
-  if (!requestId) {
+  if (!notificationId) {
     return new Response(
-      JSON.stringify({ code: 'invalid_request', message: 'A valid requestId is required.' }),
+      JSON.stringify({ code: 'invalid_request', message: 'A valid notificationId is required.' }),
       { headers: corsHeaders, status: 400 },
     );
   }
@@ -126,13 +128,16 @@ Deno.serve(async (request: Request) => {
       );
     }
 
-    const { data, error } = await adminClient.rpc('claim_emergency_notification_attempts', {
-      p_request_id: requestId,
-      p_requester_user_id: userId,
-    });
+    const { data, error } = await adminClient.rpc(
+      'claim_emergency_duty_notification_attempts',
+      {
+        p_assigner_user_id: userId,
+        p_notification_id: notificationId,
+      },
+    );
     if (error) throw error;
 
-    const claims = (data ?? []) as EmergencyNotificationClaim[];
+    const claims = (data ?? []) as DutyNotificationClaim[];
     let accepted = 0;
 
     for (let offset = 0; offset < claims.length; offset += 100) {
@@ -168,7 +173,7 @@ Deno.serve(async (request: Request) => {
           if (wasAccepted) accepted += 1;
 
           const { error: completionError } = await adminClient.rpc(
-            'complete_emergency_notification_attempt',
+            'complete_emergency_duty_notification_attempt',
             {
               p_accepted: wasAccepted,
               p_attempt_id: claim.attempt_id,
@@ -188,7 +193,7 @@ Deno.serve(async (request: Request) => {
         claimed: claims.length,
         code: 'dispatched',
         failed: claims.length - accepted,
-        message: 'Emergency push notifications were processed.',
+        message: 'Emergency-duty push notifications were processed.',
       }),
       { headers: corsHeaders, status: 200 },
     );
@@ -196,7 +201,7 @@ Deno.serve(async (request: Request) => {
     return new Response(
       JSON.stringify({
         code: 'dispatch_failed',
-        message: 'Emergency push notifications could not be dispatched.',
+        message: 'Emergency-duty push notifications could not be dispatched.',
       }),
       { headers: corsHeaders, status: 500 },
     );

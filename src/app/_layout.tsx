@@ -124,6 +124,10 @@ function RootNavigation() {
             <Stack.Screen name="about" options={{ title: t('nav.about') }} />
             <Stack.Screen name="account" options={{ title: t('nav.account') }} />
             <Stack.Screen name="bus" options={{ title: t('bus.navTitle') }} />
+            <Stack.Screen
+              name="emergency-dashboard"
+              options={{ title: t('emergencyDashboard.navTitle') }}
+            />
             <Stack.Screen name="group" options={{ title: t('tripGroups.navTitle') }} />
             <Stack.Screen name="guide" options={{ title: t('guide.navTitle') }} />
             <Stack.Screen name="program" options={{ title: t('dailyProgram.weekTitle') }} />

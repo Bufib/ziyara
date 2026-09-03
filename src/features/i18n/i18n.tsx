@@ -108,7 +108,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "emergency.staffOpen": "Postfach öffnen",
     "emergency.title": "Notfall melden",
     "emergency.body":
-      "Wähle das zuständige Team, beschreibe dein Anliegen und gib deinen Standort als Text oder einmalige Position an.",
+      "Wähle das zuständige Team, beschreibe dein Anliegen und gib deinen Aufenthaltsort als Text an. Deine Geräteposition kannst du zusätzlich freiwillig mitsenden.",
     "emergency.safetyTitle": "Bei unmittelbarer Gefahr",
     "emergency.safetyBody":
       "Diese Nachricht ersetzt keinen örtlichen Rettungsdienst. Wende dich bei unmittelbarer Lebensgefahr zusätzlich direkt an die örtlichen Einsatzkräfte oder eine Person in deiner Nähe.",
@@ -118,7 +118,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "emergency.team.medicalBody": "Bei Verletzung, Krankheit oder medizinischer Unterstützung.",
     "emergency.team.travel": "Reiseteam",
     "emergency.team.travelBody": "Bei Orientierung, Transport oder organisatorischer Hilfe.",
-    "emergency.locationLabel": "Wo bist du? (optional)",
+    "emergency.locationLabel": "Wo bist du?",
     "emergency.locationPlaceholder": "Zum Beispiel: Hotel-Lobby, Bus 2 oder Tor 3",
     "emergency.locationPrivacy":
       "Deine Geräteposition wird nur nach Tippen auf den Standortknopf einmalig ermittelt und mit dieser Nachricht gespeichert. Es gibt kein Live-Tracking.",
@@ -137,6 +137,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "emergency.submit": "Notfall jetzt senden",
     "emergency.submitting": "Notfall wird gesendet …",
     "emergency.feedback.validation_team": "Wähle zuerst das medizinische Team oder das Reiseteam.",
+    "emergency.feedback.validation_location":
+      "Gib an, wo du dich befindest, zum Beispiel Hotel-Lobby, Bus oder Tor.",
     "emergency.feedback.validation_message": "Beschreibe dein Anliegen mit mindestens 5 Zeichen.",
     "emergency.feedback.error":
       "Der Notfall konnte nicht gespeichert werden. Prüfe die Verbindung und versuche es sofort erneut.",
@@ -175,6 +177,26 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "emergency.read": "Gelesen",
     "emergency.markRead": "Als gelesen markieren",
     "emergency.markReadError": "Der Lesestatus konnte nicht gespeichert werden.",
+    "emergencyDashboard.navTitle": "Notfall-Dashboard",
+    "emergencyDashboard.title": "Notfall-Dashboard",
+    "emergencyDashboard.body.admin":
+      "Du siehst alle medizinischen und organisatorischen Notfallmeldungen.",
+    "emergencyDashboard.body.medical_staff":
+      "Du siehst ausschließlich Notfallmeldungen an das medizinische Team.",
+    "emergencyDashboard.body.organization_team":
+      "Du siehst alle nicht-medizinischen Hilfeanfragen an das Organisationsteam.",
+    "emergencyDashboard.dutyTitle": "Mein Notfalldienst",
+    "emergencyDashboard.dutyBody":
+      "Nur eingeteilte Teammitglieder erhalten neue Notfälle per Meldung und Push. Ohne Einteilung wird zur Sicherheit das gesamte passende Team benachrichtigt.",
+    "emergencyDashboard.dutyOn": "IM DIENST",
+    "emergencyDashboard.dutyOff": "NICHT IM DIENST",
+    "emergencyDashboard.dutyMessageTitle": "Zum Notfalldienst eingeteilt",
+    "emergencyDashboard.dutyMessageBody":
+      "{admin} hat dich für das {team} eingeteilt.",
+    "emergencyDashboard.requestsTitle": "Eingegangene Notfälle",
+    "emergencyDashboard.emptyTitle": "Keine Notfallmeldungen",
+    "emergencyDashboard.emptyBody":
+      "Für deinen sichtbaren Bereich wurden noch keine Notfälle gesendet.",
     "family.decrease": "Personenzahl verringern",
     "family.increase": "Personenzahl erhöhen",
     "family.partySize": "Anzahl der Personen",
@@ -778,6 +800,19 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "admin.roleAssignment.saved": "Die Rolle wurde gespeichert.",
     "admin.roleAssignment.saving": "Rolle wird gespeichert …",
     "admin.roleAssignment.title": "Rolle vergeben",
+    "admin.duty.title": "Notfalldienst",
+    "admin.duty.body":
+      "Eingeteilte Personen erhalten passende Notfälle als Meldung und Push-Benachrichtigung.",
+    "admin.duty.on": "Im Dienst",
+    "admin.duty.off": "Nicht im Dienst",
+    "admin.duty.assign": "Zum Dienst einteilen",
+    "admin.duty.remove": "Dienst beenden",
+    "admin.duty.saving": "Diensteinteilung wird gespeichert …",
+    "admin.duty.success": "Die Diensteinteilung wurde gespeichert.",
+    "admin.duty.push-error":
+      "Die Einteilung ist als Meldung gespeichert, aber Push konnte kein registriertes Gerät erreichen.",
+    "admin.duty.error":
+      "Die Diensteinteilung konnte nicht gespeichert werden. Prüfe die Verbindung.",
     "admin.section.questions.closed": "Geschlossen",
     "admin.section.questions.description":
       "Fragerunde freigeben, Fragen lesen und abhaken.",
@@ -1090,6 +1125,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "Gruppiert Arabisch, Transliteration und Übersetzung.",
     "settings.lineByLineTitle": "Zeilenweise Ansicht",
     "settings.openAdmin": "Adminbereich öffnen",
+    "settings.openEmergencyDashboard": "Notfall-Dashboard öffnen",
     "settings.openBusManagement": "Meinen Bus öffnen",
     "settings.reader": "Lesemodus",
     "settings.signOut": "Abmelden",
@@ -1178,7 +1214,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "emergency.staffOpen": "Open inbox",
     "emergency.title": "Report an emergency",
     "emergency.body":
-      "Choose the responsible team, describe what you need, and provide your location as text or a one-time position.",
+      "Choose the responsible team, describe what you need, and enter where you are as text. You can also include your device position voluntarily.",
     "emergency.safetyTitle": "If there is immediate danger",
     "emergency.safetyBody":
       "This message does not replace local emergency services. If life is in immediate danger, also contact local responders or someone nearby directly.",
@@ -1188,7 +1224,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "emergency.team.medicalBody": "For injury, illness, or medical assistance.",
     "emergency.team.travel": "Travel team",
     "emergency.team.travelBody": "For directions, transport, or organizational help.",
-    "emergency.locationLabel": "Where are you? (optional)",
+    "emergency.locationLabel": "Where are you?",
     "emergency.locationPlaceholder": "For example: hotel lobby, bus 2, or gate 3",
     "emergency.locationPrivacy":
       "Your device position is obtained once only after you tap the location button and is stored with this message. There is no live tracking.",
@@ -1207,6 +1243,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "emergency.submit": "Send emergency now",
     "emergency.submitting": "Sending emergency …",
     "emergency.feedback.validation_team": "Choose the medical team or travel team first.",
+    "emergency.feedback.validation_location":
+      "Enter where you are, for example the hotel lobby, a bus, or a gate.",
     "emergency.feedback.validation_message": "Describe what you need using at least 5 characters.",
     "emergency.feedback.error":
       "The emergency could not be saved. Check the connection and try again immediately.",
@@ -1245,6 +1283,26 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "emergency.read": "Read",
     "emergency.markRead": "Mark as read",
     "emergency.markReadError": "The read status could not be saved.",
+    "emergencyDashboard.navTitle": "Emergency dashboard",
+    "emergencyDashboard.title": "Emergency dashboard",
+    "emergencyDashboard.body.admin":
+      "You can see every medical and organizational emergency report.",
+    "emergencyDashboard.body.medical_staff":
+      "You can only see emergency reports sent to the medical team.",
+    "emergencyDashboard.body.organization_team":
+      "You can see all non-medical requests sent to the organization team.",
+    "emergencyDashboard.dutyTitle": "My emergency duty",
+    "emergencyDashboard.dutyBody":
+      "Only assigned team members receive new emergencies by inbox message and push. If nobody is assigned, the whole matching team is notified as a safety fallback.",
+    "emergencyDashboard.dutyOn": "ON DUTY",
+    "emergencyDashboard.dutyOff": "OFF DUTY",
+    "emergencyDashboard.dutyMessageTitle": "Assigned to emergency duty",
+    "emergencyDashboard.dutyMessageBody":
+      "{admin} assigned you to {team} duty.",
+    "emergencyDashboard.requestsTitle": "Incoming emergencies",
+    "emergencyDashboard.emptyTitle": "No emergency reports",
+    "emergencyDashboard.emptyBody":
+      "No emergencies have been sent for the area visible to you.",
     "family.decrease": "Decrease number of people",
     "family.increase": "Increase number of people",
     "family.partySize": "Number of people",
@@ -1840,6 +1898,19 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "admin.roleAssignment.saved": "The role has been saved.",
     "admin.roleAssignment.saving": "Saving role…",
     "admin.roleAssignment.title": "Assign role",
+    "admin.duty.title": "Emergency duty",
+    "admin.duty.body":
+      "Assigned people receive matching emergencies as an inbox message and push notification.",
+    "admin.duty.on": "On duty",
+    "admin.duty.off": "Off duty",
+    "admin.duty.assign": "Assign duty",
+    "admin.duty.remove": "End duty",
+    "admin.duty.saving": "Saving duty assignment…",
+    "admin.duty.success": "The duty assignment has been saved.",
+    "admin.duty.push-error":
+      "The assignment was saved as a message, but push could not reach a registered device.",
+    "admin.duty.error":
+      "The duty assignment could not be saved. Check the connection.",
     "admin.section.questions.closed": "Closed",
     "admin.section.questions.description":
       "Open a round, read questions, and check them off.",
@@ -2145,6 +2216,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
       "Groups Arabic, transliteration, and translation.",
     "settings.lineByLineTitle": "Line-by-line view",
     "settings.openAdmin": "Open admin area",
+    "settings.openEmergencyDashboard": "Open emergency dashboard",
     "settings.openBusManagement": "Open my bus",
     "settings.reader": "Reader",
     "settings.signOut": "Sign out",
@@ -2231,7 +2303,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "emergency.staffOpen": "فتح صندوق الرسائل",
     "emergency.title": "إرسال بلاغ طارئ",
     "emergency.body":
-      "اختر الفريق المسؤول واشرح ما تحتاج إليه وحدد موقعك كتابةً أو أرسل موقع الجهاز مرة واحدة.",
+      "اختر الفريق المسؤول واشرح ما تحتاج إليه واكتب أين توجد. ويمكنك أيضاً إرفاق موقع جهازك اختيارياً.",
     "emergency.safetyTitle": "عند وجود خطر فوري",
     "emergency.safetyBody":
       "هذه الرسالة لا تحل محل خدمات الطوارئ المحلية. عند وجود خطر فوري على الحياة، تواصل أيضاً مباشرةً مع فرق الطوارئ المحلية أو مع شخص قريب منك.",
@@ -2241,7 +2313,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "emergency.team.medicalBody": "للإصابة أو المرض أو الحاجة إلى مساعدة طبية.",
     "emergency.team.travel": "فريق الرحلة",
     "emergency.team.travelBody": "للمساعدة في الاتجاهات أو النقل أو الأمور التنظيمية.",
-    "emergency.locationLabel": "أين أنت؟ (اختياري)",
+    "emergency.locationLabel": "أين أنت؟",
     "emergency.locationPlaceholder": "مثلاً: بهو الفندق أو الحافلة 2 أو البوابة 3",
     "emergency.locationPrivacy":
       "لن يُحدَّد موقع جهازك إلا مرة واحدة بعد الضغط على زر الموقع، وسيُحفظ مع هذه الرسالة. لا يوجد تتبع مباشر.",
@@ -2260,6 +2332,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "emergency.submit": "إرسال البلاغ الآن",
     "emergency.submitting": "جارٍ إرسال البلاغ …",
     "emergency.feedback.validation_team": "اختر أولاً الفريق الطبي أو فريق الرحلة.",
+    "emergency.feedback.validation_location":
+      "اكتب أين توجد، مثل بهو الفندق أو الحافلة أو البوابة.",
     "emergency.feedback.validation_message": "اشرح ما تحتاج إليه بخمسة أحرف على الأقل.",
     "emergency.feedback.error":
       "تعذر حفظ البلاغ الطارئ. تحقق من الاتصال وحاول مرة أخرى فوراً.",
@@ -2298,6 +2372,26 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "emergency.read": "مقروء",
     "emergency.markRead": "تحديد كمقروء",
     "emergency.markReadError": "تعذر حفظ حالة القراءة.",
+    "emergencyDashboard.navTitle": "لوحة الطوارئ",
+    "emergencyDashboard.title": "لوحة الطوارئ",
+    "emergencyDashboard.body.admin":
+      "يمكنك رؤية جميع البلاغات الطبية والتنظيمية الطارئة.",
+    "emergencyDashboard.body.medical_staff":
+      "يمكنك رؤية البلاغات المرسلة إلى الطاقم الطبي فقط.",
+    "emergencyDashboard.body.organization_team":
+      "يمكنك رؤية جميع طلبات المساعدة غير الطبية المرسلة إلى فريق التنظيم.",
+    "emergencyDashboard.dutyTitle": "مناوبتي للطوارئ",
+    "emergencyDashboard.dutyBody":
+      "يتلقى أعضاء الفريق المكلّفون فقط حالات الطوارئ الجديدة كرسالة وإشعار فوري. وإذا لم يُكلّف أحد، يُبلّغ الفريق المناسب كله احتياطياً.",
+    "emergencyDashboard.dutyOn": "في المناوبة",
+    "emergencyDashboard.dutyOff": "خارج المناوبة",
+    "emergencyDashboard.dutyMessageTitle": "تم تعيينك لمناوبة الطوارئ",
+    "emergencyDashboard.dutyMessageBody":
+      "عيّنك {admin} لمناوبة {team}.",
+    "emergencyDashboard.requestsTitle": "حالات الطوارئ الواردة",
+    "emergencyDashboard.emptyTitle": "لا توجد بلاغات طارئة",
+    "emergencyDashboard.emptyBody":
+      "لم تُرسل أي حالات طوارئ ضمن النطاق المتاح لك.",
     "family.decrease": "تقليل عدد الأشخاص",
     "family.increase": "زيادة عدد الأشخاص",
     "family.partySize": "عدد الأشخاص",
@@ -2890,6 +2984,19 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "admin.roleAssignment.saved": "تم حفظ الدور.",
     "admin.roleAssignment.saving": "جارٍ حفظ الدور…",
     "admin.roleAssignment.title": "منح الدور",
+    "admin.duty.title": "مناوبة الطوارئ",
+    "admin.duty.body":
+      "يتلقى الأشخاص المكلّفون حالات الطوارئ المناسبة كرسالة وإشعار فوري.",
+    "admin.duty.on": "في المناوبة",
+    "admin.duty.off": "خارج المناوبة",
+    "admin.duty.assign": "تعيين للمناوبة",
+    "admin.duty.remove": "إنهاء المناوبة",
+    "admin.duty.saving": "جارٍ حفظ المناوبة…",
+    "admin.duty.success": "تم حفظ المناوبة.",
+    "admin.duty.push-error":
+      "تم حفظ التعيين كرسالة، لكن تعذر إرسال الإشعار إلى جهاز مسجل.",
+    "admin.duty.error":
+      "تعذر حفظ المناوبة. تحقق من الاتصال.",
     "admin.section.questions.closed": "مغلقة",
     "admin.section.questions.description":
       "افتح جولة واقرأ الأسئلة وضع علامة على المنجز منها.",
@@ -3185,6 +3292,7 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "settings.lineByLineBody": "يجمع العربية والنقل الصوتي والترجمة.",
     "settings.lineByLineTitle": "عرض سطر بسطر",
     "settings.openAdmin": "فتح قسم المشرف",
+    "settings.openEmergencyDashboard": "فتح لوحة الطوارئ",
     "settings.openBusManagement": "فتح حافلتي",
     "settings.reader": "وضع القراءة",
     "settings.signOut": "تسجيل الخروج",

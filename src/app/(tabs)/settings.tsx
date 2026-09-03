@@ -13,7 +13,11 @@ import {
 } from "@/features/auth/auth-context";
 import { useGeneralAlarmNotifications } from "@/features/general-alarm/general-alarm-notifications-context";
 import { languageOptions, useI18n } from "@/features/i18n/i18n";
-import { busRoute, loginRoute } from "@/features/navigation/routes";
+import {
+  busRoute,
+  emergencyDashboardRoute,
+  loginRoute,
+} from "@/features/navigation/routes";
 import { useThemeMode, type ThemeMode } from "@/features/theme/theme-mode";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -23,7 +27,7 @@ export default function SettingsScreen() {
   const theme = useTheme();
   const { mode, resolvedTheme, setMode } = useThemeMode();
   const { language, setLanguage, t } = useI18n();
-  const { isAdmin, signOut, user } = useAuth();
+  const { isAdmin, profile, signOut, user } = useAuth();
   const { disable: unregisterGeneralAlarmDevice } =
     useGeneralAlarmNotifications();
 
@@ -165,6 +169,16 @@ export default function SettingsScreen() {
                 variant="secondary"
                 onPress={() => router.push(busRoute())}
               />
+              {profile?.role === "admin" ||
+              profile?.role === "medical_staff" ||
+              profile?.role === "organization_team" ? (
+                <Button
+                  icon="alarm"
+                  label={t("settings.openEmergencyDashboard")}
+                  variant="secondary"
+                  onPress={() => router.push(emergencyDashboardRoute())}
+                />
+              ) : null}
               <Button
                 icon="logout"
                 label={t("settings.signOut")}

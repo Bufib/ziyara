@@ -16,6 +16,7 @@ import {
   inspectGeneralAlarmNotificationState,
   openGeneralAlarmNotificationSettings,
   registerGeneralAlarmNotifications,
+  subscribeToEmergencyDashboardNotificationResponses,
   subscribeToEmergencyNotificationResponses,
   subscribeToGeneralAlarmNotificationResponses,
   syncGeneralAlarmReminders,
@@ -24,7 +25,7 @@ import {
 import type { GeneralAlarmNotificationState } from '@/features/general-alarm/general-alarm-notifications.types';
 import { buildGeneralAlarmReminderPlans } from '@/features/general-alarm/general-alarm-reminders';
 import { useI18n } from '@/features/i18n/i18n';
-import { emergencyRoute } from '@/features/navigation/routes';
+import { emergencyDashboardRoute, emergencyRoute } from '@/features/navigation/routes';
 
 type GeneralAlarmNotificationsContextValue = GeneralAlarmNotificationState & {
   disable: () => Promise<void>;
@@ -56,8 +57,13 @@ export function GeneralAlarmNotificationsProvider({ children }: PropsWithChildre
     const emergencySubscription = subscribeToEmergencyNotificationResponses(() => {
       router.push(emergencyRoute());
     });
+    const emergencyDashboardSubscription =
+      subscribeToEmergencyDashboardNotificationResponses(() => {
+        router.push(emergencyDashboardRoute());
+      });
     return () => {
       busSubscription.remove();
+      emergencyDashboardSubscription.remove();
       emergencySubscription.remove();
     };
   }, [router]);

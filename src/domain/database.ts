@@ -27,6 +27,7 @@ export type UserProfile = {
 
 export type AdminUserSummary = {
   display_name: string;
+  emergency_on_duty: boolean;
   family_id: number | null;
   family_name: string | null;
   luggage_count: number;
@@ -321,6 +322,51 @@ export type EmergencyNotificationClaim = {
   target_team: EmergencyTeam;
 };
 
+export type EmergencyDashboardItem = Omit<
+  EmergencyInboxMessage,
+  'read_at'
+>;
+
+export type EmergencyTeamDuty = {
+  assigned_at: string;
+  assigned_by_display_name: string;
+  assigned_by_profile_id: number | null;
+  profile_id: number;
+  team: EmergencyTeam;
+};
+
+export type EmergencyDutyNotification = {
+  assigned_by_display_name: string;
+  created_at: string;
+  is_on_duty: boolean;
+  notification_id: number;
+  read_at: string | null;
+  team: EmergencyTeam;
+};
+
+export type EmergencyDutyAssignmentResult = {
+  emergency_on_duty: boolean;
+  notification_id: number | null;
+  profile_id: number;
+};
+
+export type EmergencyDutyNotificationAttempt = {
+  accepted_at: string | null;
+  claimed_at: string;
+  error_code: string | null;
+  id: number;
+  notification_id: number;
+  push_device_id: number;
+};
+
+export type EmergencyDutyNotificationClaim = {
+  attempt_id: number;
+  expo_push_token: string;
+  locale: string;
+  notification_id: number;
+  team: EmergencyTeam;
+};
+
 export type TripGuidanceUpdate = {
   acts: string | null;
   closed_at: string | null;
@@ -464,6 +510,61 @@ export type Database = {
         Update: {
           accepted_at?: string | null;
           error_code?: string | null;
+        };
+      };
+      emergency_duty_notification_attempts: {
+        Insert: {
+          accepted_at?: string | null;
+          claimed_at?: string;
+          error_code?: string | null;
+          id?: never;
+          notification_id: number;
+          push_device_id: number;
+        };
+        Relationships: [];
+        Row: EmergencyDutyNotificationAttempt;
+        Update: {
+          accepted_at?: string | null;
+          error_code?: string | null;
+        };
+      };
+      emergency_duty_notifications: {
+        Insert: {
+          assigned_by_display_name: string;
+          assigned_by_profile_id?: number | null;
+          created_at?: string;
+          id?: never;
+          read_at?: string | null;
+          recipient_profile_id: number;
+          team: EmergencyTeam;
+        };
+        Relationships: [];
+        Row: {
+          assigned_by_display_name: string;
+          assigned_by_profile_id: number | null;
+          created_at: string;
+          id: number;
+          read_at: string | null;
+          recipient_profile_id: number;
+          team: EmergencyTeam;
+        };
+        Update: { read_at?: string | null };
+      };
+      emergency_team_duties: {
+        Insert: {
+          assigned_at?: string;
+          assigned_by_display_name: string;
+          assigned_by_profile_id?: number | null;
+          profile_id: number;
+          team: EmergencyTeam;
+        };
+        Relationships: [];
+        Row: EmergencyTeamDuty;
+        Update: {
+          assigned_at?: string;
+          assigned_by_display_name?: string;
+          assigned_by_profile_id?: number | null;
+          team?: EmergencyTeam;
         };
       };
       emergency_request_recipients: {
@@ -974,6 +1075,10 @@ export type Database = {
         Args: { p_role: AppRole; p_user_id: string };
         Returns: UserProfile;
       };
+      admin_set_emergency_duty: {
+        Args: { p_on_duty: boolean; p_user_id: string };
+        Returns: EmergencyDutyAssignmentResult[];
+      };
       admin_set_bus_boarding_status: {
         Args: {
           p_boarding_id: number;
@@ -1016,11 +1121,23 @@ export type Database = {
         Args: { p_request_id: number; p_requester_user_id: string };
         Returns: EmergencyNotificationClaim[];
       };
+      claim_emergency_duty_notification_attempts: {
+        Args: { p_assigner_user_id: string; p_notification_id: number };
+        Returns: EmergencyDutyNotificationClaim[];
+      };
       claim_due_general_alarm_notifications: {
         Args: never;
         Returns: GeneralAlarmNotificationClaim[];
       };
       complete_emergency_notification_attempt: {
+        Args: {
+          p_accepted: boolean;
+          p_attempt_id: number;
+          p_error_code: string;
+        };
+        Returns: undefined;
+      };
+      complete_emergency_duty_notification_attempt: {
         Args: {
           p_accepted: boolean;
           p_attempt_id: number;
@@ -1047,6 +1164,18 @@ export type Database = {
       list_my_emergency_messages: {
         Args: never;
         Returns: EmergencyInboxMessage[];
+      };
+      list_emergency_dashboard: {
+        Args: never;
+        Returns: EmergencyDashboardItem[];
+      };
+      list_my_emergency_duty_notifications: {
+        Args: never;
+        Returns: EmergencyDutyNotification[];
+      };
+      mark_emergency_duty_notification_read: {
+        Args: { p_notification_id: number };
+        Returns: undefined;
       };
       mark_emergency_request_read: {
         Args: { p_request_id: number };

@@ -68,6 +68,16 @@ async function ensureAndroidChannels() {
     sound: 'default',
     vibrationPattern: [0, 450, 180, 450],
   });
+  await Notifications.setNotificationChannelAsync('emergency-duty', {
+    description: 'Einteilungen zum medizinischen oder organisatorischen Notfalldienst',
+    enableVibrate: true,
+    importance: Notifications.AndroidImportance.MAX,
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+    name: 'Notfalldienst',
+    showBadge: true,
+    sound: 'default',
+    vibrationPattern: [0, 450, 180, 450],
+  });
 }
 
 export async function inspectGeneralAlarmNotificationState(): Promise<GeneralAlarmNotificationState> {
@@ -245,6 +255,10 @@ function isEmergencyNotificationResponse(response: NotificationResponse | null) 
   return response?.notification.request.content.data?.route === '/emergency';
 }
 
+function isEmergencyDashboardNotificationResponse(response: NotificationResponse | null) {
+  return response?.notification.request.content.data?.route === '/emergency-dashboard';
+}
+
 export function subscribeToGeneralAlarmNotificationResponses(
   listener: () => void,
 ): NotificationResponseSubscription {
@@ -274,6 +288,22 @@ export function subscribeToEmergencyNotificationResponses(
 
   return Notifications.addNotificationResponseReceivedListener((response) => {
     if (isEmergencyNotificationResponse(response)) listener();
+  });
+}
+
+export function subscribeToEmergencyDashboardNotificationResponses(
+  listener: () => void,
+): NotificationResponseSubscription {
+  if (!Notifications) return { remove: () => undefined };
+
+  const previousResponse = Notifications.getLastNotificationResponse();
+  if (isEmergencyDashboardNotificationResponse(previousResponse)) {
+    Notifications.clearLastNotificationResponse();
+    queueMicrotask(listener);
+  }
+
+  return Notifications.addNotificationResponseReceivedListener((response) => {
+    if (isEmergencyDashboardNotificationResponse(response)) listener();
   });
 }
 
