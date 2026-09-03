@@ -1,11 +1,19 @@
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider as NavigationThemeProvider } from 'expo-router';
+import {
+  DarkTheme,
+  DefaultTheme,
+  Stack,
+  ThemeProvider as NavigationThemeProvider,
+  usePathname,
+  useRouter,
+} from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
+import { SymbolIcon } from '@/components/ui/symbol-icon';
 import { BottomTabInset, Colors, Spacing } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/features/auth/auth-context';
 import { BusManagementProvider } from '@/features/bus-management/bus-management-context';
@@ -15,6 +23,7 @@ import { GroupCheckProvider, useGroupCheck } from '@/features/group-check/group-
 import { GeneralAlarmNotificationsProvider } from '@/features/general-alarm/general-alarm-notifications-context';
 import { AppI18nProvider, useI18n } from '@/features/i18n/i18n';
 import { supabaseReadFailureTranslationKey } from '@/features/network/supabase-read';
+import { emergencyRoute } from '@/features/navigation/routes';
 import { useOnboarding } from '@/features/onboarding/onboarding-state';
 import { QuestionRoundProvider } from '@/features/question-round/question-round-context';
 import { AppThemeProvider, useThemeMode } from '@/features/theme/theme-mode';
@@ -52,11 +61,13 @@ export default function RootLayout() {
 }
 
 function RootNavigation() {
+  const pathname = usePathname();
+  const router = useRouter();
   const { loaded: isThemeLoaded, resolvedTheme: scheme } = useThemeMode();
   const colors = Colors[scheme];
   const { loaded: isLanguageLoaded, t } = useI18n();
   const { loaded: isOnboardingLoaded } = useOnboarding();
-  const { profileSyncErrorKind, refreshProfile } = useAuth();
+  const { profileSyncErrorKind, refreshProfile, session } = useAuth();
   const { isBlocking } = useGroupCheck();
 
   useEffect(() => {
@@ -123,9 +134,27 @@ function RootNavigation() {
             />
           </Stack.Protected>
 
+          <Stack.Screen name="emergency" options={{ title: t('emergency.navTitle') }} />
           <Stack.Screen name="admin" options={{ title: t('nav.admin') }} />
         </Stack>
       </NavigationThemeProvider>
+      {session && pathname === '/' ? (
+        <Pressable
+          accessibilityLabel={t('emergency.homeButton')}
+          accessibilityRole="button"
+          onPress={() => router.push(emergencyRoute())}
+          style={({ pressed }) => [
+            styles.emergencyButton,
+            {
+              backgroundColor: colors.danger,
+              borderColor: colors.surface,
+              shadowColor: colors.text,
+            },
+            pressed && styles.emergencyButtonPressed,
+          ]}>
+          <SymbolIcon color={colors.surface} name="alarm" size={25} />
+        </Pressable>
+      ) : null}
       {profileSyncErrorKind ? (
         <View
           accessibilityLiveRegion="polite"
@@ -150,6 +179,27 @@ function RootNavigation() {
 }
 
 const styles = StyleSheet.create({
+  emergencyButton: {
+    alignItems: 'center',
+    borderRadius: 26,
+    borderWidth: 2,
+    elevation: 6,
+    height: 52,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: Spacing.three,
+    shadowOffset: { height: 2, width: 0 },
+    shadowOpacity: 0.28,
+    shadowRadius: 5,
+    top: '50%',
+    transform: [{ translateY: -26 }],
+    width: 52,
+    zIndex: 20,
+  },
+  emergencyButtonPressed: {
+    opacity: 0.72,
+    transform: [{ translateY: -26 }, { scale: 0.96 }],
+  },
   profileRefreshError: {
     alignItems: 'center',
     borderRadius: 12,

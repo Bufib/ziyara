@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Spacing } from '@/constants/theme';
 import { useI18n } from '@/features/i18n/i18n';
+import { nativeMapProvider } from '@/features/map/native-map-provider';
 import type {
   MeetingPointCoordinate,
   MeetingPointPickerProps,
@@ -93,6 +94,7 @@ export function MeetingPointPicker({
           accessibilityLabel={t('guide.admin.mapPickerAccessibilityLabel')}
           initialRegion={center ? regionFor(center) : iraqRegion}
           onPress={handleMapPress}
+          provider={nativeMapProvider}
           ref={mapRef}
           style={styles.map}>
           {coordinate ? (

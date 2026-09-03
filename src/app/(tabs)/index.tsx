@@ -25,7 +25,6 @@ import { useQuestionRound } from "@/features/question-round/question-round-conte
 import { useTheme } from "@/hooks/use-theme";
 import { useTripGuidance } from "@/features/trip-guidance/trip-guidance-context";
 import { useTripGroups } from "@/features/trip-groups/trip-group-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const featuredSlugs = [
   "shrine-imam-hussain",

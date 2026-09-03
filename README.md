@@ -99,14 +99,17 @@ cp .env.example .env
 npx expo start
 ```
 
-Die `.env` benötigt ausschließlich öffentliche Clientkonfiguration und bleibt ignoriert:
+Die `.env` bleibt ignoriert. Für Google Maps auf Android einen auf Paketname und Signing-SHA-1 eingeschränkten Schlüssel verwenden:
 
 ```dotenv
 EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+GOOGLE_MAPS_ANDROID_API_KEY=your-android-key
 ```
 
-Keine Service-Role-Keys, Secrets, personenbezogenen Daten oder Monitoring-DSNs in Appcode, Dokumentation oder Git aufnehmen.
+Für den Schlüssel muss das Maps SDK for Android aktiviert sein. `app.config.ts` übergibt ihn beim Build an das `react-native-maps`-Config-Plugin. Nach einer Änderung ist ein neuer nativer Development-/Produktionsbuild erforderlich. iOS verwendet weiterhin den standardmäßigen Apple-Maps-Provider und Web weiterhin die schematische Offlinekarte.
+
+Keine Service-Role-Keys, unbeschränkten API-Schlüssel, personenbezogenen Daten oder Monitoring-DSNs in Appcode, Dokumentation oder Git aufnehmen.
 
 ## Prüfungen
 

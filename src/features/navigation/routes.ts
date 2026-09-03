@@ -4,6 +4,7 @@ export const protectedRoutePaths = [
   '/account',
   '/admin',
   '/bus',
+  '/emergency',
   '/group',
   '/guide',
   '/program',
@@ -65,6 +66,10 @@ export function onboardingRoute(): Href {
 
 export function busRoute(): Href & ProtectedRoutePath {
   return '/bus' as Href & ProtectedRoutePath;
+}
+
+export function emergencyRoute(): Href & ProtectedRoutePath {
+  return '/emergency' as Href & ProtectedRoutePath;
 }
 
 export function guideRoute(): Href & ProtectedRoutePath {

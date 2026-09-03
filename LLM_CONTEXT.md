@@ -1,6 +1,6 @@
 # Ziyarah – verbindlicher Projektkontext für LLMs
 
-Stand: 2. September 2026
+Stand: 4. September 2026
 
 ## Zweck und Pflege
 
@@ -19,7 +19,7 @@ Wenn Dokumentation und Code voneinander abweichen, den Code prüfen, die richtig
 
 ## Produkt in einem Absatz
 
-Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-Reise in den Irak. Reisende können wichtige Städte und Orte ohne Anmeldung offline aus einem gebündelten Katalog öffnen, Orte auf einer Karte sehen, Inhalte durchsuchen, Einträge merken und religiöse Texte in einem Reader anzeigen. Eine Supabase-Anmeldung wird erst für Konto-, Tagesprogramm-, Bus-, Reisegruppen-, Generalalarm-, Reiseführungs-, Gruppencheck-, Fragerunden- und Adminfunktionen benötigt. Die App bietet Deutsch, Englisch und Arabisch, Light/Dark Mode sowie administrative Gruppenfunktionen: datumsbasierte Tagesprogramme auf Home, live veröffentlichte Programmpunkte und Treffpunkte, Buszuordnung und Boarding mit Erinnerungs-/Eskalationsablauf, Untergruppen mit benanntem Anführer und zustimmungsbasierter einmaliger Standortanfrage, verpflichtende Statusabfragen, eine anonyme Fragerunde und eine Benutzerübersicht. Passwort-Recovery und sichere Eigenkonto-Löschung sind implementiert. Religiöse, historische und ortsbezogene Inhalte bleiben bis zu einer qualifizierten Prüfung sichtbar als `needs_review` markiert.
+Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-Reise in den Irak. Reisende können wichtige Städte und Orte ohne Anmeldung offline aus einem gebündelten Katalog öffnen, Orte auf einer Karte sehen, Inhalte durchsuchen, Einträge merken und religiöse Texte in einem Reader anzeigen. Eine Supabase-Anmeldung wird erst für Konto-, Notfall-, Tagesprogramm-, Bus-, Reisegruppen-, Generalalarm-, Reiseführungs-, Gruppencheck-, Fragerunden- und Adminfunktionen benötigt. Die App bietet Deutsch, Englisch und Arabisch, Light/Dark Mode sowie administrative Gruppenfunktionen: dauerhafte Notfallmeldungen an das medizinische Team oder Reiseteam mit optionalem einmaligem Standort und Push, datumsbasierte Tagesprogramme auf Home, live veröffentlichte Programmpunkte und Treffpunkte, Buszuordnung und Boarding mit Erinnerungs-/Eskalationsablauf, Untergruppen mit benanntem Anführer und zustimmungsbasierter einmaliger Standortanfrage, verpflichtende Statusabfragen, eine anonyme Fragerunde und eine Benutzerübersicht. Passwort-Recovery und sichere Eigenkonto-Löschung sind implementiert. Religiöse, historische und ortsbezogene Inhalte bleiben bis zu einer qualifizierten Prüfung sichtbar als `needs_review` markiert.
 
 ## Aktueller Funktionsumfang
 
@@ -39,13 +39,13 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 - Profile besitzen die Rollen `user`, `medical_staff`, `organization_team` und `admin`.
 - Neue Konten starten immer als `user`. Nur ein Admin kann über die abgesicherte RPC die Rollen `user`, `medical_staff`, `organization_team` und `admin` vergeben.
 - Bestehende Adminprofile können umgestuft werden, solange mindestens ein Admin erhalten bleibt. Rollenwechsel sind datenbankseitig serialisiert und werden protokolliert, damit auch bei mehreren gleichzeitig arbeitenden Admins nie versehentlich alle Adminrechte entfernt werden.
-- `medical_staff` und `organization_team` besitzen derzeit dieselben Navigations- und Funktionsrechte wie `user`. Eigene Berechtigungen müssen später ausdrücklich implementiert werden.
+- `medical_staff` und `organization_team` besitzen zusätzlich ein rollenbezogenes Notfall-Postfach. Andere Reise- und Adminrechte bleiben davon unberührt.
 
 ### Reise- und Inhaltsfunktionen
 
 - Startseite mit einer kompakten Vorschau des heutigen Tagesprogramms für angemeldete Nutzer sowie wichtigen Städten und hervorgehobenen Orten; die Vorschau öffnet eine gegliederte Sieben-Tage-Ansicht.
 - Stadtseiten mit lokal gefilterten Orten.
-- Native Karte mit `react-native-maps`, Markern, optionaler Standortfreigabe über einen schwebenden blauen Standortpfeil, einer über „Reiseziele“ aufrufbaren hohen Liste veröffentlichter Gruppenziele und Übergabe an eine externe Navigation.
+- Native Karte mit `react-native-maps`, explizitem Google-Provider auf Android, Markern, optionaler Standortfreigabe über einen schwebenden blauen Standortpfeil, einer über „Reiseziele“ aufrufbaren hohen Liste veröffentlichter Gruppenziele und Übergabe an eine externe Navigation.
 - Web-Fallback als schematische Irak-Karte plus Ortsliste und über „Reiseziele“ einblendbarer Gruppenziel-Liste; Web importiert kein `react-native-maps`.
 - Ortssuche, Inhaltssuche und Suche nach empfohlenen Handlungen.
 - Ortsdetails mit Bildern, Quellen, Hinweisen, empfohlenen Handlungen und Merkliste.
@@ -55,6 +55,9 @@ Ziyarah ist eine produktionsorientierte Expo-App für eine schiitische Ziyarah-R
 - Eine vorhandene Anmeldung gilt zugleich als abgeschlossenes Onboarding und wird lokal entsprechend übernommen. Wenn eine verpflichtende Gruppenabfrage den normalen App-Bereich sperrt, ist `/check-in` die erste Navigator-Ausweichroute; die Sprachauswahl kann dadurch nicht versehentlich als Fallback erscheinen.
 
 ### Gruppenfunktionen
+
+- Angemeldete Nutzer erreichen die geschützte Route `/emergency` ausschließlich von der Home-/Indexseite über einen kompakten, runden Alarm-Button rechts auf halber Bildschirmhöhe. Dort wählen Nutzer ausdrücklich das medizinische Team oder Reiseteam, beschreiben Anliegen und Aufenthaltsort und können optional nach Vordergrund-Berechtigung genau eine Geräteposition mitsenden. Es gibt kein Live- oder Hintergrundtracking. Die Datenbank materialisiert alle zum Absendezeitpunkt vorhandenen Profile der Rolle `medical_staff` beziehungsweise `organization_team` als Empfänger; die Meldung bleibt für diese Empfänger im Postfach lesbar und besitzt einen individuellen Lesestatus.
+- Die Notfallmeldung wird zuerst dauerhaft gespeichert und anschließend bestmöglich über die Edge Function `dispatch-emergency-alert` an alle registrierten Expo-Push-Geräte der Empfänger geschickt. Die Function akzeptiert ausschließlich den verifizierten Absender der konkreten Meldung, beansprucht jeden Geräteversuch idempotent und legt keine Push-Tokens im Client offen. Ein Pushfehler ändert nicht nachträglich eine erfolgreich gespeicherte Postfachmeldung. Push-Tipps öffnen `/emergency`; medizinisches Personal und Organisationsteam können dort Push aktivieren. Anliegen und genaue Koordinaten stehen nur im geschützten Postfach und werden nicht in den Sperrbildschirmtext übernommen.
 
 - Ein Admin kann eine aktive Reise mit benannten Bussen anlegen und einzelne physische Teilnehmer-IDs wie `BER01` einem Bus zuordnen. Eine ID kann optional mit einem App-Profil verknüpft werden; mehrere IDs dürfen demselben Konto gehören. Nicht verknüpfte Teilnehmer bleiben in der Leiterübersicht sichtbar.
 - Im getrennten Admin-Punkt `Reisegruppen` stellt ein Admin vorhandene physische Teilnehmer-IDs zu Untergruppen zusammen und bestimmt genau einen Teilnehmer mit verknüpftem App-Konto als Gruppenanführer. Eine physische Teilnehmer-ID gehört höchstens einer Untergruppe; der Anführer ist immer zugleich Mitglied. Gruppen können atomar geändert oder gelöscht werden.
@@ -127,14 +130,15 @@ cp .env.example .env
 npx expo start
 ```
 
-Erforderliche öffentliche Client-Konfiguration:
+Erforderliche Client- und Build-Konfiguration:
 
 ```dotenv
 EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+GOOGLE_MAPS_ANDROID_API_KEY=your-android-key
 ```
 
-Die echte `.env` ist ignoriert und darf nicht ausgegeben oder committed werden. Ohne beide Werte wirft `src/features/auth/supabase.ts` beim App-Start absichtlich einen Fehler.
+Die echte `.env` ist ignoriert und darf nicht ausgegeben oder committed werden. Ohne beide Supabase-Werte wirft `src/features/auth/supabase.ts` beim App-Start absichtlich einen Fehler. Der Android-Google-Maps-Schlüssel muss auf Paketname und Signing-SHA-1 eingeschränkt werden. Er wird nur beim Erstellen des App-Binaries über `app.config.ts` und das `react-native-maps`-Config-Plugin übernommen; danach ist ein neuer nativer Build nötig.
 
 Nützliche Startbefehle:
 
@@ -144,7 +148,7 @@ npm run android
 npm run web
 ```
 
-`app.json` konfiguriert Portrait-Modus, das Scheme `ziyara`, automatische Systemdarstellung, Standortberechtigungen, statischen Web-Export, Expo Router und Splash Screen. `eas.json` besitzt interne Preview- und Production-Buildprofile. Änderungen an nativen Abhängigkeiten oder App-Konfiguration können einen neuen Development Build erfordern.
+`app.json` konfiguriert Portrait-Modus, das Scheme `ziyara`, automatische Systemdarstellung, Standortberechtigungen, statischen Web-Export, Expo Router und Splash Screen. `app.config.ts` erweitert diese statische Konfiguration um die umgebungsabhängigen Google-Maps-Schlüssel. `eas.json` besitzt interne Preview- und Production-Buildprofile. Änderungen an nativen Abhängigkeiten oder App-Konfiguration können einen neuen Development Build erfordern.
 
 ## Architektur und Verzeichnisstruktur
 
@@ -227,6 +231,7 @@ Der gleiche Provider registriert den nativen Linking-Listener für Passwort-Reco
 | `/reader/[slug]` | öffentlich | religiöser Reader |
 | `/account` | Session, nicht blockiert | Kontodaten, Personenzahl und Kofferanzahl |
 | `/bus` | Session; nur eigene verknüpfte Teilnehmer-IDs | Buszuordnung, Generalalarm, Push-Einrichtung und gestufter Status für ein aktives Boarding |
+| `/emergency` | Session; nicht durch eine offene Pflichtabfrage blockiert; Senden für jede Rolle, rollenbezogenes Postfach für medizinisches Personal und Organisationsteam | Notfall an ein Team mit Freitext, optionalem Ortsnamen und einmaliger Position; Postfach, Lesestatus und Push-Einrichtung |
 | `/group` | Session; nur eigene Untergruppen, Standortanfrage nur für den jeweiligen Anführer | Gruppenmitglieder anzeigen und eine einmalige Standortanfrage beantworten oder ablehnen |
 | `/guide` | Session; nur eigene verknüpfte Teilnehmer-IDs | aktueller Programmpunkt, Treffpunkt, Navigation und Teilnehmerstatus |
 | `/program` | Session | Wochenprogramm von heute bis zu den nächsten sechs Tagen, gegliedert nach Tag und Ablaufpunkt |
@@ -312,6 +317,9 @@ Aktuelle Tabellen:
 - `bus_boarding_escalations`: letzte ausdrückliche manuelle Eskalation je Boarding und physischer Teilnehmer-ID.
 - `push_notification_devices`: private, profilgebundene Expo-Push-Tokens mit Plattform und Sprache; keine Client-Leserechte.
 - `general_alarm_notification_attempts`: privates Idempotenz- und Expo-Annahmeprotokoll je Gerät, Teilnehmer, Stufe und Erinnerungsfenster.
+- `emergency_requests`: dauerhafte Notfallmeldung mit Absender-Snapshot, Zielteam, Anliegen und optionalem Text-/Koordinatenstandort.
+- `emergency_request_recipients`: beim Absenden materialisierte Teamempfänger mit individuellem Lesestatus.
+- `emergency_notification_attempts`: privates, idempotentes Expo-Annahmeprotokoll je Notfallmeldung und Empfängergerät.
 - `trip_guidance_updates`: versionierter aktueller Programmpunkt mit Ort, Abfahrt, Treffpunkt, Koordinaten und organisatorischen Hinweisen.
 - `trip_guidance_responses`: letzter Treffpunktstatus je Programmpunkt und physischer Teilnehmer-ID einschließlich ausdrücklicher Problemübernahme.
 - `trip_navigation_destinations`: mehrere aktive, benannte Karten- und Navigationsziele je Reise mit optionalem Orientierungshinweis und archivierter Entfernung.
@@ -320,7 +328,7 @@ Aktuelle Tabellen:
 - `trip_group_members`: atomare Zuordnung physischer Teilnehmer-IDs zu höchstens einer Untergruppe.
 - `trip_group_location_requests`: genau eine aktuelle, zustimmungsbasierte Standortanfrage je Untergruppe mit `pending`, `shared` oder `declined` und kurzzeitig lesbaren Koordinaten.
 
-Mit der lokal angewandten Kontofamilien- und Koffermigration existieren dreiundzwanzig Anwendungstabellen im `public`-Schema. Die zweiundzwanzig zuvor bestehenden Tabellen bleiben vollständig erhalten; ebenso `profiles.id`, `profiles.user_id`, `group_check_responses.id` und `member_type`.
+Nach Anwendung der Notfallmigration existieren sechsundzwanzig Anwendungstabellen im `public`-Schema. Die dreiundzwanzig zuvor bestehenden Tabellen bleiben vollständig erhalten; ebenso `profiles.id`, `profiles.user_id`, `group_check_responses.id` und `member_type`.
 
 Wichtige RPCs:
 
@@ -339,6 +347,8 @@ Wichtige RPCs:
 - `register_push_notification_device`, `unregister_push_notification_device`
 - `admin_escalate_bus_boarding_participant`
 - `can_dispatch_general_alarm`, `claim_due_general_alarm_notifications`, `complete_general_alarm_notification_attempts` (nur `service_role`)
+- `submit_emergency_request`, `list_my_emergency_messages`, `mark_emergency_request_read`
+- `claim_emergency_notification_attempts`, `complete_emergency_notification_attempt` (nur `service_role`)
 - `admin_publish_trip_guidance`, `admin_update_trip_guidance`
 - `respond_to_trip_guidance`, `admin_acknowledge_trip_guidance_problem`
 - `can_read_current_trip_daily_program`, `admin_upsert_trip_daily_programs`
@@ -381,6 +391,8 @@ Die additive, derzeit nur lokal angewandte Migration `20260830010000_add_account
 
 Die additive Migration `20260902000000_add_profile_sim_card_count.sql` ergänzt `profiles.sim_card_count` mit einem Bereich von `0` bis `50`, übernimmt den Wert bei neuen Registrierungen aus validierten Auth-Metadaten und lässt bestehende Konten bei `0`. Nutzer dürfen über den bestehenden Eigenprofil-RLS-Schutz nur den eigenen Wert ändern. Die minimale Adminliste liefert zusätzlich `member_type` und `sim_card_count`, damit Konto-Zuordnungen und SIM-Bedarf einzeln sowie aggregiert sichtbar sind. Die Migration liegt nur im Worktree und wurde weder auf die lokale noch auf die Remote-Datenbank angewandt.
 
+Die additive Migration `20260903000000_add_emergency_requests.sql` ergänzt Notfallmeldungen, materialisierte rollenbezogene Empfänger, Lesestatus und private Push-Versandversuche. Direkte Client-Schreibrechte sind entzogen; Senden und Gelesen-Markierung laufen über authentifizierte RPCs, während Push-Claims und -Abschlüsse ausschließlich `service_role` ausführen darf. RLS zeigt Meldungen nur dem Absender und den beim Absenden festgehaltenen Empfängern. Die Migration und die Edge Function liegen nur im Worktree und sind nicht remote ausgerollt.
+
 Die additive Migration `20260827130000_add_bus_boarding_read_status.sql` ergänzt den Enumwert `read` in einer eigenen Transaktion, damit PostgreSQL ihn erst nach dem Enum-Commit verwendet. `20260827140000_add_general_alarm.sql` ergänzt Fünf-Minuten-/Dringlichkeitsparameter, private Push-Geräte und Versandfenster sowie manuelle Boarding-Eskalationen. `20260827150000_enforce_general_alarm_status_order.sql` erzwingt `read` → `on_way` → `boarded` auch im Teilnehmer-RPC, serialisiert parallele Antworten je physischer ID und lässt administrative Korrekturen weiter zu. Direkte Token- und Versandprotokoll-Leserechte sind entzogen; normale Nutzer registrieren ausschließlich das eigene Gerät, Admins sehen nur Eskalationen, und nur `service_role` beansprucht beziehungsweise vervollständigt Push-Fenster. Der lokale Edge-Function-Quellcode `dispatch-general-alarm` prüft Admin- oder Scheduler-Autorisierung und sendet gruppierte, lokalisierte Nachrichten an den Expo Push Service. Alle drei Migrationen sind lokal und remote angewandt; Function-Deployment, Push-Secrets und Scheduler sind noch nicht erfolgt.
 
 Am 27. August 2026 wurden die Migrationen `20260826000000_expand_group_check_results.sql`, `20260826010000_drop_unused_group_check_answer_index.sql`, `20260826020000_protect_account_deletion.sql`, `20260826021000_add_account_deletion_precheck.sql` und `20260827000000_add_bus_management.sql` nach ausdrücklicher Freigabe auf das verknüpfte Remote-Projekt ausgerollt. Am 28. August 2026 folgten die Reiseführungs- und Generalalarm-Migrationen `20260827120000` bis `20260827150000`. Die Mehrzielmigration `20260828120000_add_trip_navigation_destinations.sql` war bei der Remote-Prüfung am 30. August 2026 bereits angewandt; am selben Tag wurden die zuvor fehlende Migration `20260828130000_add_daily_program.sql` und anschließend `20260830000000_add_trip_groups_and_location_requests.sql` ausdrücklich ausgerollt. Bis zu diesem Stand waren lokal und remote synchron. Die anschließend ergänzte Migration `20260830010000_add_account_families_and_luggage.sql` ist nur lokal angewandt und wurde nicht remote ausgerollt. Die spätere SIM-Karten-Migration `20260902000000_add_profile_sim_card_count.sql` wurde noch auf keine Datenbank angewandt. Keine bestehende Migration wurde verändert, gelöscht oder zusammengefasst. Die Edge Function `delete-account` ist remote als aktive Version 1 mit `verify_jwt = false` bereitgestellt; ein anonymer POST erreichte die interne Auth-Prüfung und wurde erwartungsgemäß mit HTTP 401 abgelehnt. Es wurde kein reales Konto testweise gelöscht und die Remote-Redirect-Allowlist wurde nicht verändert.
@@ -398,7 +410,7 @@ Der anschließend ergänzte Busstatus-Session-Retry ist Clientcode im lokalen Wo
 
 ## Plattformunterschiede
 
-- Native Karte: `src/features/map/MapScreen.tsx` mit `react-native-maps` und Expo Location.
+- Native Karte: `src/features/map/MapScreen.tsx` mit `react-native-maps`, explizitem Google-Provider auf Android und Expo Location.
 - Webkarte: `src/features/map/MapScreen.web.tsx` mit schematischer Karte, Browser-Geolocation und Liste.
 - Stadtkarte besitzt ebenfalls native und `.web.tsx`-Varianten.
 - Die administrative Treffpunktauswahl besitzt ebenfalls native und `.web.tsx`-Varianten: Native Geräte zeigen eine interaktive Karte mit verschiebbarem Marker, Web eine klickbare Irak-Koordinatenfläche. Beide können nach ausdrücklicher Standortfreigabe einmalig den aktuellen Gerätestandort übernehmen.
@@ -406,6 +418,7 @@ Der anschließend ergänzte Busstatus-Session-Retry ist Clientcode im lokalen Wo
 - Gebündelte Katalogdaten und Bilder sind offline verfügbar. Supabase-Funktionen und Kartenkacheln sind nicht vollständig offlinefähig.
 - Das gebündelte Erststartvideo wird mit `expo-video` auf iOS, Android und Web bildschirmfüllend als Hintergrund abgespielt und läuft bewusst stumm in Schleife. Eine abgedunkelte Ebene hält die Sprachauswahl lesbar; ein Wiedergabefehler blockiert sie nicht.
 - Generalalarm-Push und lokale Benachrichtigungen sind nativ; die Webversion zeigt den Statusfluss ohne Push. In Expo Go lädt die App `expo-notifications` nicht, damit dessen Android-Fehler für nicht unterstützten Remote-Push den Router nicht mitreißt; die Benachrichtigungsintegration ist dort vollständig deaktiviert und der Zustand wird ausdrücklich angezeigt. Remote-Push und die Generalalarm-Erinnerungen der App erfordern einen nativen Development-/Produktionsbuild. Kein Plattformpfad behauptet, Lautlosmodus, Fokus, ausgeschaltete Geräte oder deaktivierte Benachrichtigungen zuverlässig umgehen zu können.
+- Notfall-Push nutzt dieselbe profilgebundene Expo-Geräteregistrierung und einen eigenen Android-Kanal mit maximaler Wichtigkeit. Web und Expo Go behalten das vollständige Postfach, bieten aber keinen Remote-Push. Auch Notfall-Push ist bestmöglich und kann Systemzustände oder Geräteeinstellungen nicht umgehen.
 
 ## UI-Konventionen
 
@@ -465,6 +478,7 @@ Der letzte vollständige Prüfstand vor der SIM-Karten-Erweiterung vom 2. Septem
 - Sämtliche kuratierten Orts- und religiösen Inhalte benötigen weiterhin qualifizierte Prüfung.
 - Ziyarat Ashura enthält bereits Volltext, steht aber noch auf `needs_review` und `pending_rights_review`.
 - Native Kartenkacheln sind offline nicht garantiert.
+- Für Google Maps auf Android fehlen im Repository absichtlich ein echter API-Schlüssel sowie der finale Android-Paketname. Vor einem Android-Produktivbuild muss ein auf Paketname und Signing-SHA-1 eingeschränkter Schlüssel in der Buildumgebung gesetzt, das Maps SDK for Android aktiviert und das native App-Binary neu erstellt werden.
 - Finale Store-Metadaten und veröffentlichungsfertige Datenschutz-/Supportseiten fehlen. Externes Crash-Reporting ist nicht integriert.
 - App-Icon und Splash-Grafik sind noch Expo-Startergrafiken und müssen vor einem Store-Release durch freigegebene Markenassets ersetzt werden.
 - Bundle-Identifier und finale Store-/Build-Konfiguration sind in `app.json` noch nicht vollständig.
@@ -475,6 +489,7 @@ Der letzte vollständige Prüfstand vor der SIM-Karten-Erweiterung vom 2. Septem
 - Das Reiseführungsschema ist lokal und remote migriert sowie lokal vollständig getestet. Vor produktiver Nutzung sind ein neuer Client-Build sowie reale Tests von Realtime, einmaliger Standortfreigabe und Offline-Warteschlange erforderlich.
 - Die Tagesprogramm- und Mehrzielmigrationen sind lokal und remote angewandt sowie lokal vollständig automatisiert getestet. Bereits installierte Apps benötigen weiterhin den aktualisierten Client; vor breiter produktiver Nutzung braucht das Tagesprogramm zusätzlich eine reale Prüfung von Realtime, Zeitzone und kleiner Mobilbreite.
 - Das Generalalarm-Schema ist lokal und remote migriert; die Dispatcher-Function ist lokal implementiert und getestet, aber noch nicht remote bereitgestellt. Vor produktiver Push-Nutzung fehlen EAS-Projekt-ID und Push-Credentials, Function-Deployment, `GENERAL_ALARM_CRON_SECRET`, optional `EXPO_ACCESS_TOKEN`, ein minutenweiser Server-Scheduler, ein neuer nativer Build sowie reale Geräte-/Mobilfunktests. Details stehen in `docs/GENERAL_ALARM.md`.
+- Das Notfallschema und `dispatch-emergency-alert` sind nur im Worktree. Vor produktiver Nutzung müssen die Migration remote angewandt, die Function bereitgestellt, EAS-Projekt-ID/Push-Credentials konfiguriert und wegen Berechtigungstext sowie Android-Kanal ein neuer nativer Build erstellt werden. Ohne Function bleibt die interne Postfachmeldung erhalten, aber es gibt keinen Push. Details stehen in `docs/EMERGENCY_ALERTS.md`.
 - Arabisch richtet Texte aus, schaltet aber die gesamte native Layoutreihenfolge noch nicht über `I18nManager` auf RTL um.
 - Der vollständige npm-Audit meldete am 27. August 2026 keine Critical-, aber 4 High- und 11 Moderate-Einträge. Die High-Einträge hängen an der Expo-/Metro-Buildkette und deren `image-size`-Parsern; der vollständige Moderate-Fix würde Expo beziehungsweise `expo-splash-screen` inkompatibel herabstufen. Auf kompatible Expo-/Metro-Patches warten und keinen `npm audit fix --force` ausführen.
 - Es fehlen weiterhin native Store-Builds und der reale Last-/Netzwerktest mit etwa 100 Geräten; die vorhandenen Playwright-Smokes ersetzen keine signierten iOS-/Android-Gerätetests.

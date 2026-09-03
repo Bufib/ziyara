@@ -98,6 +98,83 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "account.simCardSave": "Anzahl der SIM-Karten speichern",
     "account.simCardSuccess": "Die Anzahl der SIM-Karten wurde gespeichert.",
     "account.simCardTitle": "SIM-Karten",
+    "emergency.navTitle": "Notfallhilfe",
+    "emergency.homeTitle": "Notfallhilfe",
+    "emergency.homeBody":
+      "Kontaktiere schnell das medizinische Team oder das Reiseteam und sende bei Bedarf deinen Standort mit.",
+    "emergency.homeButton": "Notfall melden",
+    "emergency.staffHomeTitle": "Notfall-Postfach",
+    "emergency.staffHomeBody": "Öffne die Hilfeanfragen, die an dein Team gesendet wurden.",
+    "emergency.staffOpen": "Postfach öffnen",
+    "emergency.title": "Notfall melden",
+    "emergency.body":
+      "Wähle das zuständige Team, beschreibe dein Anliegen und gib deinen Standort als Text oder einmalige Position an.",
+    "emergency.safetyTitle": "Bei unmittelbarer Gefahr",
+    "emergency.safetyBody":
+      "Diese Nachricht ersetzt keinen örtlichen Rettungsdienst. Wende dich bei unmittelbarer Lebensgefahr zusätzlich direkt an die örtlichen Einsatzkräfte oder eine Person in deiner Nähe.",
+    "emergency.formTitle": "Neue Hilfeanfrage",
+    "emergency.teamLabel": "Welches Team soll benachrichtigt werden?",
+    "emergency.team.medical": "Medizinisches Team",
+    "emergency.team.medicalBody": "Bei Verletzung, Krankheit oder medizinischer Unterstützung.",
+    "emergency.team.travel": "Reiseteam",
+    "emergency.team.travelBody": "Bei Orientierung, Transport oder organisatorischer Hilfe.",
+    "emergency.locationLabel": "Wo bist du? (optional)",
+    "emergency.locationPlaceholder": "Zum Beispiel: Hotel-Lobby, Bus 2 oder Tor 3",
+    "emergency.locationPrivacy":
+      "Deine Geräteposition wird nur nach Tippen auf den Standortknopf einmalig ermittelt und mit dieser Nachricht gespeichert. Es gibt kein Live-Tracking.",
+    "emergency.locationShare": "Aktuellen Standort mitsenden",
+    "emergency.locationSharing": "Standort wird ermittelt …",
+    "emergency.locationClear": "Position entfernen",
+    "emergency.locationDenied":
+      "Ohne Standortberechtigung kann keine Geräteposition mitgesendet werden. Du kannst deinen Ort weiterhin als Text angeben.",
+    "emergency.locationError":
+      "Der Standort konnte nicht ermittelt werden. Prüfe GPS und Berechtigung oder gib den Ort als Text an.",
+    "emergency.locationFallback": "Standort der Notfallmeldung",
+    "emergency.locationPrefix": "Ort: {location}",
+    "emergency.locationOpen": "Auf Karte öffnen",
+    "emergency.messageLabel": "Was ist passiert?",
+    "emergency.messagePlaceholder": "Beschreibe kurz, was du brauchst und wie dringend es ist.",
+    "emergency.submit": "Notfall jetzt senden",
+    "emergency.submitting": "Notfall wird gesendet …",
+    "emergency.feedback.validation_team": "Wähle zuerst das medizinische Team oder das Reiseteam.",
+    "emergency.feedback.validation_message": "Beschreibe dein Anliegen mit mindestens 5 Zeichen.",
+    "emergency.feedback.error":
+      "Der Notfall konnte nicht gespeichert werden. Prüfe die Verbindung und versuche es sofort erneut.",
+    "emergency.feedback.no_recipients":
+      "Der Notfall wurde gespeichert, aber aktuell ist kein Konto mit dieser Teamrolle hinterlegt. Nutze bitte zusätzlich einen direkten Kontaktweg.",
+    "emergency.feedback.success":
+      "Der Notfall wurde für {count} Teammitglied(er) gespeichert. Der Pushdienst hat mindestens eine Benachrichtigung angenommen.",
+    "emergency.feedback.success_no_push":
+      "Der Notfall wurde für {count} Teammitglied(er) im Postfach gespeichert. Push konnte aktuell kein registriertes Gerät erreichen.",
+    "emergency.notificationsTitle": "Push für Notfallmeldungen",
+    "emergency.notifications.checking": "Benachrichtigungsstatus wird geprüft …",
+    "emergency.notifications.denied":
+      "Push ist nicht freigegeben. Neue Meldungen bleiben trotzdem im Postfach lesbar.",
+    "emergency.notifications.error":
+      "Push konnte nicht eingerichtet werden. Neue Meldungen bleiben trotzdem im Postfach lesbar.",
+    "emergency.notifications.expo_go":
+      "Remote-Push ist in Expo Go deaktiviert. Verwende einen nativen Development- oder Produktionsbuild.",
+    "emergency.notifications.missing_project_id":
+      "Dieser Build ist noch nicht mit einer EAS-Projekt-ID für Push verbunden.",
+    "emergency.notifications.registered":
+      "Push ist für dieses Gerät aktiviert. Geräteeinstellungen können die Anzeige weiterhin einschränken.",
+    "emergency.notifications.simulator":
+      "Remote-Push benötigt ein echtes Gerät. Das Notfall-Postfach bleibt verfügbar.",
+    "emergency.notifications.unsupported":
+      "Push ist in der Webversion nicht verfügbar. Das Notfall-Postfach bleibt verfügbar.",
+    "emergency.notificationsEnable": "Push aktivieren",
+    "emergency.notificationsSettings": "Geräteeinstellungen",
+    "emergency.syncErrorTitle": "Nachrichten nicht aktuell",
+    "emergency.retry": "Erneut laden",
+    "emergency.inboxTitle": "Nachrichten an mein Team",
+    "emergency.inboxBody": "Neue Meldungen erscheinen hier und werden zusätzlich per Push versucht.",
+    "emergency.inboxEmpty": "Noch keine Notfallmeldungen für dein Team",
+    "emergency.sentTitle": "Meine gesendeten Notfälle",
+    "emergency.sentEmpty": "Du hast noch keinen Notfall gesendet.",
+    "emergency.new": "NEU",
+    "emergency.read": "Gelesen",
+    "emergency.markRead": "Als gelesen markieren",
+    "emergency.markReadError": "Der Lesestatus konnte nicht gespeichert werden.",
     "family.decrease": "Personenzahl verringern",
     "family.increase": "Personenzahl erhöhen",
     "family.partySize": "Anzahl der Personen",
@@ -1091,6 +1168,83 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "account.simCardSave": "Save SIM-card count",
     "account.simCardSuccess": "The SIM-card count has been saved.",
     "account.simCardTitle": "SIM cards",
+    "emergency.navTitle": "Emergency help",
+    "emergency.homeTitle": "Emergency help",
+    "emergency.homeBody":
+      "Quickly contact the medical team or travel team and include your location if needed.",
+    "emergency.homeButton": "Report an emergency",
+    "emergency.staffHomeTitle": "Emergency inbox",
+    "emergency.staffHomeBody": "Open the assistance requests sent to your team.",
+    "emergency.staffOpen": "Open inbox",
+    "emergency.title": "Report an emergency",
+    "emergency.body":
+      "Choose the responsible team, describe what you need, and provide your location as text or a one-time position.",
+    "emergency.safetyTitle": "If there is immediate danger",
+    "emergency.safetyBody":
+      "This message does not replace local emergency services. If life is in immediate danger, also contact local responders or someone nearby directly.",
+    "emergency.formTitle": "New assistance request",
+    "emergency.teamLabel": "Which team should be notified?",
+    "emergency.team.medical": "Medical team",
+    "emergency.team.medicalBody": "For injury, illness, or medical assistance.",
+    "emergency.team.travel": "Travel team",
+    "emergency.team.travelBody": "For directions, transport, or organizational help.",
+    "emergency.locationLabel": "Where are you? (optional)",
+    "emergency.locationPlaceholder": "For example: hotel lobby, bus 2, or gate 3",
+    "emergency.locationPrivacy":
+      "Your device position is obtained once only after you tap the location button and is stored with this message. There is no live tracking.",
+    "emergency.locationShare": "Include current location",
+    "emergency.locationSharing": "Getting location …",
+    "emergency.locationClear": "Remove position",
+    "emergency.locationDenied":
+      "A device position cannot be included without location permission. You can still describe your location as text.",
+    "emergency.locationError":
+      "Your location could not be determined. Check GPS and permission settings or enter it as text.",
+    "emergency.locationFallback": "Emergency report location",
+    "emergency.locationPrefix": "Location: {location}",
+    "emergency.locationOpen": "Open on map",
+    "emergency.messageLabel": "What happened?",
+    "emergency.messagePlaceholder": "Briefly describe what you need and how urgent it is.",
+    "emergency.submit": "Send emergency now",
+    "emergency.submitting": "Sending emergency …",
+    "emergency.feedback.validation_team": "Choose the medical team or travel team first.",
+    "emergency.feedback.validation_message": "Describe what you need using at least 5 characters.",
+    "emergency.feedback.error":
+      "The emergency could not be saved. Check the connection and try again immediately.",
+    "emergency.feedback.no_recipients":
+      "The emergency was saved, but no account currently has this team role. Please also use a direct contact method.",
+    "emergency.feedback.success":
+      "The emergency was saved for {count} team member(s). The push service accepted at least one notification.",
+    "emergency.feedback.success_no_push":
+      "The emergency was saved in the inbox for {count} team member(s). Push could not currently reach a registered device.",
+    "emergency.notificationsTitle": "Emergency push notifications",
+    "emergency.notifications.checking": "Checking notification status …",
+    "emergency.notifications.denied":
+      "Push has not been allowed. New reports remain readable in the inbox.",
+    "emergency.notifications.error":
+      "Push could not be configured. New reports remain readable in the inbox.",
+    "emergency.notifications.expo_go":
+      "Remote push is disabled in Expo Go. Use a native development or production build.",
+    "emergency.notifications.missing_project_id":
+      "This build is not linked to an EAS project ID for push yet.",
+    "emergency.notifications.registered":
+      "Push is enabled for this device. Device settings may still limit its display.",
+    "emergency.notifications.simulator":
+      "Remote push requires a physical device. The emergency inbox remains available.",
+    "emergency.notifications.unsupported":
+      "Push is unavailable on the web. The emergency inbox remains available.",
+    "emergency.notificationsEnable": "Enable push",
+    "emergency.notificationsSettings": "Device settings",
+    "emergency.syncErrorTitle": "Messages are not current",
+    "emergency.retry": "Reload",
+    "emergency.inboxTitle": "Messages for my team",
+    "emergency.inboxBody": "New reports appear here, with an additional push attempt.",
+    "emergency.inboxEmpty": "No emergency reports for your team yet",
+    "emergency.sentTitle": "My sent emergencies",
+    "emergency.sentEmpty": "You have not sent an emergency yet.",
+    "emergency.new": "NEW",
+    "emergency.read": "Read",
+    "emergency.markRead": "Mark as read",
+    "emergency.markReadError": "The read status could not be saved.",
     "family.decrease": "Decrease number of people",
     "family.increase": "Increase number of people",
     "family.partySize": "Number of people",
@@ -2067,6 +2221,83 @@ const dictionaries: Record<Language, Record<string, string>> = {
     "account.simCardSave": "حفظ عدد شرائح الاتصال",
     "account.simCardSuccess": "تم حفظ عدد شرائح الاتصال.",
     "account.simCardTitle": "شرائح الاتصال",
+    "emergency.navTitle": "مساعدة طارئة",
+    "emergency.homeTitle": "مساعدة طارئة",
+    "emergency.homeBody":
+      "تواصل بسرعة مع الفريق الطبي أو فريق الرحلة وأرسل موقعك عند الحاجة.",
+    "emergency.homeButton": "إرسال بلاغ طارئ",
+    "emergency.staffHomeTitle": "صندوق رسائل الطوارئ",
+    "emergency.staffHomeBody": "افتح طلبات المساعدة المرسلة إلى فريقك.",
+    "emergency.staffOpen": "فتح صندوق الرسائل",
+    "emergency.title": "إرسال بلاغ طارئ",
+    "emergency.body":
+      "اختر الفريق المسؤول واشرح ما تحتاج إليه وحدد موقعك كتابةً أو أرسل موقع الجهاز مرة واحدة.",
+    "emergency.safetyTitle": "عند وجود خطر فوري",
+    "emergency.safetyBody":
+      "هذه الرسالة لا تحل محل خدمات الطوارئ المحلية. عند وجود خطر فوري على الحياة، تواصل أيضاً مباشرةً مع فرق الطوارئ المحلية أو مع شخص قريب منك.",
+    "emergency.formTitle": "طلب مساعدة جديد",
+    "emergency.teamLabel": "أي فريق تريد إشعاره؟",
+    "emergency.team.medical": "الفريق الطبي",
+    "emergency.team.medicalBody": "للإصابة أو المرض أو الحاجة إلى مساعدة طبية.",
+    "emergency.team.travel": "فريق الرحلة",
+    "emergency.team.travelBody": "للمساعدة في الاتجاهات أو النقل أو الأمور التنظيمية.",
+    "emergency.locationLabel": "أين أنت؟ (اختياري)",
+    "emergency.locationPlaceholder": "مثلاً: بهو الفندق أو الحافلة 2 أو البوابة 3",
+    "emergency.locationPrivacy":
+      "لن يُحدَّد موقع جهازك إلا مرة واحدة بعد الضغط على زر الموقع، وسيُحفظ مع هذه الرسالة. لا يوجد تتبع مباشر.",
+    "emergency.locationShare": "إرفاق الموقع الحالي",
+    "emergency.locationSharing": "جارٍ تحديد الموقع …",
+    "emergency.locationClear": "إزالة الموقع",
+    "emergency.locationDenied":
+      "لا يمكن إرفاق موقع الجهاز دون إذن الموقع. لا يزال بإمكانك وصف موقعك كتابةً.",
+    "emergency.locationError":
+      "تعذر تحديد موقعك. تحقق من GPS وإذن الموقع أو أدخل الموقع كتابةً.",
+    "emergency.locationFallback": "موقع البلاغ الطارئ",
+    "emergency.locationPrefix": "الموقع: {location}",
+    "emergency.locationOpen": "فتح على الخريطة",
+    "emergency.messageLabel": "ماذا حدث؟",
+    "emergency.messagePlaceholder": "اشرح باختصار ما تحتاج إليه ومدى إلحاحه.",
+    "emergency.submit": "إرسال البلاغ الآن",
+    "emergency.submitting": "جارٍ إرسال البلاغ …",
+    "emergency.feedback.validation_team": "اختر أولاً الفريق الطبي أو فريق الرحلة.",
+    "emergency.feedback.validation_message": "اشرح ما تحتاج إليه بخمسة أحرف على الأقل.",
+    "emergency.feedback.error":
+      "تعذر حفظ البلاغ الطارئ. تحقق من الاتصال وحاول مرة أخرى فوراً.",
+    "emergency.feedback.no_recipients":
+      "تم حفظ البلاغ، لكن لا يوجد حالياً حساب يحمل دور هذا الفريق. يُرجى استخدام وسيلة اتصال مباشرة أيضاً.",
+    "emergency.feedback.success":
+      "تم حفظ البلاغ لـ {count} من أعضاء الفريق. قبلت خدمة الإشعارات إشعاراً واحداً على الأقل.",
+    "emergency.feedback.success_no_push":
+      "تم حفظ البلاغ في صندوق رسائل {count} من أعضاء الفريق. تعذر حالياً وصول الإشعار إلى جهاز مسجل.",
+    "emergency.notificationsTitle": "إشعارات بلاغات الطوارئ",
+    "emergency.notifications.checking": "جارٍ فحص حالة الإشعارات …",
+    "emergency.notifications.denied":
+      "لم يُسمح بالإشعارات. تبقى البلاغات الجديدة مقروءة في صندوق الرسائل.",
+    "emergency.notifications.error":
+      "تعذر إعداد الإشعارات. تبقى البلاغات الجديدة مقروءة في صندوق الرسائل.",
+    "emergency.notifications.expo_go":
+      "الإشعارات البعيدة معطلة في Expo Go. استخدم نسخة تطوير أو إنتاج أصلية.",
+    "emergency.notifications.missing_project_id":
+      "هذا الإصدار غير مرتبط بعد بمعرّف مشروع EAS للإشعارات.",
+    "emergency.notifications.registered":
+      "تم تفعيل الإشعارات لهذا الجهاز. قد تستمر إعدادات الجهاز في تقييد ظهورها.",
+    "emergency.notifications.simulator":
+      "تتطلب الإشعارات البعيدة جهازاً حقيقياً. يبقى صندوق رسائل الطوارئ متاحاً.",
+    "emergency.notifications.unsupported":
+      "الإشعارات غير متاحة على الويب. يبقى صندوق رسائل الطوارئ متاحاً.",
+    "emergency.notificationsEnable": "تفعيل الإشعارات",
+    "emergency.notificationsSettings": "إعدادات الجهاز",
+    "emergency.syncErrorTitle": "الرسائل ليست محدثة",
+    "emergency.retry": "إعادة التحميل",
+    "emergency.inboxTitle": "رسائل فريقي",
+    "emergency.inboxBody": "تظهر البلاغات الجديدة هنا، مع محاولة إرسال إشعار إضافي.",
+    "emergency.inboxEmpty": "لا توجد بلاغات طارئة لفريقك بعد",
+    "emergency.sentTitle": "بلاغاتي الطارئة المرسلة",
+    "emergency.sentEmpty": "لم ترسل أي بلاغ طارئ بعد.",
+    "emergency.new": "جديد",
+    "emergency.read": "مقروء",
+    "emergency.markRead": "تحديد كمقروء",
+    "emergency.markReadError": "تعذر حفظ حالة القراءة.",
     "family.decrease": "تقليل عدد الأشخاص",
     "family.increase": "زيادة عدد الأشخاص",
     "family.partySize": "عدد الأشخاص",

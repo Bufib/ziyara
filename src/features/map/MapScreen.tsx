@@ -31,6 +31,8 @@ import { openNavigation } from "@/features/places/openNavigation";
 import { useTripGuidance } from "@/features/trip-guidance/trip-guidance-context";
 import { useTheme } from "@/hooks/use-theme";
 
+import { nativeMapProvider } from "./native-map-provider";
+
 const iraqRegion: Region = {
   latitude: 33.1,
   longitude: 43.9,
@@ -141,6 +143,7 @@ export function MapExperience() {
       <MapView
         ref={mapRef}
         initialRegion={iraqRegion}
+        provider={nativeMapProvider}
         style={styles.map}
       >
         {allPlaces.map((rawPlace) => {

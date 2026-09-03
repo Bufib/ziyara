@@ -10,7 +10,7 @@
     "ios": {
       "icon": "./assets/expo.icon",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Erlaube Shia Ziyarah Iraq, deinen Standort auf der Karte anzuzeigen, als Treffpunkt zu übernehmen, die Entfernung zum Treffpunkt zu berechnen oder ihn nach deiner ausdrücklichen Zustimmung einmalig mit der Reiseleitung zu teilen."
+        "NSLocationWhenInUseUsageDescription": "Erlaube Shia Ziyarah Iraq, deinen Standort auf der Karte anzuzeigen, als Treffpunkt zu übernehmen, die Entfernung zu berechnen oder ihn nach deiner ausdrücklichen Zustimmung einmalig mit der Reiseleitung beziehungsweise einem ausgewählten Notfallteam zu teilen."
       }
     },
     "android": {

@@ -45,7 +45,7 @@ function getProjectId() {
     : Constants.easConfig?.projectId;
 }
 
-async function ensureAndroidChannel() {
+async function ensureAndroidChannels() {
   if (Platform.OS !== 'android' || !Notifications) return;
 
   await Notifications.setNotificationChannelAsync(channelId, {
@@ -58,13 +58,23 @@ async function ensureAndroidChannel() {
     sound: 'default',
     vibrationPattern: [0, 300, 180, 300],
   });
+  await Notifications.setNotificationChannelAsync('emergency-alerts', {
+    description: 'Dringende Hilfeanfragen an das medizinische Team oder Reiseteam',
+    enableVibrate: true,
+    importance: Notifications.AndroidImportance.MAX,
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+    name: 'Notfallmeldungen',
+    showBadge: true,
+    sound: 'default',
+    vibrationPattern: [0, 450, 180, 450],
+  });
 }
 
 export async function inspectGeneralAlarmNotificationState(): Promise<GeneralAlarmNotificationState> {
   if (!Notifications) return expoGoState;
 
   try {
-    await ensureAndroidChannel();
+    await ensureAndroidChannels();
     const permission = await Notifications.getPermissionsAsync();
 
     if (!permission.granted) {
@@ -94,7 +104,7 @@ export async function registerGeneralAlarmNotifications(
   let permissionGranted = false;
 
   try {
-    await ensureAndroidChannel();
+    await ensureAndroidChannels();
     let permission = await Notifications.getPermissionsAsync();
 
     if (!permission.granted && requestPermission && permission.canAskAgain) {
@@ -231,6 +241,10 @@ function isBusNotificationResponse(response: NotificationResponse | null) {
   return response?.notification.request.content.data?.route === '/bus';
 }
 
+function isEmergencyNotificationResponse(response: NotificationResponse | null) {
+  return response?.notification.request.content.data?.route === '/emergency';
+}
+
 export function subscribeToGeneralAlarmNotificationResponses(
   listener: () => void,
 ): NotificationResponseSubscription {
@@ -244,6 +258,22 @@ export function subscribeToGeneralAlarmNotificationResponses(
 
   return Notifications.addNotificationResponseReceivedListener((response) => {
     if (isBusNotificationResponse(response)) listener();
+  });
+}
+
+export function subscribeToEmergencyNotificationResponses(
+  listener: () => void,
+): NotificationResponseSubscription {
+  if (!Notifications) return { remove: () => undefined };
+
+  const previousResponse = Notifications.getLastNotificationResponse();
+  if (isEmergencyNotificationResponse(previousResponse)) {
+    Notifications.clearLastNotificationResponse();
+    queueMicrotask(listener);
+  }
+
+  return Notifications.addNotificationResponseReceivedListener((response) => {
+    if (isEmergencyNotificationResponse(response)) listener();
   });
 }
 

@@ -5,6 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useI18n } from '@/features/i18n/i18n';
 import { localizeCountryName } from '@/features/i18n/localizedData';
+import { nativeMapProvider } from '@/features/map/native-map-provider';
 import { useTheme } from '@/hooks/use-theme';
 
 type CityLocationMapProps = {
@@ -26,6 +27,7 @@ export function CityLocationMap({ city, placeCount, region }: CityLocationMapPro
           maxZoomLevel={20}
           minZoomLevel={12}
           pitchEnabled={false}
+          provider={nativeMapProvider}
           rotateEnabled={false}
           scrollEnabled
           style={styles.map}

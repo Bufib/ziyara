@@ -4,6 +4,7 @@ import type { ColorValue } from 'react-native';
 
 export type SymbolIconName =
   | 'account'
+  | 'alarm'
   | 'book'
   | 'bookmark'
   | 'bus'
@@ -31,6 +32,11 @@ export type SymbolIconName =
 
 const symbolNames: Record<SymbolIconName, React.ComponentProps<typeof SymbolView>['name']> = {
   account: { ios: 'person.crop.circle', android: 'account_circle', web: 'account_circle' },
+  alarm: {
+    ios: 'bell.and.waves.left.and.right.fill',
+    android: 'notifications_active',
+    web: 'notifications_active',
+  },
   book: { ios: 'book.closed', android: 'menu_book', web: 'menu_book' },
   bookmark: { ios: 'bookmark', android: 'bookmark', web: 'bookmark' },
   bus: { ios: 'bus.fill', android: 'directions_bus', web: 'directions_bus' },

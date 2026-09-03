@@ -35,4 +35,10 @@ export function subscribeToGeneralAlarmNotificationResponses(
   return { remove: () => undefined };
 }
 
+export function subscribeToEmergencyNotificationResponses(
+  _listener: () => void,
+): NotificationResponseSubscription {
+  return { remove: () => undefined };
+}
+
 export async function openGeneralAlarmNotificationSettings() {}

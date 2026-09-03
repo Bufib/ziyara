@@ -1,5 +1,6 @@
 export type AppRole = 'admin' | 'medical_staff' | 'organization_team' | 'user';
 export type BusBoardingStatus = 'boarded' | 'on_way' | 'problem' | 'read';
+export type EmergencyTeam = 'medical' | 'travel';
 export type MemberType = 'brother' | 'sister';
 export type TripGroupLocationStatus = 'declined' | 'pending' | 'shared';
 export type TripGuidanceStatus =
@@ -264,6 +265,62 @@ export type GeneralAlarmNotificationClaim = {
   title: string;
 };
 
+export type EmergencyRequest = {
+  accuracy_meters: number | null;
+  created_at: string;
+  id: number;
+  latitude: number | null;
+  location_label: string | null;
+  longitude: number | null;
+  message: string;
+  requester_display_name: string;
+  requester_profile_id: number | null;
+  target_team: EmergencyTeam;
+};
+
+export type EmergencyRequestRecipient = {
+  created_at: string;
+  read_at: string | null;
+  recipient_profile_id: number;
+  request_id: number;
+};
+
+export type EmergencyNotificationAttempt = {
+  accepted_at: string | null;
+  claimed_at: string;
+  error_code: string | null;
+  id: number;
+  push_device_id: number;
+  recipient_profile_id: number;
+  request_id: number;
+};
+
+export type EmergencyInboxMessage = {
+  accuracy_meters: number | null;
+  created_at: string;
+  latitude: number | null;
+  location_label: string | null;
+  longitude: number | null;
+  message: string;
+  read_at: string | null;
+  request_id: number;
+  requester_display_name: string;
+  target_team: EmergencyTeam;
+};
+
+export type EmergencySubmissionResult = {
+  recipient_count: number;
+  request_id: number;
+};
+
+export type EmergencyNotificationClaim = {
+  attempt_id: number;
+  expo_push_token: string;
+  locale: string;
+  request_id: number;
+  target_team: EmergencyTeam;
+};
+
 export type TripGuidanceUpdate = {
   acts: string | null;
   closed_at: string | null;
@@ -391,6 +448,53 @@ export type Database = {
           title?: string;
           urgent_before_minutes?: number;
         };
+      };
+      emergency_notification_attempts: {
+        Insert: {
+          accepted_at?: string | null;
+          claimed_at?: string;
+          error_code?: string | null;
+          id?: never;
+          push_device_id: number;
+          recipient_profile_id: number;
+          request_id: number;
+        };
+        Relationships: [];
+        Row: EmergencyNotificationAttempt;
+        Update: {
+          accepted_at?: string | null;
+          error_code?: string | null;
+        };
+      };
+      emergency_request_recipients: {
+        Insert: {
+          created_at?: string;
+          read_at?: string | null;
+          recipient_profile_id: number;
+          request_id: number;
+        };
+        Relationships: [];
+        Row: EmergencyRequestRecipient;
+        Update: {
+          read_at?: string | null;
+        };
+      };
+      emergency_requests: {
+        Insert: {
+          accuracy_meters?: number | null;
+          created_at?: string;
+          id?: never;
+          latitude?: number | null;
+          location_label?: string | null;
+          longitude?: number | null;
+          message: string;
+          requester_display_name: string;
+          requester_profile_id?: number | null;
+          target_team: EmergencyTeam;
+        };
+        Relationships: [];
+        Row: EmergencyRequest;
+        Update: never;
       };
       general_alarm_notification_attempts: {
         Insert: {
@@ -908,9 +1012,21 @@ export type Database = {
         Args: { p_user_id: string };
         Returns: boolean;
       };
+      claim_emergency_notification_attempts: {
+        Args: { p_request_id: number; p_requester_user_id: string };
+        Returns: EmergencyNotificationClaim[];
+      };
       claim_due_general_alarm_notifications: {
         Args: never;
         Returns: GeneralAlarmNotificationClaim[];
+      };
+      complete_emergency_notification_attempt: {
+        Args: {
+          p_accepted: boolean;
+          p_attempt_id: number;
+          p_error_code: string;
+        };
+        Returns: undefined;
       };
       get_trip_group_member_summaries: {
         Args: never;
@@ -927,6 +1043,14 @@ export type Database = {
       is_admin: {
         Args: never;
         Returns: boolean;
+      };
+      list_my_emergency_messages: {
+        Args: never;
+        Returns: EmergencyInboxMessage[];
+      };
+      mark_emergency_request_read: {
+        Args: { p_request_id: number };
+        Returns: undefined;
       };
       close_group_check: {
         Args: { p_check_id: number };
@@ -993,6 +1117,17 @@ export type Database = {
       submit_anonymous_question: {
         Args: { p_question: string; p_round_id: number };
         Returns: AnonymousQuestion;
+      };
+      submit_emergency_request: {
+        Args: {
+          p_accuracy_meters?: number | null;
+          p_latitude?: number | null;
+          p_location_label?: string | null;
+          p_longitude?: number | null;
+          p_message: string;
+          p_target_team: EmergencyTeam;
+        };
+        Returns: EmergencySubmissionResult[];
       };
       unregister_push_notification_device: {
         Args: { p_expo_push_token: string };
